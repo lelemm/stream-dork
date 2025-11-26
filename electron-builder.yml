@@ -1,0 +1,27 @@
+appId: com.fake-stream-deck.app
+productName: Fake Stream Deck
+copyright: Copyright © 2025
+
+directories:
+  output: dist-electron
+
+files:
+  - "dist/**/*"
+  - "src/main.cjs"
+  - "src/preload.js"
+  - "package.json"
+  - "node_modules/**/*"
+
+win:
+  target:
+    - target: dir
+      arch: [x64]
+  icon: src/assets/tray-icon.png
+
+nsis: false
+nsisWeb: false
+squirrelWindows: false
+msi: false
+forceCodeSigning: false
+publish: null
+
