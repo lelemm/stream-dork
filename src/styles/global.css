@@ -123,4 +123,114 @@
   body {
     @apply bg-background text-foreground;
   }
+
+  /* Make the Electron overlay window fully transparent */
+  body.overlay-transparent {
+    background: transparent !important;
+  }
+}
+
+/* Overlay button with bevel effect - adapts to system theme */
+.overlay-button-bevel {
+  /* Dark mode (default) - black button */
+  background: linear-gradient(
+    145deg,
+    rgba(40, 40, 40, 1) 0%,
+    rgba(20, 20, 20, 1) 100%
+  );
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow:
+    /* Outer shadow for depth */
+    0 4px 8px rgba(0, 0, 0, 0.4),
+    /* Inner highlight on top-left */
+    inset 1px 1px 2px rgba(255, 255, 255, 0.1),
+    /* Inner shadow on bottom-right */
+    inset -1px -1px 2px rgba(0, 0, 0, 0.3);
+  transition: all 0.15s ease;
+}
+
+.overlay-button-bevel:hover {
+  background: linear-gradient(
+    145deg,
+    rgba(55, 55, 55, 1) 0%,
+    rgba(30, 30, 30, 1) 100%
+  );
+  border-color: rgba(255, 255, 255, 0.15);
+  box-shadow:
+    0 6px 12px rgba(0, 0, 0, 0.5),
+    inset 1px 1px 3px rgba(255, 255, 255, 0.15),
+    inset -1px -1px 3px rgba(0, 0, 0, 0.4),
+    0 0 20px rgba(147, 51, 234, 0.3);
+  transform: translateY(-2px);
+}
+
+.overlay-button-bevel:active {
+  background: linear-gradient(
+    145deg,
+    rgba(25, 25, 25, 1) 0%,
+    rgba(35, 35, 35, 1) 100%
+  );
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.3),
+    inset 2px 2px 4px rgba(0, 0, 0, 0.3),
+    inset -1px -1px 2px rgba(255, 255, 255, 0.05);
+  transform: translateY(1px);
+}
+
+/* Light mode - white button */
+@media (prefers-color-scheme: light) {
+  .overlay-button-bevel {
+    background: linear-gradient(
+      145deg,
+      rgba(255, 255, 255, 1) 0%,
+      rgba(235, 235, 235, 1) 100%
+    );
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    box-shadow:
+      0 4px 8px rgba(0, 0, 0, 0.15),
+      inset 1px 1px 2px rgba(255, 255, 255, 0.8),
+      inset -1px -1px 2px rgba(0, 0, 0, 0.08);
+  }
+
+  .overlay-button-bevel:hover {
+    background: linear-gradient(
+      145deg,
+      rgba(255, 255, 255, 1) 0%,
+      rgba(245, 245, 245, 1) 100%
+    );
+    border-color: rgba(0, 0, 0, 0.15);
+    box-shadow:
+      0 6px 12px rgba(0, 0, 0, 0.2),
+      inset 1px 1px 3px rgba(255, 255, 255, 0.9),
+      inset -1px -1px 3px rgba(0, 0, 0, 0.1),
+      0 0 20px rgba(147, 51, 234, 0.2);
+  }
+
+  .overlay-button-bevel:active {
+    background: linear-gradient(
+      145deg,
+      rgba(230, 230, 230, 1) 0%,
+      rgba(245, 245, 245, 1) 100%
+    );
+    box-shadow:
+      0 2px 4px rgba(0, 0, 0, 0.1),
+      inset 2px 2px 4px rgba(0, 0, 0, 0.1),
+      inset -1px -1px 2px rgba(255, 255, 255, 0.5);
+  }
+}
+
+/* Focus mode pulse animation */
+@keyframes focus-pulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(147, 51, 234, 0.4);
+  }
+  50% {
+    transform: scale(1.05);
+    box-shadow: 0 0 30px 10px rgba(147, 51, 234, 0.3);
+  }
+}
+
+.animate-focus-pulse {
+  animation: focus-pulse 1.5s ease-in-out infinite;
 }

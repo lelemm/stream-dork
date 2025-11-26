@@ -1,5 +1,3 @@
-"use client"
-
 import { useState, useEffect } from "react"
 import { useDeckStore } from "@/lib/deck-store"
 import { Card } from "@/components/ui/card"

@@ -1,12 +1,18 @@
 import "@/styles/global.css"
 
-import { ButtonGrid } from "@/components/button-grid"
-import { Settings } from "lucide-react"
+import { createRoot } from "react-dom/client"
+import { OverlayButtonGrid } from "@/components/overlay-button-grid"
 import { useDeckStore } from "@/lib/deck-store"
-import { useEffect, useMemo } from "react"
+import { useEffect, useMemo, useRef } from "react"
 
-export default function OverlayPage() {
-  const { config, setConfigFromMain } = useDeckStore()
+function OverlayPage() {
+  const {
+    config,
+    setConfigFromMain,
+    updateButtonByContext,
+    setButtonStatusByContext,
+  } = useDeckStore()
+  const statusTimers = useRef(new Map<string, ReturnType<typeof setTimeout>>())
 
   useEffect(() => {
     let unsubscribe: (() => void) | undefined
@@ -28,14 +34,68 @@ export default function OverlayPage() {
   }, [setConfigFromMain])
 
   useEffect(() => {
-    const handleKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        window.electron?.closeOverlay()
+    const handleHostEvent = (message) => {
+      if (!message?.context) return
+      const { event, context, payload } = message
+      switch (event) {
+        case "setTitle":
+          if (typeof payload?.title === "string") {
+            updateButtonByContext(context, (button) => ({
+              ...button,
+              label: payload.title,
+            }))
+          }
+          break
+        case "setImage":
+          if (typeof payload?.image === "string") {
+            updateButtonByContext(context, (button) => ({
+              ...button,
+              icon: payload.image,
+            }))
+          }
+          break
+        case "setState":
+          updateButtonByContext(context, (button) => ({
+            ...button,
+            action: button.action ? { ...button.action, state: payload?.state ?? 0 } : button.action,
+          }))
+          break
+        case "showAlert":
+          updateButtonByContext(context, (button) => ({ ...button, status: "alert" }))
+          clearTimeout(statusTimers.current.get(context))
+          statusTimers.current.set(
+            context,
+            setTimeout(() => {
+              setButtonStatusByContext(context, undefined)
+              statusTimers.current.delete(context)
+            }, 1200),
+          )
+          break
+        case "showOk":
+          updateButtonByContext(context, (button) => ({ ...button, status: "ok" }))
+          clearTimeout(statusTimers.current.get(context))
+          statusTimers.current.set(
+            context,
+            setTimeout(() => {
+              setButtonStatusByContext(context, undefined)
+              statusTimers.current.delete(context)
+            }, 1200),
+          )
+          break
+        default:
+          break
       }
     }
-    window.addEventListener("keydown", handleKey)
-    return () => window.removeEventListener("keydown", handleKey)
-  }, [])
+
+    const unsubscribe = window.electron?.onHostEvent(handleHostEvent)
+    return () => {
+      unsubscribe?.()
+      statusTimers.current.forEach((timer) => clearTimeout(timer))
+      statusTimers.current.clear()
+    }
+  }, [updateButtonByContext, setButtonStatusByContext])
+
+  // Note: Keyboard handling is now done by OverlayButtonGrid component
 
   const positionStyles = useMemo(() => {
     const margin = config.overlayMargin || 20
@@ -68,21 +128,15 @@ export default function OverlayPage() {
 
   return (
     <div className="h-screen w-screen relative bg-transparent">
-      {/* Minimal floating settings button */}
-      <button
-        className="absolute top-4 right-4 z-50 rounded-full border border-border bg-card/80 px-4 py-2 text-sm text-foreground backdrop-blur-sm transition hover:border-primary"
-        onClick={() => window.electron?.showSetup()}
-      >
-        <div className="flex items-center gap-2">
-          <Settings className="size-3" />
-          <span>Setup</span>
-        </div>
-      </button>
-
-      {/* Button Grid positioned according to settings */}
       <div className="absolute" style={positionStyles}>
-        <ButtonGrid isSetupMode={false} />
+        <OverlayButtonGrid />
       </div>
     </div>
   )
+}
+
+// Mount the app
+const container = document.getElementById("root")
+if (container) {
+  createRoot(container).render(<OverlayPage />)
 }

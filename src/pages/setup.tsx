@@ -1,19 +1,54 @@
 import "@/styles/global.css"
 
+import { createRoot } from "react-dom/client"
 import { useEffect, useState } from "react"
 import { useDeckStore } from "@/lib/deck-store"
 import { AvailableActions } from "@/components/available-actions"
 import { ButtonGrid } from "@/components/button-grid"
 import { ButtonConfigPanel } from "@/components/button-config-panel"
 import { GridSettings } from "@/components/grid-settings"
+import { HostDebugPanel } from "@/components/host-debug-panel"
+import { PluginActionsPanel } from "@/components/plugin-actions-panel"
+import { PropertyInspectorPanel } from "@/components/property-inspector-panel"
 import { Settings } from "lucide-react"
+import type { HostState } from "@/types/electron"
 
-export default function SetupPage() {
+function SetupPage() {
   const [draggedAction, setDraggedAction] = useState<any>(null)
-  const { addButton, setConfigFromMain } = useDeckStore()
+  const { addButton, setConfigFromMain, selectedButton } = useDeckStore()
+  const [hostState, setHostState] = useState<HostState | null>(null)
 
-  const handleDrop = (row: number, col: number) => {
+  const handleDrop = async (row: number, col: number) => {
     if (!draggedAction) return
+
+    if (draggedAction.type === "plugin" && draggedAction.pluginUuid && draggedAction.actionUuid) {
+      const context = await window.electron?.createHostContext({
+        pluginUuid: draggedAction.pluginUuid,
+        actionUuid: draggedAction.actionUuid,
+        coordinates: { column: col, row },
+      })
+      const newButton = {
+        id: `${Date.now()}-${Math.random()}`,
+        position: { row, col },
+        action: {
+          id: `${draggedAction.pluginUuid}-${draggedAction.actionUuid}`,
+          type: "plugin" as const,
+          name: draggedAction.name,
+          pluginUuid: draggedAction.pluginUuid,
+          actionUuid: draggedAction.actionUuid,
+          context: context || undefined,
+          propertyInspectorPath: draggedAction.propertyInspectorPath,
+          icon: draggedAction.icon,
+          config: {},
+        },
+        label: draggedAction.name,
+        icon: draggedAction.icon,
+      }
+      addButton(newButton)
+      setDraggedAction(null)
+      await refreshHostState()
+      return
+    }
 
     const newButton = {
       id: `${Date.now()}-${Math.random()}`,
@@ -44,12 +79,24 @@ export default function SetupPage() {
       unsubscribe = window.electron?.onConfigUpdated((cfg) => {
         setConfigFromMain(cfg)
       })
+      window.electron?.getHostState().then((state) => setHostState(state))
     }
 
     return () => {
       unsubscribe?.()
     }
   }, [setConfigFromMain])
+
+  const refreshHostState = async () => {
+    try {
+      const state = await window.electron?.getHostState()
+      if (state) {
+        setHostState(state)
+      }
+    } catch (error) {
+      console.error("Unable to refresh host state", error)
+    }
+  }
 
   return (
     <div className="h-screen flex flex-col bg-background">
@@ -83,14 +130,26 @@ export default function SetupPage() {
 
         {/* Right Sidebar - Available Actions */}
         <aside className="w-80 border-l border-border bg-card p-4 overflow-y-auto">
-          <AvailableActions onDragStart={setDraggedAction} />
+          <AvailableActions plugins={hostState?.plugins || []} onDragStart={setDraggedAction} />
+          <PluginActionsPanel hostState={hostState} onDragStart={setDraggedAction} />
+          <HostDebugPanel hostState={hostState} refreshHostState={refreshHostState} />
         </aside>
       </div>
 
-      {/* Bottom Panel - Button Configuration */}
-      <div className="h-80 border-t border-border bg-card">
-        <ButtonConfigPanel />
+      {/* Bottom Panel - Button Configuration / Property Inspector */}
+      <div className="h-[360px] border-t border-border bg-card p-4">
+        {selectedButton?.action?.type === "plugin" ? (
+          <PropertyInspectorPanel selectedButton={selectedButton} hostState={hostState} />
+        ) : (
+          <ButtonConfigPanel />
+        )}
       </div>
     </div>
   )
+}
+
+// Mount the app
+const container = document.getElementById("root")
+if (container) {
+  createRoot(container).render(<SetupPage />)
 }

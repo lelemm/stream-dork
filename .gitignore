@@ -25,3 +25,4 @@ Thumbs.db
 /.pnp.js
 /.pnp.cjs
 node_modules
+plugins

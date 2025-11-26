@@ -1,5 +1,3 @@
-"use client"
-
 import type React from "react"
 
 import { useState, useEffect, useRef } from "react"
@@ -18,6 +16,7 @@ export function GridSettings() {
     setGridSizePixels,
     setBackgroundPadding,
     setBackgroundColor,
+    setBackgroundOpacity,
     setButtonRadius,
     setOverlayPosition,
     setOverlayMargin,
@@ -31,6 +30,7 @@ export function GridSettings() {
   const [gridSize, setGridSize] = useState(config.gridSizePixels || 400)
   const [bgPadding, setBgPadding] = useState(config.backgroundPadding || 8)
   const [bgColor, setBgColor] = useState(config.backgroundColor || "#0a0a0a")
+  const [bgOpacity, setBgOpacity] = useState(config.backgroundOpacity ?? 100)
   const [btnRadius, setBtnRadius] = useState(config.buttonRadius || 16)
   const [position, setPosition] = useState<OverlayPosition>(config.overlayPosition || "bottom-right")
   const [margin, setMargin] = useState(config.overlayMargin || 20)
@@ -45,6 +45,7 @@ export function GridSettings() {
     setGridSize(config.gridSizePixels || 400)
     setBgPadding(config.backgroundPadding || 8)
     setBgColor(config.backgroundColor || "#0a0a0a")
+    setBgOpacity(config.backgroundOpacity ?? 100)
     setBtnRadius(config.buttonRadius || 16)
     setPosition(config.overlayPosition || "bottom-right")
     setMargin(config.overlayMargin || 20)
@@ -59,6 +60,7 @@ export function GridSettings() {
     setGridSizePixels(Math.max(100, Math.min(2000, gridSize)))
     setBackgroundPadding(Math.max(0, Math.min(30, bgPadding)))
     setBackgroundColor(bgColor)
+    setBackgroundOpacity(Math.max(0, Math.min(100, bgOpacity)))
     setButtonRadius(Math.max(0, Math.min(32, btnRadius)))
     setOverlayPosition(position)
     setOverlayMargin(Math.max(0, Math.min(200, margin)))
@@ -210,6 +212,20 @@ export function GridSettings() {
                 placeholder="#0a0a0a"
               />
             </div>
+          </div>
+          <div>
+            <Label htmlFor="bgOpacity" className="text-xs">
+              Opacity ({bgOpacity}%)
+            </Label>
+            <Input
+              id="bgOpacity"
+              type="range"
+              min={0}
+              max={100}
+              value={bgOpacity}
+              onChange={(e) => setBgOpacity(Number.parseInt(e.target.value))}
+              className="mt-1.5 cursor-pointer"
+            />
           </div>
         </div>
       </div>

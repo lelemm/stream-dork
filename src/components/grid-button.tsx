@@ -1,5 +1,3 @@
-"use client"
-
 import type React from "react"
 import { cn } from "@/lib/utils"
 import type { GridButton as GridButtonType } from "@/lib/types"
@@ -94,9 +92,17 @@ export function GridButton({
                 <X className="size-3" />
               </Button>
             )}
-            <div className="text-2xl" style={{ color: button?.textColor || "#ffffff" }}>
-              {button?.icon || "🎮"}
-            </div>
+            {button?.icon && (button.icon.startsWith("data:") || button.icon.startsWith("http")) ? (
+              <img 
+                src={button.icon} 
+                alt={button.label || "Button icon"} 
+                className="size-10 object-contain"
+              />
+            ) : (
+              <div className="text-2xl" style={{ color: button?.textColor || "#ffffff" }}>
+                {button?.icon || "🎮"}
+              </div>
+            )}
             {button?.label && (
               <p
                 className="text-[10px] font-medium text-center line-clamp-2 px-1"
@@ -104,6 +110,14 @@ export function GridButton({
               >
                 {button.label}
               </p>
+            )}
+            {button?.status && (
+              <span
+                className="absolute top-1 right-1 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase text-background"
+                style={{ backgroundColor: button.status === "alert" ? "#f97316" : "#22c55e" }}
+              >
+                {button.status === "alert" ? "!" : "OK"}
+              </span>
             )}
           </div>
         </>

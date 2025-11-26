@@ -11,5 +11,15 @@ contextBridge.exposeInMainWorld("electron", {
   showSetup: () => ipcRenderer.send("show-setup"),
   closeOverlay: () => ipcRenderer.send("close-overlay"),
   toggleSetup: () => ipcRenderer.send("toggle-setup"),
+  getHostState: async () => ipcRenderer.invoke("host:get-state"),
+  createHostContext: async (payload) => ipcRenderer.invoke("host:create-context", payload),
+  sendHostEvent: async (payload) => ipcRenderer.invoke("host:send-event", payload),
+  onHostEvent: (callback) => {
+    const listener = (event, payload) => callback(payload)
+    ipcRenderer.on("host-event", listener)
+    return () => ipcRenderer.off("host-event", listener)
+  },
+  notifyInspectorVisibility: ({ context, visible }) =>
+    ipcRenderer.send("host:inspector-visibility", { context, visible }),
 })
 

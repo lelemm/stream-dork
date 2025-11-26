@@ -9,6 +9,7 @@ files:
   - "dist/**/*"
   - "src/main.cjs"
   - "src/preload.js"
+  - "src/host/**/*"
   - "package.json"
   - "node_modules/**/*"
 

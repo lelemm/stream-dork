@@ -1,5 +1,3 @@
-"use client"
-
 import { useDeckStore } from "@/lib/deck-store"
 import { GridButton } from "./grid-button"
 import { useMemo } from "react"
@@ -94,7 +92,7 @@ export function ButtonGrid({ isSetupMode, fitToViewport = false, onButtonDrop, o
                 <GridButton
                   button={button}
                   isSetupMode={isSetupMode}
-                  isSelected={isSetupMode && selectedButton?.id === button?.id}
+                  isSelected={isSetupMode && !!button && selectedButton?.id === button.id}
                   position={{ row, col }}
                   buttonSize={0}
                   useFlexSize={true}

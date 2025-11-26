@@ -7,7 +7,7 @@ ARG GROUP_ID=1000
 
 COPY package.json package-lock.json* ./
 COPY electron-builder.yml ./
-COPY dist/ ./
+COPY dist/ ./dist/
 COPY src/ ./src/
 
 RUN npm install

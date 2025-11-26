@@ -1,4 +1,4 @@
-export type ActionType = "hotkey" | "open-url" | "run-command" | "multi-action" | "folder"
+export type ActionType = "hotkey" | "open-url" | "run-command" | "multi-action" | "folder" | "plugin"
 
 export type OverlayPosition = "top-left" | "top-right" | "bottom-left" | "bottom-right" | "center" | "custom"
 
@@ -8,6 +8,10 @@ export interface ButtonAction {
   name: string
   icon?: string
   config?: Record<string, any>
+  pluginUuid?: string
+  actionUuid?: string
+  context?: string
+  propertyInspectorPath?: string
 }
 
 export interface GridButton {
@@ -18,6 +22,7 @@ export interface GridButton {
   icon?: string
   backgroundColor?: string
   textColor?: string
+  status?: "alert" | "ok"
 }
 
 export interface DeckConfig {
@@ -27,6 +32,7 @@ export interface DeckConfig {
   gridSizePixels?: number
   backgroundPadding?: number
   backgroundColor?: string
+  backgroundOpacity?: number
   buttonRadius?: number
   overlayPosition?: OverlayPosition
   overlayMargin?: number
