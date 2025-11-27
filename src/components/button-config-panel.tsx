@@ -5,15 +5,16 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Paintbrush, Settings, Trash2 } from "lucide-react"
+import { Paintbrush, Settings, Trash2, Sparkles } from "lucide-react"
 
 export function ButtonConfigPanel() {
-  const { selectedButton, updateButton, removeButton } = useDeckStore()
+  const { selectedButton, updateButton, removeButton, config } = useDeckStore()
   const [label, setLabel] = useState("")
   const [icon, setIcon] = useState("")
   const [bgColor, setBgColor] = useState("#1f1f1f")
   const [textColor, setTextColor] = useState("#ffffff")
   const [actionConfig, setActionConfig] = useState<Record<string, string>>({})
+  const [animDuration, setAnimDuration] = useState<number | undefined>(undefined)
 
   useEffect(() => {
     if (selectedButton) {
@@ -22,6 +23,7 @@ export function ButtonConfigPanel() {
       setBgColor(selectedButton.backgroundColor || "#1f1f1f")
       setTextColor(selectedButton.textColor || "#ffffff")
       setActionConfig(selectedButton.action?.config || {})
+      setAnimDuration(selectedButton.animationDuration)
     }
   }, [selectedButton])
 
@@ -42,6 +44,7 @@ export function ButtonConfigPanel() {
       icon,
       backgroundColor: bgColor,
       textColor,
+      animationDuration: animDuration,
       action: selectedButton.action ? { ...selectedButton.action, config: actionConfig } : undefined,
     })
   }
@@ -123,7 +126,7 @@ export function ButtonConfigPanel() {
       </div>
 
       <Tabs defaultValue="appearance" className="flex-1 flex flex-col">
-        <TabsList className="grid w-full grid-cols-2 mb-4">
+        <TabsList className="grid w-full grid-cols-3 mb-4">
           <TabsTrigger value="appearance" className="text-xs">
             <Paintbrush className="size-3 mr-1.5" />
             Appearance
@@ -131,6 +134,10 @@ export function ButtonConfigPanel() {
           <TabsTrigger value="action" className="text-xs">
             <Settings className="size-3 mr-1.5" />
             Action
+          </TabsTrigger>
+          <TabsTrigger value="animation" className="text-xs">
+            <Sparkles className="size-3 mr-1.5" />
+            Animation
           </TabsTrigger>
         </TabsList>
 
@@ -213,6 +220,50 @@ export function ButtonConfigPanel() {
           </div>
 
           {getActionFields()}
+        </TabsContent>
+
+        <TabsContent value="animation" className="flex-1 space-y-4">
+          <div className="p-3 rounded-lg bg-muted/50">
+            <p className="text-xs font-medium mb-1">Button Animation</p>
+            <p className="text-[11px] text-muted-foreground">
+              Override the global animation duration for this button.
+              Leave empty to use the default ({config.animationDuration || 250}ms).
+            </p>
+          </div>
+
+          <div>
+            <Label htmlFor="animDuration" className="text-xs">
+              Animation Duration (ms)
+            </Label>
+            <Input
+              id="animDuration"
+              type="number"
+              min={50}
+              max={2000}
+              step={50}
+              placeholder={`Default: ${config.animationDuration || 250}`}
+              value={animDuration ?? ""}
+              onChange={(e) => {
+                const val = e.target.value
+                setAnimDuration(val ? Number.parseInt(val) : undefined)
+              }}
+              className="mt-1.5"
+            />
+            <p className="text-[10px] text-muted-foreground mt-1">
+              Set a custom duration for this button's reveal animation
+            </p>
+          </div>
+
+          {animDuration !== undefined && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setAnimDuration(undefined)}
+              className="w-full text-xs"
+            >
+              Reset to Default
+            </Button>
+          )}
         </TabsContent>
       </Tabs>
 

@@ -1,5 +1,6 @@
 import "@/styles/global.css"
 
+import React from "react"
 import { createRoot } from "react-dom/client"
 import { OverlayButtonGrid } from "@/components/overlay-button-grid"
 import { useDeckStore } from "@/lib/deck-store"
@@ -97,32 +98,44 @@ function OverlayPage() {
 
   // Note: Keyboard handling is now done by OverlayButtonGrid component
 
-  const positionStyles = useMemo(() => {
+  const positionStyles = useMemo((): React.CSSProperties => {
     const margin = config.overlayMargin || 20
     const position = config.overlayPosition || "bottom-right"
 
+    // Explicitly set all position properties to avoid React inline style persistence issues
+    // When switching from "center" to another position, old top/left values would persist
+    const baseStyles: React.CSSProperties = {
+      top: undefined,
+      left: undefined,
+      bottom: undefined,
+      right: undefined,
+      transform: undefined,
+    }
+
     switch (position) {
       case "top-left":
-        return { top: margin, left: margin }
+        return { ...baseStyles, top: margin, left: margin }
       case "top-right":
-        return { top: margin, right: margin }
+        return { ...baseStyles, top: margin, right: margin }
       case "bottom-left":
-        return { bottom: margin, left: margin }
+        return { ...baseStyles, bottom: margin, left: margin }
       case "bottom-right":
-        return { bottom: margin, right: margin }
+        return { ...baseStyles, bottom: margin, right: margin }
       case "center":
         return {
+          ...baseStyles,
           top: "50%",
           left: "50%",
           transform: "translate(-50%, -50%)",
         }
       case "custom":
         return {
+          ...baseStyles,
           top: config.overlayCustomY || 100,
           left: config.overlayCustomX || 100,
         }
       default:
-        return { bottom: margin, right: margin }
+        return { ...baseStyles, bottom: margin, right: margin }
     }
   }, [config.overlayPosition, config.overlayMargin, config.overlayCustomX, config.overlayCustomY])
 

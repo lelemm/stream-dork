@@ -1,6 +1,7 @@
 import { useDeckStore } from "@/lib/deck-store"
 import { GridButton } from "./grid-button"
-import { useMemo } from "react"
+import { useMemo, useState, useRef } from "react"
+import type { GridButton as GridButtonType } from "@/lib/types"
 
 interface ButtonGridProps {
   isSetupMode: boolean
@@ -10,7 +11,9 @@ interface ButtonGridProps {
 }
 
 export function ButtonGrid({ isSetupMode, fitToViewport = false, onButtonDrop, onButtonClick }: ButtonGridProps) {
-  const { config, selectedButton, setSelectedButton, removeButton, executeAction } = useDeckStore()
+  const { config, selectedButton, setSelectedButton, removeButton, moveButton, copyButton, pasteButton, executeAction } = useDeckStore()
+  const [clipboard, setClipboard] = useState<GridButtonType | null>(null)
+  const draggedButtonId = useRef<string | null>(null)
 
   const getButtonAtPosition = (row: number, col: number) => {
     return config.buttons.find((btn) => btn.position.row === row && btn.position.col === col)
@@ -45,6 +48,30 @@ export function ButtonGrid({ isSetupMode, fitToViewport = false, onButtonDrop, o
         executeAction(button.id)
       }
     }
+  }
+
+  const handleCopy = (buttonId: string) => {
+    const copied = copyButton(buttonId)
+    if (copied) {
+      setClipboard(copied)
+    }
+  }
+
+  const handlePaste = (row: number, col: number) => {
+    if (clipboard) {
+      pasteButton(clipboard, row, col)
+    }
+  }
+
+  const handleMove = (targetRow: number, targetCol: number) => {
+    if (draggedButtonId.current) {
+      moveButton(draggedButtonId.current, targetRow, targetCol)
+      draggedButtonId.current = null
+    }
+  }
+
+  const handleDragStart = (buttonId: string) => {
+    draggedButtonId.current = buttonId
   }
 
   const padding = config.backgroundPadding || 8
@@ -88,6 +115,7 @@ export function ButtonGrid({ isSetupMode, fitToViewport = false, onButtonDrop, o
                 key={`${row}-${col}`}
                 className="relative aspect-square"
                 style={{ gridColumn: col + 1, gridRow: row + 1 }}
+                onDragStart={() => button && handleDragStart(button.id)}
               >
                 <GridButton
                   button={button}
@@ -99,8 +127,12 @@ export function ButtonGrid({ isSetupMode, fitToViewport = false, onButtonDrop, o
                   radius={radius}
                   hasBackground={iconMap[row]?.[col] || false}
                   onDrop={onButtonDrop}
+                  onMove={() => handleMove(row, col)}
                   onClick={() => handleButtonClick(row, col)}
                   onRemove={() => button && removeButton(button.id)}
+                  onCopy={() => button && handleCopy(button.id)}
+                  onPaste={() => handlePaste(row, col)}
+                  canPaste={!!clipboard}
                 />
               </div>
             )
@@ -149,19 +181,27 @@ export function ButtonGrid({ isSetupMode, fitToViewport = false, onButtonDrop, o
           const button = getButtonAtPosition(row, col)
 
           return (
-            <GridButton
+            <div
               key={`${row}-${col}`}
-              button={button}
-              isSetupMode={isSetupMode}
-              isSelected={false}
-              position={{ row, col }}
-              buttonSize={buttonSize}
-              radius={radius}
-              hasBackground={iconMap[row]?.[col] || false}
-              onDrop={onButtonDrop}
-              onClick={() => handleButtonClick(row, col)}
-              onRemove={() => button && removeButton(button.id)}
-            />
+              onDragStart={() => button && handleDragStart(button.id)}
+            >
+              <GridButton
+                button={button}
+                isSetupMode={isSetupMode}
+                isSelected={false}
+                position={{ row, col }}
+                buttonSize={buttonSize}
+                radius={radius}
+                hasBackground={iconMap[row]?.[col] || false}
+                onDrop={onButtonDrop}
+                onMove={() => handleMove(row, col)}
+                onClick={() => handleButtonClick(row, col)}
+                onRemove={() => button && removeButton(button.id)}
+                onCopy={() => button && handleCopy(button.id)}
+                onPaste={() => handlePaste(row, col)}
+                canPaste={!!clipboard}
+              />
+            </div>
           )
         })}
       </div>

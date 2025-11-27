@@ -1,8 +1,10 @@
 import { useDeckStore } from "@/lib/deck-store"
 import { useMemo, useState, useEffect, useCallback, useRef } from "react"
-import type { GridButton as GridButtonType } from "@/lib/types"
+import type { GridButton as GridButtonType, AnimationDirection, AnimationStartCorner } from "@/lib/types"
 import { Search } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { motion, useSpring, useTransform } from "motion/react"
+import { interpolate } from "flubber"
 
 interface ButtonWithHint extends GridButtonType {
   filterHint: string
@@ -13,11 +15,238 @@ interface OverlayButtonGridProps {
   onButtonActivated?: () => void
 }
 
+// Direction the button animates FROM (where it "comes from" in the spiral)
+type StretchDirection = 'from-bottom' | 'from-right' | 'from-top' | 'from-left'
+
+interface SpiralPosition {
+  row: number
+  col: number
+  direction: StretchDirection
+}
+
+// Calculate spiral order with configurable start corner and direction
+function calculateSpiralOrder(
+  rows: number, 
+  cols: number,
+  startCorner: AnimationStartCorner = 'bottom-right',
+  direction: AnimationDirection = 'clockwise'
+): SpiralPosition[] {
+  // For center start, we spiral outward from center
+  if (startCorner === 'center') {
+    return calculateCenterOutwardSpiral(rows, cols, direction)
+  }
+  
+  const order: SpiralPosition[] = []
+  const visited = new Set<string>()
+  
+  let top = 0, bottom = rows - 1, left = 0, right = cols - 1
+  
+  // Determine starting position based on corner
+  const isClockwise = direction === 'clockwise'
+  
+  while (top <= bottom && left <= right) {
+    if (startCorner === 'bottom-right') {
+      if (isClockwise) {
+        // Up right edge, left top edge, down left edge, right bottom edge
+        for (let r = bottom; r >= top; r--) addPos(r, right, 'from-bottom')
+        right--
+        for (let c = right; c >= left; c--) addPos(top, c, 'from-right')
+        top++
+        for (let r = top; r <= bottom; r++) addPos(r, left, 'from-top')
+        left++
+        for (let c = left; c <= right; c++) addPos(bottom, c, 'from-left')
+        bottom--
+      } else {
+        // Left bottom edge, up left edge, right top edge, down right edge
+        for (let c = right; c >= left; c--) addPos(bottom, c, 'from-right')
+        bottom--
+        for (let r = bottom; r >= top; r--) addPos(r, left, 'from-bottom')
+        left++
+        for (let c = left; c <= right; c++) addPos(top, c, 'from-left')
+        top++
+        for (let r = top; r <= bottom; r++) addPos(r, right, 'from-top')
+        right--
+      }
+    } else if (startCorner === 'bottom-left') {
+      if (isClockwise) {
+        for (let c = left; c <= right; c++) addPos(bottom, c, 'from-left')
+        bottom--
+        for (let r = bottom; r >= top; r--) addPos(r, right, 'from-bottom')
+        right--
+        for (let c = right; c >= left; c--) addPos(top, c, 'from-right')
+        top++
+        for (let r = top; r <= bottom; r++) addPos(r, left, 'from-top')
+        left++
+      } else {
+        for (let r = bottom; r >= top; r--) addPos(r, left, 'from-bottom')
+        left++
+        for (let c = left; c <= right; c++) addPos(top, c, 'from-left')
+        top++
+        for (let r = top; r <= bottom; r++) addPos(r, right, 'from-top')
+        right--
+        for (let c = right; c >= left; c--) addPos(bottom, c, 'from-right')
+        bottom--
+      }
+    } else if (startCorner === 'top-right') {
+      if (isClockwise) {
+        for (let c = right; c >= left; c--) addPos(top, c, 'from-right')
+        top++
+        for (let r = top; r <= bottom; r++) addPos(r, left, 'from-top')
+        left++
+        for (let c = left; c <= right; c++) addPos(bottom, c, 'from-left')
+        bottom--
+        for (let r = bottom; r >= top; r--) addPos(r, right, 'from-bottom')
+        right--
+      } else {
+        for (let r = top; r <= bottom; r++) addPos(r, right, 'from-top')
+        right--
+        for (let c = right; c >= left; c--) addPos(bottom, c, 'from-right')
+        bottom--
+        for (let r = bottom; r >= top; r--) addPos(r, left, 'from-bottom')
+        left++
+        for (let c = left; c <= right; c++) addPos(top, c, 'from-left')
+        top++
+      }
+    } else if (startCorner === 'top-left') {
+      if (isClockwise) {
+        for (let r = top; r <= bottom; r++) addPos(r, left, 'from-top')
+        left++
+        for (let c = left; c <= right; c++) addPos(bottom, c, 'from-left')
+        bottom--
+        for (let r = bottom; r >= top; r--) addPos(r, right, 'from-bottom')
+        right--
+        for (let c = right; c >= left; c--) addPos(top, c, 'from-right')
+        top++
+      } else {
+        for (let c = left; c <= right; c++) addPos(top, c, 'from-left')
+        top++
+        for (let r = top; r <= bottom; r++) addPos(r, right, 'from-top')
+        right--
+        for (let c = right; c >= left; c--) addPos(bottom, c, 'from-right')
+        bottom--
+        for (let r = bottom; r >= top; r--) addPos(r, left, 'from-bottom')
+        left++
+      }
+    }
+  }
+  
+  function addPos(row: number, col: number, dir: StretchDirection) {
+    const key = `${row},${col}`
+    if (!visited.has(key)) {
+      order.push({ row, col, direction: dir })
+      visited.add(key)
+    }
+  }
+  
+  return order
+}
+
+// Calculate spiral starting from center going outward
+function calculateCenterOutwardSpiral(
+  rows: number, 
+  cols: number,
+  direction: AnimationDirection
+): SpiralPosition[] {
+  const order: SpiralPosition[] = []
+  const visited = new Set<string>()
+  
+  // Start from center
+  const centerRow = Math.floor(rows / 2)
+  const centerCol = Math.floor(cols / 2)
+  
+  // Add center first
+  const addPos = (row: number, col: number, dir: StretchDirection) => {
+    if (row >= 0 && row < rows && col >= 0 && col < cols) {
+      const key = `${row},${col}`
+      if (!visited.has(key)) {
+        order.push({ row, col, direction: dir })
+        visited.add(key)
+      }
+    }
+  }
+  
+  addPos(centerRow, centerCol, 'from-bottom')
+  
+  const isClockwise = direction === 'clockwise'
+  
+  // Spiral outward in expanding rings
+  for (let ring = 1; ring <= Math.max(rows, cols); ring++) {
+    if (isClockwise) {
+      // Right
+      for (let r = centerRow - ring + 1; r <= centerRow + ring; r++) 
+        addPos(r, centerCol + ring, 'from-left')
+      // Down
+      for (let c = centerCol + ring - 1; c >= centerCol - ring; c--) 
+        addPos(centerRow + ring, c, 'from-top')
+      // Left
+      for (let r = centerRow + ring - 1; r >= centerRow - ring; r--) 
+        addPos(r, centerCol - ring, 'from-right')
+      // Up
+      for (let c = centerCol - ring + 1; c <= centerCol + ring; c++) 
+        addPos(centerRow - ring, c, 'from-bottom')
+    } else {
+      // Left
+      for (let r = centerRow - ring + 1; r <= centerRow + ring; r++) 
+        addPos(r, centerCol - ring, 'from-right')
+      // Down
+      for (let c = centerCol - ring + 1; c <= centerCol + ring; c++) 
+        addPos(centerRow + ring, c, 'from-top')
+      // Right
+      for (let r = centerRow + ring - 1; r >= centerRow - ring; r--) 
+        addPos(r, centerCol + ring, 'from-left')
+      // Up
+      for (let c = centerCol + ring - 1; c >= centerCol - ring; c--) 
+        addPos(centerRow - ring, c, 'from-bottom')
+    }
+  }
+  
+  return order
+}
+
+type AnimationPhase = "idle" | "showing" | "visible" | "hiding" | "hidden"
+
 export function OverlayButtonGrid({ onButtonActivated }: OverlayButtonGridProps) {
   const { config, executeAction } = useDeckStore()
   const [typedCombo, setTypedCombo] = useState("")
   const [focusedButton, setFocusedButton] = useState<ButtonWithHint | null>(null)
   const gridRef = useRef<HTMLDivElement>(null)
+  
+  // Animation state
+  const [animationPhase, setAnimationPhase] = useState<AnimationPhase>("hidden")
+  const [visibleButtonCount, setVisibleButtonCount] = useState(0)
+  const animationRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const autoDismissRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // Reset auto-dismiss timer function
+  const resetAutoDismissTimer = useCallback(() => {
+    if (!config.autoDismissEnabled || !config.autoDismissDelaySeconds) return
+    
+    // Clear existing timer
+    if (autoDismissRef.current) {
+      clearTimeout(autoDismissRef.current)
+      autoDismissRef.current = null
+    }
+    
+    // Set new timer
+    autoDismissRef.current = setTimeout(() => {
+      window.electron?.closeOverlay()
+    }, config.autoDismissDelaySeconds * 1000)
+  }, [config.autoDismissEnabled, config.autoDismissDelaySeconds])
+
+  // Animation settings from config
+  const animationEnabled = config.animationEnabled ?? true
+  const animationDuration = config.animationDuration || 250
+  const staggerDelay = Math.max(10, animationDuration / 10)
+
+  // Calculate spiral order for animation based on config
+  const spiralOrder = useMemo(() => {
+    return calculateSpiralOrder(
+      config.rows, 
+      config.cols,
+      config.animationStartCorner || 'bottom-right',
+      config.animationDirection || 'clockwise'
+    )
+  }, [config.rows, config.cols, config.animationStartCorner, config.animationDirection])
 
   // Get all buttons with their positions sorted left-to-right, top-to-bottom
   const sortedButtons = useMemo(() => {
@@ -98,6 +327,9 @@ export function OverlayButtonGrid({ onButtonActivated }: OverlayButtonGridProps)
   // Handle keyboard input
   const handleKeyDown = useCallback(
     (event: KeyboardEvent) => {
+      // Reset auto-dismiss timer on any key press
+      resetAutoDismissTimer()
+
       // Escape closes overlay
       if (event.key === "Escape") {
         if (focusedButton) {
@@ -124,11 +356,13 @@ export function OverlayButtonGrid({ onButtonActivated }: OverlayButtonGridProps)
         if (focusedButton) {
           executeAction(focusedButton.id)
           onButtonActivated?.()
-          window.electron?.closeOverlay()
+          // Use forceHideOverlay to skip the close animation
+          window.electron?.forceHideOverlay()
         } else if (singleMatch) {
           executeAction(singleMatch.id)
           onButtonActivated?.()
-          window.electron?.closeOverlay()
+          // Use forceHideOverlay to skip the close animation
+          window.electron?.forceHideOverlay()
         }
         return
       }
@@ -138,7 +372,7 @@ export function OverlayButtonGrid({ onButtonActivated }: OverlayButtonGridProps)
         setTypedCombo((prev) => prev + event.key.toUpperCase())
       }
     },
-    [focusedButton, singleMatch, executeAction, onButtonActivated]
+    [focusedButton, singleMatch, executeAction, onButtonActivated, resetAutoDismissTimer]
   )
 
   useEffect(() => {
@@ -146,16 +380,148 @@ export function OverlayButtonGrid({ onButtonActivated }: OverlayButtonGridProps)
     return () => window.removeEventListener("keydown", handleKeyDown)
   }, [handleKeyDown])
 
-  // Auto-focus when single match found
+  // Listen for overlay visibility changes from main process
   useEffect(() => {
-    if (singleMatch && !focusedButton) {
+    const unsubscribe = window.electron?.onOverlayVisibility(({ visible }: { visible: boolean }) => {
+      // Clear any existing auto-dismiss timer
+      if (autoDismissRef.current) {
+        clearTimeout(autoDismissRef.current)
+        autoDismissRef.current = null
+      }
+
+      if (visible) {
+        // Reset focus mode when showing
+        setFocusedButton(null)
+        setTypedCombo("")
+        
+        if (animationEnabled) {
+          // Start show animation
+          setAnimationPhase("showing")
+          setVisibleButtonCount(0)
+        } else {
+          // Skip animation - show all immediately
+          setAnimationPhase("visible")
+          setVisibleButtonCount(config.rows * config.cols)
+        }
+        
+        // Set up auto-dismiss if enabled
+        if (config.autoDismissEnabled && config.autoDismissDelaySeconds) {
+          autoDismissRef.current = setTimeout(() => {
+            window.electron?.closeOverlay()
+          }, config.autoDismissDelaySeconds * 1000)
+        }
+      } else {
+        if (animationEnabled) {
+          // Start hide animation
+          setAnimationPhase("hiding")
+        } else {
+          // Skip animation - hide immediately
+          setAnimationPhase("hidden")
+          setVisibleButtonCount(0)
+          window.electron?.forceHideOverlay()
+        }
+      }
+    })
+
+    return () => {
+      unsubscribe?.()
+      if (autoDismissRef.current) {
+        clearTimeout(autoDismissRef.current)
+      }
+    }
+  }, [animationEnabled, config.rows, config.cols, config.autoDismissEnabled, config.autoDismissDelaySeconds])
+
+  // Animation loop for showing buttons
+  useEffect(() => {
+    if (animationPhase === "showing") {
+      const totalPositions = config.rows * config.cols
+      
+      if (visibleButtonCount < totalPositions) {
+        animationRef.current = setTimeout(() => {
+          setVisibleButtonCount((prev) => prev + 1)
+        }, staggerDelay) // Configurable stagger delay
+      } else {
+        setAnimationPhase("visible")
+      }
+    }
+
+    return () => {
+      if (animationRef.current) {
+        clearTimeout(animationRef.current)
+      }
+    }
+  }, [animationPhase, visibleButtonCount, config.rows, config.cols])
+
+  // Animation loop for hiding buttons
+  useEffect(() => {
+    if (animationPhase === "hiding") {
+      const totalPositions = config.rows * config.cols
+      
+      // If starting from 0 (edge case), initialize to full
+      if (visibleButtonCount === 0) {
+        setVisibleButtonCount(totalPositions)
+        return
+      }
+
+      if (visibleButtonCount > 0) {
+        animationRef.current = setTimeout(() => {
+          setVisibleButtonCount((prev) => {
+            const newCount = prev - 1
+            // When count reaches 0, hide the window
+            if (newCount === 0) {
+              setAnimationPhase("hidden")
+              window.electron?.forceHideOverlay()
+            }
+            return newCount
+          })
+        }, staggerDelay) // Configurable stagger delay
+      }
+    }
+
+    return () => {
+      if (animationRef.current) {
+        clearTimeout(animationRef.current)
+      }
+    }
+  }, [animationPhase, visibleButtonCount, config.rows, config.cols])
+
+  // Calculate which positions are currently visible based on animation
+  const visiblePositions = useMemo(() => {
+    const positions = new Set<string>()
+    for (let i = 0; i < visibleButtonCount && i < spiralOrder.length; i++) {
+      const pos = spiralOrder[i]
+      positions.add(`${pos.row},${pos.col}`)
+    }
+    return positions
+  }, [visibleButtonCount, spiralOrder])
+
+  // Check if a position should be visible
+  const isPositionVisible = useCallback((row: number, col: number) => {
+    if (animationPhase === "visible" || animationPhase === "idle") return true
+    if (animationPhase === "hidden") return false
+    return visiblePositions.has(`${row},${col}`)
+  }, [animationPhase, visiblePositions])
+
+  // Get animation info for a position (index and stretch direction)
+  const getPositionAnimationInfo = useCallback((row: number, col: number): { index: number; direction: StretchDirection } => {
+    const idx = spiralOrder.findIndex((pos) => pos.row === row && pos.col === col)
+    if (idx >= 0) {
+      return { index: idx, direction: spiralOrder[idx].direction }
+    }
+    return { index: 0, direction: 'from-bottom' }
+  }, [spiralOrder])
+
+  // Auto-focus when single match found - only if user has typed something
+  // This prevents getting stuck in focus mode when there's only 1 button
+  useEffect(() => {
+    if (singleMatch && !focusedButton && typedCombo.length > 0) {
       // Small delay for animation
       const timer = setTimeout(() => {
         setFocusedButton(singleMatch)
       }, 100)
       return () => clearTimeout(timer)
     }
-  }, [singleMatch, focusedButton])
+  }, [singleMatch, focusedButton, typedCombo])
 
   const getButtonAtPosition = (row: number, col: number) => {
     return buttonsWithHints.find(
@@ -178,7 +544,11 @@ export function OverlayButtonGrid({ onButtonActivated }: OverlayButtonGridProps)
   const gridHeight = buttonSize * config.rows
 
   return (
-    <div className="relative">
+    <div 
+      className="relative"
+      onMouseMove={resetAutoDismissTimer}
+      onMouseEnter={resetAutoDismissTimer}
+    >
       {/* Search indicator */}
       {typedCombo && !focusedButton && (
         <div
@@ -197,7 +567,10 @@ export function OverlayButtonGrid({ onButtonActivated }: OverlayButtonGridProps)
 
       {/* Focus mode - just the button, no background overlay */}
       {focusedButton && (
-        <div className="fixed inset-0 z-40 flex items-center justify-center pointer-events-none">
+        <div 
+          className="fixed inset-0 z-40 flex items-center justify-center pointer-events-none"
+          onMouseMove={resetAutoDismissTimer}
+        >
           <div className="animate-focus-pulse pointer-events-auto">
             <OverlayButton
               button={focusedButton}
@@ -218,6 +591,8 @@ export function OverlayButtonGrid({ onButtonActivated }: OverlayButtonGridProps)
       {/* Button grid */}
       <div
         ref={gridRef}
+        onMouseMove={resetAutoDismissTimer}
+        onMouseEnter={resetAutoDismissTimer}
         className={cn(
           "relative transition-opacity duration-200",
           focusedButton && "opacity-0 pointer-events-none"
@@ -238,6 +613,8 @@ export function OverlayButtonGrid({ onButtonActivated }: OverlayButtonGridProps)
           buttonSize={buttonSize}
           bgColor={bgColor}
           bgOpacity={bgOpacity}
+          visiblePositions={visiblePositions}
+          animationPhase={animationPhase}
         />
 
         {/* Buttons layer */}
@@ -252,12 +629,17 @@ export function OverlayButtonGrid({ onButtonActivated }: OverlayButtonGridProps)
             const row = Math.floor(index / config.cols)
             const col = index % config.cols
             const button = getButtonAtPosition(row, col)
+            const isVisible = isPositionVisible(row, col)
+            const { index: animIndex, direction: stretchDirection } = getPositionAnimationInfo(row, col)
 
             return (
               <div
                 key={`${row}-${col}`}
                 className="relative"
-                style={{ width: buttonSize, height: buttonSize }}
+                style={{ 
+                  width: buttonSize, 
+                  height: buttonSize,
+                }}
               >
                 {button && (
                   <OverlayButton
@@ -267,10 +649,16 @@ export function OverlayButtonGrid({ onButtonActivated }: OverlayButtonGridProps)
                     isDimmed={isButtonDimmed(button)}
                     showHint={true}
                     isFocused={false}
+                    isVisible={isVisible}
+                    animationIndex={animIndex}
+                    stretchDirection={stretchDirection}
+                    animationDurationMs={animationDuration}
+                    staggerDelayMs={staggerDelay}
                     onClick={() => {
                       executeAction(button.id)
                       onButtonActivated?.()
-                      window.electron?.closeOverlay()
+                      // Use forceHideOverlay to skip the close animation
+                      window.electron?.forceHideOverlay()
                     }}
                   />
                 )}
@@ -290,7 +678,39 @@ interface OverlayButtonProps {
   isDimmed: boolean
   showHint: boolean
   isFocused: boolean
+  isVisible?: boolean
+  animationIndex?: number
+  stretchDirection?: StretchDirection
+  animationDurationMs?: number
+  staggerDelayMs?: number
   onClick?: () => void
+}
+
+// Get animation properties based on stretch direction
+function getStretchAnimation(direction: StretchDirection, isVisible: boolean) {
+  // Initial state (hidden) - stretched to zero in the direction it comes from
+  // Final state (visible) - full size
+  const hidden = {
+    'from-bottom': { scaleY: 0, scaleX: 1, originX: 0.5, originY: 1 },    // grows upward
+    'from-top': { scaleY: 0, scaleX: 1, originX: 0.5, originY: 0 },       // grows downward
+    'from-right': { scaleX: 0, scaleY: 1, originX: 1, originY: 0.5 },     // grows leftward
+    'from-left': { scaleX: 0, scaleY: 1, originX: 0, originY: 0.5 },      // grows rightward
+  }
+  
+  const shown = { scaleX: 1, scaleY: 1 }
+  
+  const config = hidden[direction]
+  
+  return {
+    initial: { ...config, opacity: 0 },
+    animate: isVisible 
+      ? { ...shown, opacity: 1 }
+      : { scaleX: config.scaleX, scaleY: config.scaleY, opacity: 0 },
+    style: { 
+      originX: config.originX,
+      originY: config.originY,
+    }
+  }
 }
 
 function OverlayButton({
@@ -300,21 +720,41 @@ function OverlayButton({
   isDimmed,
   showHint,
   isFocused,
+  isVisible = true,
+  animationIndex = 0,
+  stretchDirection = 'from-bottom',
+  animationDurationMs = 250,
+  staggerDelayMs = 25,
   onClick,
 }: OverlayButtonProps) {
   const innerPadding = 4
   const innerRadius = Math.max(radius - 4, 4)
+  
+  // Use per-button duration if set, otherwise use the passed default
+  const duration = (button.animationDuration ?? animationDurationMs) / 1000
+  const stretchAnim = getStretchAnimation(stretchDirection, isVisible)
 
   return (
-    <div
+    <motion.div
       onClick={onClick}
       className={cn(
-        "relative flex items-center justify-center flex-col transition-all duration-200 cursor-pointer",
+        "relative flex items-center justify-center flex-col cursor-pointer",
         "hover:scale-105 hover:z-10 active:scale-95",
         isDimmed && "opacity-30 grayscale pointer-events-none",
         isFocused && "scale-110"
       )}
-      style={{ width: buttonSize, height: buttonSize }}
+      initial={stretchAnim.initial}
+      animate={stretchAnim.animate}
+      transition={{ 
+        duration: duration, 
+        delay: isVisible ? animationIndex * (staggerDelayMs / 1000) : 0,
+        ease: [0.34, 1.56, 0.64, 1] // Bouncy ease for playful effect
+      }}
+      style={{ 
+        width: buttonSize, 
+        height: buttonSize,
+        ...stretchAnim.style
+      }}
     >
       {/* Button with bevel effect */}
       <div
@@ -381,7 +821,7 @@ function OverlayButton({
           </span>
         )}
       </div>
-    </div>
+    </motion.div>
   )
 }
 
@@ -394,6 +834,77 @@ interface MergedBackgroundProps {
   buttonSize: number
   bgColor: string
   bgOpacity: number
+  visiblePositions: Set<string>
+  animationPhase: AnimationPhase
+}
+
+// Animated path component that morphs between paths using Flubber
+function AnimatedPath({ 
+  targetPath, 
+  fill, 
+  fillOpacity 
+}: { 
+  targetPath: string
+  fill: string
+  fillOpacity: number 
+}) {
+  const [currentPath, setCurrentPath] = useState(targetPath)
+  const [prevPath, setPrevPath] = useState(targetPath)
+  const progress = useSpring(1, { stiffness: 300, damping: 30 })
+  
+  // Create interpolator when target changes
+  const interpolator = useMemo(() => {
+    if (prevPath === targetPath) return null
+    try {
+      return interpolate(prevPath, targetPath, { maxSegmentLength: 2 })
+    } catch {
+      // If interpolation fails, just snap to target
+      return null
+    }
+  }, [prevPath, targetPath])
+  
+  // Update path when target changes
+  useEffect(() => {
+    if (targetPath !== prevPath) {
+      progress.set(0)
+      progress.set(1)
+    }
+  }, [targetPath, prevPath, progress])
+  
+  // Transform progress to interpolated path
+  const animatedPath = useTransform(progress, (p) => {
+    if (!interpolator) return targetPath
+    return interpolator(Math.min(1, Math.max(0, p)))
+  })
+  
+  // Update prev path after animation completes
+  useEffect(() => {
+    const unsubscribe = progress.on("change", (v) => {
+      if (v >= 0.99 && prevPath !== targetPath) {
+        setPrevPath(targetPath)
+      }
+    })
+    return unsubscribe
+  }, [progress, prevPath, targetPath])
+  
+  // Subscribe to animated path changes
+  useEffect(() => {
+    const unsubscribe = animatedPath.on("change", setCurrentPath)
+    return unsubscribe
+  }, [animatedPath])
+  
+  return (
+    <motion.path
+      d={currentPath}
+      fill={fill}
+      fillOpacity={fillOpacity}
+      fillRule="evenodd"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.2 }}
+    />
+  )
 }
 
 function MergedBackground({
@@ -405,7 +916,10 @@ function MergedBackground({
   buttonSize,
   bgColor,
   bgOpacity,
+  visiblePositions,
+  animationPhase,
 }: MergedBackgroundProps) {
+  // Create icon map based on visible positions during animation
   const iconMap = useMemo(() => {
     const map: boolean[][] = []
     for (let r = 0; r < rows; r++) {
@@ -414,105 +928,102 @@ function MergedBackground({
         const button = buttonsWithHints.find(
           (btn) => btn.position.row === r && btn.position.col === c
         )
-        map[r][c] = !!button
+        // During animation, only include visible positions
+        const isAnimating = animationPhase === "showing" || animationPhase === "hiding"
+        const isVisible = visiblePositions.has(`${r},${c}`)
+        map[r][c] = !!button && (!isAnimating || isVisible)
       }
     }
     return map
-  }, [buttonsWithHints, rows, cols])
+  }, [buttonsWithHints, rows, cols, visiblePositions, animationPhase])
 
-  const generatePaths = () => {
+  const generatePath = useCallback(() => {
     const cellSize = buttonSize
 
-    // Find connected regions using flood fill
-    const visited = new Set<string>()
-    const regions: Set<string>[] = []
-
-    const floodFill = (startRow: number, startCol: number): Set<string> => {
-      const region = new Set<string>()
-      const stack = [{ row: startRow, col: startCol }]
-
-      while (stack.length > 0) {
-        const { row, col } = stack.pop()!
-        const key = `${row},${col}`
-
-        if (visited.has(key)) continue
-        if (row < 0 || row >= rows || col < 0 || col >= cols) continue
-        if (!iconMap[row]?.[col]) continue
-
-        visited.add(key)
-        region.add(key)
-
-        stack.push({ row: row - 1, col })
-        stack.push({ row: row + 1, col })
-        stack.push({ row, col: col - 1 })
-        stack.push({ row, col: col + 1 })
-      }
-
-      return region
+    // Find all boundary edges (edges between filled and empty cells)
+    type Edge = { x1: number; y1: number; x2: number; y2: number; key: string }
+    const allEdges: Edge[] = []
+    
+    const isFilled = (r: number, c: number) => {
+      if (r < 0 || r >= rows || c < 0 || c >= cols) return false
+      return iconMap[r]?.[c] ?? false
     }
 
+    // Collect all edges between filled and empty cells
     for (let r = 0; r < rows; r++) {
       for (let c = 0; c < cols; c++) {
-        if (iconMap[r]?.[c] && !visited.has(`${r},${c}`)) {
-          const region = floodFill(r, c)
-          if (region.size > 0) {
-            regions.push(region)
-          }
-        }
-      }
-    }
-
-    if (regions.length === 0) return null
-
-    const paths: string[] = []
-
-    for (const region of regions) {
-      const inRegion = (r: number, c: number) => region.has(`${r},${c}`)
-
-      type Edge = { x1: number; y1: number; x2: number; y2: number }
-      const edges: Edge[] = []
-
-      for (const key of region) {
-        const [r, c] = key.split(",").map(Number)
+        if (!isFilled(r, c)) continue
+        
         const x = c * cellSize
         const y = r * cellSize
 
-        if (!inRegion(r - 1, c)) {
-          edges.push({ x1: x, y1: y, x2: x + cellSize, y2: y })
+        // Top edge (if cell above is empty)
+        if (!isFilled(r - 1, c)) {
+          allEdges.push({ x1: x, y1: y, x2: x + cellSize, y2: y, key: `h${r},${c}` })
         }
-        if (!inRegion(r, c + 1)) {
-          edges.push({ x1: x + cellSize, y1: y, x2: x + cellSize, y2: y + cellSize })
+        // Right edge (if cell to right is empty)
+        if (!isFilled(r, c + 1)) {
+          allEdges.push({ x1: x + cellSize, y1: y, x2: x + cellSize, y2: y + cellSize, key: `vr${r},${c}` })
         }
-        if (!inRegion(r + 1, c)) {
-          edges.push({ x1: x + cellSize, y1: y + cellSize, x2: x, y2: y + cellSize })
+        // Bottom edge (if cell below is empty)
+        if (!isFilled(r + 1, c)) {
+          allEdges.push({ x1: x + cellSize, y1: y + cellSize, x2: x, y2: y + cellSize, key: `h${r+1},${c}` })
         }
-        if (!inRegion(r, c - 1)) {
-          edges.push({ x1: x, y1: y + cellSize, x2: x, y2: y })
+        // Left edge (if cell to left is empty)
+        if (!isFilled(r, c - 1)) {
+          allEdges.push({ x1: x, y1: y + cellSize, x2: x, y2: y, key: `vl${r},${c}` })
         }
       }
+    }
 
-      if (edges.length === 0) continue
+    if (allEdges.length === 0) return null
 
-      const usedEdges = new Set<number>()
-      const orderedPoints: { x: number; y: number }[] = []
+    // Build all closed loops from edges
+    const loops: { x: number; y: number }[][] = []
+    const usedEdges = new Set<number>()
 
-      orderedPoints.push({ x: edges[0].x1, y: edges[0].y1 })
-      orderedPoints.push({ x: edges[0].x2, y: edges[0].y2 })
-      usedEdges.add(0)
+    while (usedEdges.size < allEdges.length) {
+      // Find first unused edge
+      let startIdx = -1
+      for (let i = 0; i < allEdges.length; i++) {
+        if (!usedEdges.has(i)) {
+          startIdx = i
+          break
+        }
+      }
+      if (startIdx === -1) break
 
-      while (usedEdges.size < edges.length) {
-        const lastPoint = orderedPoints[orderedPoints.length - 1]
+      const loop: { x: number; y: number }[] = []
+      loop.push({ x: allEdges[startIdx].x1, y: allEdges[startIdx].y1 })
+      loop.push({ x: allEdges[startIdx].x2, y: allEdges[startIdx].y2 })
+      usedEdges.add(startIdx)
+
+      // Follow edges to complete the loop
+      let iterations = 0
+      const maxIterations = allEdges.length * 2
+      
+      while (iterations < maxIterations) {
+        iterations++
+        const lastPoint = loop[loop.length - 1]
+        const firstPoint = loop[0]
+        
+        // Check if we've closed the loop
+        if (loop.length > 2 && 
+            Math.abs(lastPoint.x - firstPoint.x) < 0.5 && 
+            Math.abs(lastPoint.y - firstPoint.y) < 0.5) {
+          loop.pop() // Remove duplicate point
+          break
+        }
+
+        // Find next edge
         let foundNext = false
-
-        for (let i = 0; i < edges.length; i++) {
+        for (let i = 0; i < allEdges.length; i++) {
           if (usedEdges.has(i)) continue
-          const edge = edges[i]
+          const edge = allEdges[i]
 
-          if (
-            Math.abs(edge.x1 - lastPoint.x) < 0.5 &&
-            Math.abs(edge.y1 - lastPoint.y) < 0.5
-          ) {
-            orderedPoints.push({ x: edge.x2, y: edge.y2 })
+          if (Math.abs(edge.x1 - lastPoint.x) < 0.5 && 
+              Math.abs(edge.y1 - lastPoint.y) < 0.5) {
+            loop.push({ x: edge.x2, y: edge.y2 })
             usedEdges.add(i)
             foundNext = true
             break
@@ -522,30 +1033,28 @@ function MergedBackground({
         if (!foundNext) break
       }
 
-      if (orderedPoints.length > 1) {
-        const first = orderedPoints[0]
-        const last = orderedPoints[orderedPoints.length - 1]
-        if (
-          Math.abs(first.x - last.x) < 0.5 &&
-          Math.abs(first.y - last.y) < 0.5
-        ) {
-          orderedPoints.pop()
-        }
+      if (loop.length >= 3) {
+        loops.push(loop)
       }
-
-      if (orderedPoints.length < 3) continue
-
-      const paddedPath = generatePaddedPathWithRoundedCorners(
-        orderedPoints,
-        padding,
-        radius,
-        cellSize
-      )
-      paths.push(paddedPath)
     }
 
-    return { paths, totalWidth: cols * cellSize, totalHeight: rows * cellSize }
-  }
+    if (loops.length === 0) return null
+
+    // Generate path string with all loops
+    // Using evenodd fill rule, so holes will be cut out automatically
+    let combinedPath = ""
+    
+    for (const loop of loops) {
+      const paddedPath = generatePaddedPathWithRoundedCorners(loop, padding, radius, cellSize)
+      combinedPath += paddedPath + " "
+    }
+
+    return { 
+      path: combinedPath.trim(), 
+      totalWidth: cols * cellSize, 
+      totalHeight: rows * cellSize 
+    }
+  }, [iconMap, rows, cols, buttonSize, padding, radius])
 
   const generatePaddedPathWithRoundedCorners = (
     points: { x: number; y: number }[],
@@ -554,6 +1063,8 @@ function MergedBackground({
     cellSize: number
   ): string => {
     const n = points.length
+    if (n < 3) return ""
+    
     const paddedPoints: { x: number; y: number }[] = []
 
     for (let i = 0; i < n; i++) {
@@ -636,14 +1147,14 @@ function MergedBackground({
     return path
   }
 
-  const result = generatePaths()
+  const result = generatePath()
 
-  if (!result || result.paths.length === 0) return null
+  if (!result) return null
 
-  const { paths, totalWidth, totalHeight } = result
+  const { path, totalWidth, totalHeight } = result
 
   return (
-    <svg
+    <motion.svg
       className="absolute pointer-events-none"
       style={{
         top: 0,
@@ -652,16 +1163,16 @@ function MergedBackground({
         height: totalHeight + padding * 2,
       }}
       viewBox={`${-padding} ${-padding} ${totalWidth + padding * 2} ${totalHeight + padding * 2}`}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
     >
-      {paths.map((path, i) => (
-        <path
-          key={i}
-          d={path}
-          fill={bgColor}
-          fillOpacity={bgOpacity}
-        />
-      ))}
-    </svg>
+      <AnimatedPath 
+        targetPath={path}
+        fill={bgColor}
+        fillOpacity={bgOpacity}
+      />
+    </motion.svg>
   )
 }
 

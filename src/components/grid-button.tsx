@@ -1,16 +1,26 @@
 import type React from "react"
 import { cn } from "@/lib/utils"
 import type { GridButton as GridButtonType } from "@/lib/types"
-import { Plus, X } from "lucide-react"
+import { Plus, X, Copy, Trash2, ClipboardPaste } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuTrigger,
+} from "@/components/ui/context-menu"
 
 interface GridButtonProps {
   button?: GridButtonType
   isSetupMode: boolean
   isSelected?: boolean
   onDrop?: (row: number, col: number) => void
+  onMove?: (row: number, col: number) => void
   onClick?: () => void
   onRemove?: () => void
+  onCopy?: () => void
+  onPaste?: () => void
+  canPaste?: boolean
   position: { row: number; col: number }
   buttonSize: number
   useFlexSize?: boolean
@@ -23,8 +33,12 @@ export function GridButton({
   isSetupMode,
   isSelected,
   onDrop,
+  onMove,
   onClick,
   onRemove,
+  onCopy,
+  onPaste,
+  canPaste = false,
   position,
   buttonSize,
   useFlexSize = false,
@@ -33,12 +47,26 @@ export function GridButton({
 }: GridButtonProps) {
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault()
-    e.dataTransfer.dropEffect = "copy"
+    e.dataTransfer.dropEffect = e.dataTransfer.types.includes("application/x-button-move") ? "move" : "copy"
   }
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault()
-    onDrop?.(position.row, position.col)
+    // Check if this is a move operation (existing button being dragged)
+    if (e.dataTransfer.types.includes("application/x-button-move")) {
+      onMove?.(position.row, position.col)
+    } else {
+      onDrop?.(position.row, position.col)
+    }
+  }
+
+  const handleDragStart = (e: React.DragEvent) => {
+    if (!button || !isSetupMode) {
+      e.preventDefault()
+      return
+    }
+    e.dataTransfer.setData("application/x-button-move", button.id)
+    e.dataTransfer.effectAllowed = "move"
   }
 
   const isEmpty = !button?.action
@@ -49,8 +77,10 @@ export function GridButton({
 
   const innerPadding = 4
 
-  return (
+  const buttonContent = (
     <div
+      draggable={isSetupMode && !isEmpty}
+      onDragStart={handleDragStart}
       onDragOver={handleDragOver}
       onDrop={handleDrop}
       onClick={onClick}
@@ -58,6 +88,7 @@ export function GridButton({
         "relative flex items-center justify-center flex-col transition-all",
         isSetupMode && "cursor-pointer",
         isSetupMode && isSelected && "ring-2 ring-primary ring-inset",
+        isSetupMode && !isEmpty && "cursor-grab active:cursor-grabbing",
         !isSetupMode && !isEmpty && "hover:brightness-110 active:scale-95",
       )}
       style={sizeStyles}
@@ -123,5 +154,37 @@ export function GridButton({
         </>
       )}
     </div>
+  )
+
+  // Only show context menu in setup mode
+  if (!isSetupMode) {
+    return buttonContent
+  }
+
+  return (
+    <ContextMenu>
+      <ContextMenuTrigger asChild>
+        {buttonContent}
+      </ContextMenuTrigger>
+      <ContextMenuContent>
+        {isEmpty ? (
+          <ContextMenuItem onClick={onPaste} disabled={!canPaste}>
+            <ClipboardPaste className="mr-2 size-4" />
+            Paste
+          </ContextMenuItem>
+        ) : (
+          <>
+            <ContextMenuItem onClick={onCopy}>
+              <Copy className="mr-2 size-4" />
+              Copy
+            </ContextMenuItem>
+            <ContextMenuItem onClick={onRemove} className="text-destructive focus:text-destructive">
+              <Trash2 className="mr-2 size-4" />
+              Delete
+            </ContextMenuItem>
+          </>
+        )}
+      </ContextMenuContent>
+    </ContextMenu>
   )
 }

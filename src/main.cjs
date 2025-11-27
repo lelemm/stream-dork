@@ -12,6 +12,13 @@ const fs = require("fs")
 const { discoverPlugins } = require("./host/plugin-discovery.cjs")
 const { StreamDeckHost } = require("./host/streamdeck-host.cjs")
 
+// Parse command line arguments
+const args = process.argv.slice(2)
+const showControlPanel = args.some(arg => 
+  arg === '--stream-dork-control-panel=1' || 
+  arg === '--stream-dork-control-panel'
+)
+
 // Enable Chrome DevTools Protocol remote debugging on port 23519
 // This allows debugging Property Inspectors at http://localhost:23519
 // Similar to the real Stream Deck's CEF remote debugging
@@ -168,6 +175,22 @@ const defaultConfig = {
   overlayMargin: 20,
   overlayCustomX: 100,
   overlayCustomY: 100,
+  // Animation defaults
+  animationEnabled: true,
+  animationDuration: 250,
+  animationDirection: "clockwise",
+  animationStartCorner: "bottom-right",
+  // Shortcut defaults
+  shortcutDebounceMs: 300,
+  // Auto-dismiss defaults
+  autoDismissEnabled: false,
+  autoDismissDelaySeconds: 5,
+  // Panel sizes defaults
+  panelSizes: {
+    leftPanel: 20,
+    rightPanel: 22,
+    bottomPanel: 35,
+  },
 }
 
 let config = { ...defaultConfig }
@@ -175,6 +198,7 @@ let config = { ...defaultConfig }
 let setupWindow
 let overlayWindow
 let tray
+let lastToggleTime = 0
 
 // In packaged builds we should never try to talk to the Vite dev server.
 // Use Electron's app.isPackaged flag instead of NODE_ENV, which may be unset.
@@ -328,9 +352,15 @@ function createSetupWindow() {
 function createOverlayWindow() {
   appendLog("WINDOW", "Creating overlay window")
   try {
+    const { screen } = require("electron")
+    const primaryDisplay = screen.getPrimaryDisplay()
+    const { width, height } = primaryDisplay.workAreaSize
+
     overlayWindow = new BrowserWindow({
-      width: 600,
-      height: 400,
+      width: width,
+      height: height,
+      x: 0,
+      y: 0,
       show: false,
       frame: false,
       transparent: true,
@@ -339,6 +369,7 @@ function createOverlayWindow() {
       skipTaskbar: true,
       focusable: true,
       resizable: false,
+      hasShadow: false,
       webPreferences: {
         preload: path.join(__dirname, "preload.js"),
         contextIsolation: true,
@@ -384,20 +415,118 @@ function showOverlayWindow() {
   overlayWindow.setAlwaysOnTop(true, "screen-saver")
   overlayWindow.show()
   overlayWindow.focus()
+  // Notify the overlay to start the show animation
+  overlayWindow.webContents.send("overlay-visibility", { visible: true })
 }
 
 function hideOverlayWindow() {
+  if (overlayWindow && !overlayWindow.isDestroyed()) {
+    // Notify the overlay to start the hide animation, then hide the window after animation completes
+    overlayWindow.webContents.send("overlay-visibility", { visible: false })
+  }
+}
+
+function forceHideOverlay() {
   if (overlayWindow && !overlayWindow.isDestroyed()) {
     overlayWindow.hide()
   }
 }
 
 function toggleOverlayWindow() {
+  const now = Date.now()
+  const debounceMs = config.shortcutDebounceMs || 300
+  if (now - lastToggleTime < debounceMs) {
+    appendLog("INPUT", "Toggle debounced - ignoring rapid keypress")
+    return
+  }
+  lastToggleTime = now
+
   if (overlayWindow && !overlayWindow.isDestroyed() && overlayWindow.isVisible()) {
     hideOverlayWindow()
   } else {
     showOverlayWindow()
   }
+}
+
+function resetPanelSizes() {
+  config = {
+    ...config,
+    panelSizes: {
+      leftPanel: 20,
+      rightPanel: 22,
+      bottomPanel: 35,
+    },
+  }
+  saveConfigToDisk()
+  broadcastConfig()
+}
+
+function createAppMenu() {
+  const template = [
+    {
+      label: "File",
+      submenu: [
+        { role: "quit" },
+      ],
+    },
+    {
+      label: "Edit",
+      submenu: [
+        { role: "undo" },
+        { role: "redo" },
+        { type: "separator" },
+        { role: "cut" },
+        { role: "copy" },
+        { role: "paste" },
+      ],
+    },
+    {
+      label: "View",
+      submenu: [
+        { role: "reload" },
+        { role: "forceReload" },
+        { role: "toggleDevTools" },
+        { type: "separator" },
+        { role: "resetZoom" },
+        { role: "zoomIn" },
+        { role: "zoomOut" },
+        { type: "separator" },
+        { role: "togglefullscreen" },
+      ],
+    },
+    {
+      label: "Window",
+      submenu: [
+        {
+          label: "Reset Panel Sizes",
+          click: () => resetPanelSizes(),
+        },
+        { type: "separator" },
+        { role: "minimize" },
+        { role: "close" },
+      ],
+    },
+    {
+      label: "Help",
+      submenu: [
+        {
+          label: "About Stream Dork",
+          click: async () => {
+            const { dialog } = require("electron")
+            dialog.showMessageBox({
+              type: "info",
+              title: "About Stream Dork",
+              message: "Stream Dork",
+              detail: "A virtual stream deck overlay for your desktop.\n\nVersion: 0.1.0",
+            })
+          },
+        },
+      ],
+    },
+  ]
+
+  const menu = Menu.buildFromTemplate(template)
+  Menu.setApplicationMenu(menu)
 }
 
 function createTray() {
@@ -430,7 +559,7 @@ function createTray() {
   ])
 
     tray.setContextMenu(contextMenu)
-    tray.setToolTip("Fake Stream Deck")
+    tray.setToolTip("Stream Dork")
     tray.on("double-click", () => {
       toggleOverlayWindow()
     })
@@ -447,6 +576,7 @@ app
     appendLog("DEBUG", `🔧 Chrome DevTools Protocol enabled on http://localhost:${REMOTE_DEBUGGING_PORT}`)
     appendLog("DEBUG", `📋 Use this URL to debug Property Inspectors in your browser`)
     loadConfigFromDisk()
+    createAppMenu()
     showSetupWindow()
     createOverlayWindow()
     streamDeckHost.start()
@@ -488,6 +618,12 @@ ipcMain.handle("get-config", () => {
   return config
 })
 
+ipcMain.handle("get-app-flags", () => {
+  return {
+    showControlPanel,
+  }
+})
+
 ipcMain.handle("update-config", (event, updates) => {
   appendLog("IPC", `update-config with ${safeStringify(updates)}`)
   return updateConfig(updates)
@@ -515,6 +651,11 @@ ipcMain.on("show-setup", () => {
 ipcMain.on("close-overlay", () => {
   appendLog("IPC", "close-overlay requested")
   hideOverlayWindow()
+})
+
+ipcMain.on("force-hide-overlay", () => {
+  appendLog("IPC", "force-hide-overlay requested (animation complete)")
+  forceHideOverlay()
 })
 
 ipcMain.on("toggle-setup", () => {

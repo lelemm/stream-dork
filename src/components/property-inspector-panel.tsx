@@ -18,7 +18,7 @@ function buildInspectorInfo(plugin: HostPluginDescriptor | undefined) {
       language: navigator.language || "en",
       platform: "windows",
       platformVersion: navigator.userAgent,
-      version: "fake-stream-deck",
+      version: "stream-dork",
     },
     colors: {
       buttonMouseOverBackgroundColor: "#464646FF",
@@ -31,7 +31,7 @@ function buildInspectorInfo(plugin: HostPluginDescriptor | undefined) {
     devices: [
       {
         id: DEFAULT_DEVICE_ID,
-        name: "Fake Stream Deck",
+        name: "Stream Dork",
         size: {
           columns: 5,
           rows: 3,

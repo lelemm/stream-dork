@@ -6,8 +6,9 @@ import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Grid3x3, Maximize2, Palette, Move, Download, Upload } from "lucide-react"
-import type { OverlayPosition } from "@/lib/types"
+import { Switch } from "@/components/ui/switch"
+import { Grid3x3, Maximize2, Palette, Move, Download, Upload, Sparkles, Keyboard, Timer } from "lucide-react"
+import type { OverlayPosition, AnimationDirection, AnimationStartCorner } from "@/lib/types"
 
 export function GridSettings() {
   const {
@@ -21,6 +22,13 @@ export function GridSettings() {
     setOverlayPosition,
     setOverlayMargin,
     setOverlayCustomPosition,
+    setAnimationEnabled,
+    setAnimationDuration,
+    setAnimationDirection,
+    setAnimationStartCorner,
+    setShortcutDebounceMs,
+    setAutoDismissEnabled,
+    setAutoDismissDelaySeconds,
     exportConfig,
     importConfig,
   } = useDeckStore()
@@ -36,6 +44,16 @@ export function GridSettings() {
   const [margin, setMargin] = useState(config.overlayMargin || 20)
   const [customX, setCustomX] = useState(config.overlayCustomX || 100)
   const [customY, setCustomY] = useState(config.overlayCustomY || 100)
+  // Animation settings
+  const [animEnabled, setAnimEnabled] = useState(config.animationEnabled ?? true)
+  const [animDuration, setAnimDuration] = useState(config.animationDuration || 250)
+  const [animDirection, setAnimDirection] = useState<AnimationDirection>(config.animationDirection || "clockwise")
+  const [animStartCorner, setAnimStartCorner] = useState<AnimationStartCorner>(config.animationStartCorner || "bottom-right")
+  // Shortcut settings
+  const [debounceMs, setDebounceMs] = useState(config.shortcutDebounceMs || 300)
+  // Auto-dismiss settings
+  const [autoDismiss, setAutoDismiss] = useState(config.autoDismissEnabled ?? false)
+  const [dismissDelay, setDismissDelay] = useState(config.autoDismissDelaySeconds || 5)
 
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -51,6 +69,13 @@ export function GridSettings() {
     setMargin(config.overlayMargin || 20)
     setCustomX(config.overlayCustomX || 100)
     setCustomY(config.overlayCustomY || 100)
+    setAnimEnabled(config.animationEnabled ?? true)
+    setAnimDuration(config.animationDuration || 250)
+    setAnimDirection(config.animationDirection || "clockwise")
+    setAnimStartCorner(config.animationStartCorner || "bottom-right")
+    setDebounceMs(config.shortcutDebounceMs || 300)
+    setAutoDismiss(config.autoDismissEnabled ?? false)
+    setDismissDelay(config.autoDismissDelaySeconds || 5)
   }, [config])
 
   const handleApply = () => {
@@ -65,6 +90,16 @@ export function GridSettings() {
     setOverlayPosition(position)
     setOverlayMargin(Math.max(0, Math.min(200, margin)))
     setOverlayCustomPosition(customX, customY)
+    // Animation settings
+    setAnimationEnabled(animEnabled)
+    setAnimationDuration(Math.max(50, Math.min(1000, animDuration)))
+    setAnimationDirection(animDirection)
+    setAnimationStartCorner(animStartCorner)
+    // Shortcut settings
+    setShortcutDebounceMs(Math.max(50, Math.min(1000, debounceMs)))
+    // Auto-dismiss settings
+    setAutoDismissEnabled(autoDismiss)
+    setAutoDismissDelaySeconds(Math.max(1, Math.min(60, dismissDelay)))
   }
 
   const handleExport = () => {
@@ -73,7 +108,7 @@ export function GridSettings() {
     const url = URL.createObjectURL(blob)
     const a = document.createElement("a")
     a.href = url
-    a.download = "stream-deck-config.json"
+    a.download = "stream-dork-config.json"
     a.click()
     URL.revokeObjectURL(url)
   }
@@ -299,6 +334,140 @@ export function GridSettings() {
                   className="mt-1.5"
                 />
               </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Animation Settings */}
+      <div>
+        <div className="flex items-center gap-2 mb-3">
+          <Sparkles className="size-4 text-primary" />
+          <h3 className="font-semibold text-sm">Animation</h3>
+        </div>
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <Label htmlFor="animEnabled" className="text-xs">
+              Enable Animation
+            </Label>
+            <Switch
+              id="animEnabled"
+              checked={animEnabled}
+              onCheckedChange={setAnimEnabled}
+            />
+          </div>
+
+          {animEnabled && (
+            <>
+              <div>
+                <Label htmlFor="animDuration" className="text-xs">
+                  Duration (ms)
+                </Label>
+                <Input
+                  id="animDuration"
+                  type="number"
+                  min={50}
+                  max={1000}
+                  step={50}
+                  value={animDuration}
+                  onChange={(e) => setAnimDuration(Number.parseInt(e.target.value) || 250)}
+                  className="mt-1.5"
+                />
+              </div>
+
+              <div>
+                <Label className="text-xs">Direction</Label>
+                <Select value={animDirection} onValueChange={(v) => setAnimDirection(v as AnimationDirection)}>
+                  <SelectTrigger className="mt-1.5">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="clockwise">Clockwise</SelectItem>
+                    <SelectItem value="counter-clockwise">Counter-Clockwise</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label className="text-xs">Start From</Label>
+                <Select value={animStartCorner} onValueChange={(v) => setAnimStartCorner(v as AnimationStartCorner)}>
+                  <SelectTrigger className="mt-1.5">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="bottom-right">Bottom Right</SelectItem>
+                    <SelectItem value="bottom-left">Bottom Left</SelectItem>
+                    <SelectItem value="top-right">Top Right</SelectItem>
+                    <SelectItem value="top-left">Top Left</SelectItem>
+                    <SelectItem value="center">Center</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* Shortcut & Behavior Settings */}
+      <div>
+        <div className="flex items-center gap-2 mb-3">
+          <Keyboard className="size-4 text-primary" />
+          <h3 className="font-semibold text-sm">Shortcut & Behavior</h3>
+        </div>
+        <div className="space-y-3">
+          <div>
+            <Label htmlFor="debounceMs" className="text-xs">
+              Shortcut Debounce (ms)
+            </Label>
+            <Input
+              id="debounceMs"
+              type="number"
+              min={50}
+              max={1000}
+              step={50}
+              value={debounceMs}
+              onChange={(e) => setDebounceMs(Number.parseInt(e.target.value) || 300)}
+              className="mt-1.5"
+            />
+            <p className="text-[10px] text-muted-foreground mt-1">
+              Prevents rapid toggling when holding shortcut
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Auto-dismiss Settings */}
+      <div>
+        <div className="flex items-center gap-2 mb-3">
+          <Timer className="size-4 text-primary" />
+          <h3 className="font-semibold text-sm">Auto-Dismiss</h3>
+        </div>
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <Label htmlFor="autoDismiss" className="text-xs">
+              Enable Auto-Dismiss
+            </Label>
+            <Switch
+              id="autoDismiss"
+              checked={autoDismiss}
+              onCheckedChange={setAutoDismiss}
+            />
+          </div>
+
+          {autoDismiss && (
+            <div>
+              <Label htmlFor="dismissDelay" className="text-xs">
+                Delay (seconds)
+              </Label>
+              <Input
+                id="dismissDelay"
+                type="number"
+                min={1}
+                max={60}
+                value={dismissDelay}
+                onChange={(e) => setDismissDelay(Number.parseInt(e.target.value) || 5)}
+                className="mt-1.5"
+              />
             </div>
           )}
         </div>

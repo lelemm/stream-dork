@@ -56,17 +56,28 @@ export interface HostVisualEvent {
   payload?: Record<string, unknown>
 }
 
+export interface OverlayVisibilityPayload {
+  visible: boolean
+}
+
+export interface AppFlags {
+  showControlPanel: boolean
+}
+
 export interface ElectronAPI {
   getConfig: () => Promise<DeckConfig>
+  getAppFlags: () => Promise<AppFlags>
   updateConfig: (_config: DeckConfig) => Promise<DeckConfig>
   onConfigUpdated: (_callback: (config: DeckConfig) => void) => () => void
   showSetup: () => void
   closeOverlay: () => void
+  forceHideOverlay: () => void
   toggleSetup: () => void
   getHostState: () => Promise<HostState>
   createHostContext: (options: HostContextOptions) => Promise<string>
   sendHostEvent: (options: HostEventOptions) => Promise<void>
   onHostEvent: (callback: (message: HostVisualEvent) => void) => () => void
+  onOverlayVisibility: (callback: (payload: OverlayVisibilityPayload) => void) => () => void
   notifyInspectorVisibility: (payload: { context: string; visible: boolean }) => void
 }
 

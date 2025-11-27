@@ -151,7 +151,7 @@ class StreamDeckHost {
       devices: [
         {
           id: DEFAULT_DEVICE_ID,
-          name: "Fake Stream Deck",
+          name: "Stream Dork",
           size: { columns: 5, rows: 3 },
           type: 0
         }
@@ -352,6 +352,7 @@ class StreamDeckHost {
       case "setSettings":
         this.contextSettings.set(context, message.payload || {})
         this.log("PLUGINS", `setSettings for ${context}`)
+        this.saveState()
         this.sendSettingsUpdate(pluginUuid, context, true)
         break
       case "getSettings":
@@ -361,6 +362,7 @@ class StreamDeckHost {
       case "setGlobalSettings":
         this.globalSettings.set(pluginUuid, message.payload || {})
         this.log("PLUGINS", `setGlobalSettings (${pluginUuid})`)
+        this.saveState()
         this.broadcastGlobalSettings(pluginUuid)
         break
       case "getGlobalSettings":
@@ -411,6 +413,7 @@ class StreamDeckHost {
     switch (message.event) {
       case "setSettings":
         this.contextSettings.set(message.context, message.payload || {})
+        this.saveState()
         this.sendSettingsUpdate(pluginUuid, message.context, true)
         break
       case "getSettings":
@@ -419,6 +422,7 @@ class StreamDeckHost {
       case "setGlobalSettings":
         if (pluginUuid) {
           this.globalSettings.set(pluginUuid, message.payload || {})
+          this.saveState()
           this.broadcastGlobalSettings(pluginUuid)
         }
         break

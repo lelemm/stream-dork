@@ -1,5 +1,5 @@
 import { create } from "zustand"
-import type { DeckConfig, GridButton, OverlayPosition } from "./types"
+import type { DeckConfig, GridButton, OverlayPosition, AnimationDirection, AnimationStartCorner, PanelSizes } from "./types"
 
 const defaultConfig: DeckConfig = {
   rows: 3,
@@ -14,6 +14,22 @@ const defaultConfig: DeckConfig = {
   overlayMargin: 20,
   overlayCustomX: 100,
   overlayCustomY: 100,
+  // Animation defaults
+  animationEnabled: true,
+  animationDuration: 250,
+  animationDirection: "clockwise",
+  animationStartCorner: "bottom-right",
+  // Shortcut defaults
+  shortcutDebounceMs: 300,
+  // Auto-dismiss defaults
+  autoDismissEnabled: false,
+  autoDismissDelaySeconds: 5,
+  // Panel sizes defaults
+  panelSizes: {
+    leftPanel: 20,
+    rightPanel: 22,
+    bottomPanel: 35,
+  },
 }
 
 const pushUpdateToMain = (config: DeckConfig) => {
@@ -37,9 +53,26 @@ interface DeckStore {
   setOverlayPosition: (position: OverlayPosition) => void
   setOverlayMargin: (margin: number) => void
   setOverlayCustomPosition: (x: number, y: number) => void
+  // Animation settings
+  setAnimationEnabled: (enabled: boolean) => void
+  setAnimationDuration: (duration: number) => void
+  setAnimationDirection: (direction: AnimationDirection) => void
+  setAnimationStartCorner: (corner: AnimationStartCorner) => void
+  // Shortcut settings
+  setShortcutDebounceMs: (ms: number) => void
+  // Auto-dismiss settings
+  setAutoDismissEnabled: (enabled: boolean) => void
+  setAutoDismissDelaySeconds: (seconds: number) => void
+  // Panel sizes
+  setPanelSizes: (sizes: PanelSizes) => void
+  resetPanelSizes: () => void
+  // Button operations
   addButton: (button: GridButton) => void
   updateButton: (id: string, updates: Partial<GridButton>) => void
   removeButton: (id: string) => void
+  moveButton: (id: string, newRow: number, newCol: number) => void
+  copyButton: (id: string) => GridButton | null
+  pasteButton: (button: GridButton, row: number, col: number) => void
   setSelectedButton: (button: GridButton | null) => void
   executeAction: (actionId: string) => void
   exportConfig: () => string
@@ -135,6 +168,84 @@ export const useDeckStore = create<DeckStore>((set, get) => ({
     })
   },
 
+  setAnimationEnabled: (enabled) => {
+    set((state) => {
+      const updatedConfig = { ...state.config, animationEnabled: enabled }
+      pushUpdateToMain(updatedConfig)
+      return { config: updatedConfig }
+    })
+  },
+
+  setAnimationDuration: (duration) => {
+    set((state) => {
+      const updatedConfig = { ...state.config, animationDuration: duration }
+      pushUpdateToMain(updatedConfig)
+      return { config: updatedConfig }
+    })
+  },
+
+  setAnimationDirection: (direction) => {
+    set((state) => {
+      const updatedConfig = { ...state.config, animationDirection: direction }
+      pushUpdateToMain(updatedConfig)
+      return { config: updatedConfig }
+    })
+  },
+
+  setAnimationStartCorner: (corner) => {
+    set((state) => {
+      const updatedConfig = { ...state.config, animationStartCorner: corner }
+      pushUpdateToMain(updatedConfig)
+      return { config: updatedConfig }
+    })
+  },
+
+  setShortcutDebounceMs: (ms) => {
+    set((state) => {
+      const updatedConfig = { ...state.config, shortcutDebounceMs: ms }
+      pushUpdateToMain(updatedConfig)
+      return { config: updatedConfig }
+    })
+  },
+
+  setAutoDismissEnabled: (enabled) => {
+    set((state) => {
+      const updatedConfig = { ...state.config, autoDismissEnabled: enabled }
+      pushUpdateToMain(updatedConfig)
+      return { config: updatedConfig }
+    })
+  },
+
+  setAutoDismissDelaySeconds: (seconds) => {
+    set((state) => {
+      const updatedConfig = { ...state.config, autoDismissDelaySeconds: seconds }
+      pushUpdateToMain(updatedConfig)
+      return { config: updatedConfig }
+    })
+  },
+
+  setPanelSizes: (sizes) => {
+    set((state) => {
+      const updatedConfig = {
+        ...state.config,
+        panelSizes: { ...state.config.panelSizes, ...sizes },
+      }
+      pushUpdateToMain(updatedConfig)
+      return { config: updatedConfig }
+    })
+  },
+
+  resetPanelSizes: () => {
+    set((state) => {
+      const updatedConfig = {
+        ...state.config,
+        panelSizes: defaultConfig.panelSizes,
+      }
+      pushUpdateToMain(updatedConfig)
+      return { config: updatedConfig }
+    })
+  },
+
   addButton: (button) => {
     set((state) => {
       const updatedConfig = {
@@ -176,6 +287,64 @@ export const useDeckStore = create<DeckStore>((set, get) => ({
     })
   },
 
+  moveButton: (id, newRow, newCol) => {
+    set((state) => {
+      // Check if target position is occupied
+      const existingButton = state.config.buttons.find(
+        (btn) => btn.position.row === newRow && btn.position.col === newCol
+      )
+      
+      const buttons = state.config.buttons.map((btn) => {
+        if (btn.id === id) {
+          return { ...btn, position: { row: newRow, col: newCol } }
+        }
+        // If there's a button at the target, swap positions
+        if (existingButton && btn.id === existingButton.id) {
+          const sourceButton = state.config.buttons.find((b) => b.id === id)
+          if (sourceButton) {
+            return { ...btn, position: { row: sourceButton.position.row, col: sourceButton.position.col } }
+          }
+        }
+        return btn
+      })
+
+      const updatedConfig = { ...state.config, buttons }
+      pushUpdateToMain(updatedConfig)
+      return { config: updatedConfig }
+    })
+  },
+
+  copyButton: (id) => {
+    const state = get()
+    const button = state.config.buttons.find((btn) => btn.id === id)
+    if (!button) return null
+    // Return a deep copy of the button
+    return JSON.parse(JSON.stringify(button))
+  },
+
+  pasteButton: (button, row, col) => {
+    set((state) => {
+      // Remove any existing button at the target position
+      const buttons = state.config.buttons.filter(
+        (btn) => !(btn.position.row === row && btn.position.col === col)
+      )
+      
+      // Create new button with new ID and position
+      const newButton: GridButton = {
+        ...button,
+        id: `${Date.now()}-${Math.random()}`,
+        position: { row, col },
+        action: button.action ? { ...button.action, context: undefined } : undefined,
+      }
+      
+      buttons.push(newButton)
+      
+      const updatedConfig = { ...state.config, buttons }
+      pushUpdateToMain(updatedConfig)
+      return { config: updatedConfig }
+    })
+  },
+
   setSelectedButton: (button) => {
     set({ selectedButton: button })
   },
@@ -209,10 +378,6 @@ export const useDeckStore = create<DeckStore>((set, get) => ({
         break
       default:
         console.log("[v0] Unknown action type")
-    }
-    return {
-      config: updatedConfig,
-      selectedButton: state.selectedButton?.id === id ? null : state.selectedButton,
     }
   },
 

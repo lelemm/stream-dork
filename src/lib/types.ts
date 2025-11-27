@@ -2,6 +2,12 @@ export type ActionType = "hotkey" | "open-url" | "run-command" | "multi-action" 
 
 export type OverlayPosition = "top-left" | "top-right" | "bottom-left" | "bottom-right" | "center" | "custom"
 
+// Animation start corner options
+export type AnimationStartCorner = "bottom-right" | "bottom-left" | "top-right" | "top-left" | "center"
+
+// Animation direction
+export type AnimationDirection = "clockwise" | "counter-clockwise"
+
 export interface ButtonAction {
   id: string
   type: ActionType
@@ -23,6 +29,14 @@ export interface GridButton {
   backgroundColor?: string
   textColor?: string
   status?: "alert" | "ok"
+  // Per-button animation duration override (in ms)
+  animationDuration?: number
+}
+
+export interface PanelSizes {
+  leftPanel?: number // percentage width
+  rightPanel?: number // percentage width
+  bottomPanel?: number // percentage height
 }
 
 export interface DeckConfig {
@@ -38,4 +52,16 @@ export interface DeckConfig {
   overlayMargin?: number
   overlayCustomX?: number
   overlayCustomY?: number
+  // Animation settings
+  animationEnabled?: boolean
+  animationDuration?: number // Default animation duration in ms
+  animationDirection?: AnimationDirection
+  animationStartCorner?: AnimationStartCorner
+  // Shortcut settings
+  shortcutDebounceMs?: number
+  // Auto-dismiss settings
+  autoDismissEnabled?: boolean
+  autoDismissDelaySeconds?: number
+  // Panel sizes
+  panelSizes?: PanelSizes
 }

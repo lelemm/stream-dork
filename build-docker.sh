@@ -11,7 +11,7 @@ docker build \
   --progress=plain \
   --build-arg USER_ID=$(id -u) \
   --build-arg GROUP_ID=$(id -g) \
-  -t fake-stream-deck .
+  -t stream-dork .
 
 echo "🗃️ Preparing cache directories..."
 mkdir -p ~/.cache/electron
@@ -25,8 +25,8 @@ docker run --rm -ti \
   -v ${PWD}/dist-electron:/project/dist-electron \
   -v ~/.cache/electron:/tmp/.cache/electron \
   -v ~/.cache/electron-builder:/tmp/.cache/electron-builder \
-  --name fake-stream-deck-builder \
-  fake-stream-deck
+  --name stream-dork-builder \
+  stream-dork
 
 echo "✅ Docker build complete. Artifacts available in dist-electron/"
 
