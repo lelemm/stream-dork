@@ -377,7 +377,19 @@ class StreamDeckHost {
 
   handlePluginEvent(meta, message) {
     const pluginUuid = meta.pluginUuid
-    const context = message.context
+    const rawContext = message.context
+    
+    // Resolve context - handle case where context might have -pi suffix
+    // (some plugins might incorrectly use the inspector context)
+    let context = rawContext
+    if (rawContext && !this.contextRegistry.has(rawContext) && rawContext.endsWith("-pi")) {
+      const strippedContext = rawContext.slice(0, -3)
+      if (this.contextRegistry.has(strippedContext)) {
+        context = strippedContext
+        this.log("PLUGINS", `Resolved plugin context ${rawContext} -> ${context}`)
+      }
+    }
+    
     switch (message.event) {
       case "setSettings":
         this.contextSettings.set(context, message.payload || {})
@@ -722,6 +734,8 @@ class StreamDeckHost {
 
   emitWillAppear(entry) {
     const socket = this.pluginSockets.get(entry.pluginUuid)
+    // Always use contextSettings for the latest settings, not the potentially stale entry.settings
+    const currentSettings = this.contextSettings.get(entry.context) || {}
     const message = {
       event: "willAppear",
       action: entry.action,
@@ -729,7 +743,7 @@ class StreamDeckHost {
       device: entry.device,
       payload: {
         coordinates: entry.coordinates,
-        settings: entry.settings,
+        settings: currentSettings,
         controller: entry.controller,
         state: entry.state,
         isInMultiAction: false,

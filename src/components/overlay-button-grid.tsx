@@ -779,25 +779,42 @@ function OverlayButton({
         )}
 
         {/* Icon */}
-        {button?.icon &&
-        (button.icon.startsWith("data:") || button.icon.startsWith("http")) ? (
-          <img
-            src={button.icon}
-            alt={button.label || "Button icon"}
-            className={cn("size-10 object-contain", isFocused && "size-16")}
-          />
-        ) : (
-          <div
-            className={cn("text-2xl", isFocused && "text-4xl")}
-            style={{ color: button?.textColor || "#ffffff" }}
-          >
-            {button?.icon || "🎮"}
-          </div>
-        )}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={isVisible ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.8 }}
+          transition={{
+            duration: duration * 0.6, // Faster than container animation
+            delay: isVisible ? animationIndex * (staggerDelayMs / 1000) : 0,
+            ease: [0.34, 1.56, 0.64, 1]
+          }}
+        >
+          {button?.icon &&
+          (button.icon.startsWith("data:") || button.icon.startsWith("http")) ? (
+            <img
+              src={button.icon}
+              alt={button.label || "Button icon"}
+              className={cn("size-10 object-contain", isFocused && "size-16")}
+            />
+          ) : (
+            <div
+              className={cn("text-2xl", isFocused && "text-4xl")}
+              style={{ color: button?.textColor || "#ffffff" }}
+            >
+              {button?.icon || "🎮"}
+            </div>
+          )}
+        </motion.div>
 
         {/* Label */}
         {button?.label && (
-          <p
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={isVisible ? { opacity: 1 } : { opacity: 0 }}
+            transition={{
+              duration: duration * 0.6,
+              delay: isVisible ? animationIndex * (staggerDelayMs / 1000) : 0,
+              ease: [0.34, 1.56, 0.64, 1]
+            }}
             className={cn(
               "text-[10px] font-medium text-center line-clamp-2 px-1",
               isFocused && "text-sm"
@@ -805,7 +822,7 @@ function OverlayButton({
             style={{ color: button?.textColor || "#ffffff" }}
           >
             {button.label}
-          </p>
+          </motion.p>
         )}
 
         {/* Status indicator */}
