@@ -5,7 +5,7 @@ const { exec, spawn } = require("child_process")
 const fs = require("fs")
 const path = require("path")
 
-const DEFAULT_DEVICE_ID = "fake-device-0"
+const DEFAULT_DEVICE_ID = "stream-dork-host"
 
 function safeUUID() {
   if (crypto.randomUUID) {
@@ -15,9 +15,12 @@ function safeUUID() {
 }
 
 class StreamDeckHost {
-  constructor({ plugins = [], logger = () => {}, notifyRenderer = () => {}, stateFile }) {
+  constructor({ plugins = [], iconLibraries = [], logger = () => {}, notifyRenderer = () => {}, stateFile, language = "en", enableFileLogging = false }) {
     this.plugins = plugins
+    this.iconLibraries = iconLibraries
     this.logger = logger
+    this.language = language // Configured language for plugin i18n
+    this.enableFileLogging = enableFileLogging
     this.port = 0
     this.server = null
     this.connectionMeta = new Map()
@@ -32,6 +35,9 @@ class StreamDeckHost {
     this.actionLookup = new Map()
     this.notifyRenderer = notifyRenderer
     this.stateFile = stateFile
+    // Track visual state (image, title, state) per context for runtime overrides from plugins
+    // This allows the overlay to get the current visual state when it opens
+    this.visualState = new Map()
     this.monitoredApps = new Map()
     this.monitoredState = new Map()
     this.appMonitorInterval = null
@@ -47,6 +53,10 @@ class StreamDeckHost {
     // Communication log (per-day file: comm_<date>.txt next to stateFile)
     this.commLogDate = null
     this.commLogPath = null
+    // Track last sent settings to avoid flooding with duplicate didReceiveSettings
+    // Key: context, Value: JSON string of last sent settings
+    this.lastSentSettingsToPlugin = new Map()
+    this.lastSentSettingsToInspector = new Map()
   }
 
   getCommLogPath() {
@@ -61,6 +71,9 @@ class StreamDeckHost {
   }
 
   logComm(kind, details, payload) {
+    if (!this.enableFileLogging) {
+      return
+    }
     const filePath = this.getCommLogPath()
     if (!filePath) return
     const line = `${new Date().toISOString()} [${kind}] ${details}${
@@ -130,7 +143,7 @@ class StreamDeckHost {
     const info = {
       application: {
         font: "Segoe UI",
-        language: "en",
+        language: this.language, // Use configured language for plugin i18n
         platform: "windows",
         platformVersion: "10.0",
         version: "6.0.0"
@@ -316,16 +329,33 @@ class StreamDeckHost {
     })
 
     if (typeof message?.context === "string") {
-      this.inspectorByContext.set(message.context, socket)
-      meta.context = message.context
+      // Resolve the actual button context - some SDKs send the inspector UUID (with -pi suffix)
+      // as the context instead of the actual button context
+      let resolvedContext = message.context
+      if (!this.contextRegistry.has(resolvedContext) && resolvedContext.endsWith("-pi")) {
+        const strippedContext = resolvedContext.slice(0, -3)
+        if (this.contextRegistry.has(strippedContext)) {
+          resolvedContext = strippedContext
+          this.log("HOST", `Resolved inspector registration context ${message.context} -> ${resolvedContext}`)
+        }
+      }
+      
+      // Store the resolved context for use in handleInspectorEvent
+      meta.context = resolvedContext
+      this.inspectorByContext.set(resolvedContext, socket)
+      
+      // Get coordinates from contextRegistry if available
+      const entry = this.contextRegistry.get(resolvedContext)
+      const coordinates = entry?.coordinates || { column: 0, row: 0 }
+      
       this.send(socket, {
         event: "didReceiveSettings",
         action: message.action,
-        context: message.context,
+        context: resolvedContext,
         device: DEFAULT_DEVICE_ID,
         payload: {
-          settings: this.contextSettings.get(message.context) || {},
-          coordinates: { column: 0, row: 0 },
+          settings: this.contextSettings.get(resolvedContext) || {},
+          coordinates,
           isInMultiAction: false,
         },
       })
@@ -333,7 +363,7 @@ class StreamDeckHost {
         this.send(meta.pluginUuid, {
           event: "propertyInspectorDidAppear",
           action: message.action,
-          context: message.context,
+          context: resolvedContext,
           device: DEFAULT_DEVICE_ID,
         })
       }
@@ -351,9 +381,17 @@ class StreamDeckHost {
     switch (message.event) {
       case "setSettings":
         this.contextSettings.set(context, message.payload || {})
+        // Keep contextRegistry entry in sync so getState() returns correct settings
+        if (this.contextRegistry.has(context)) {
+          this.contextRegistry.get(context).settings = message.payload || {}
+        }
         this.log("PLUGINS", `setSettings for ${context}`)
         this.saveState()
-        this.sendSettingsUpdate(pluginUuid, context, true)
+        // Update the plugin's last sent cache (plugin just set these, don't send back)
+        this.lastSentSettingsToPlugin.set(context, JSON.stringify(message.payload || {}))
+        // Only notify the inspector (if open), NOT the plugin that just set the settings
+        // This prevents an infinite loop where plugin sets settings -> host sends didReceiveSettings -> plugin sets settings again
+        this.sendSettingsToInspector(context)
         break
       case "getSettings":
         this.log("PLUGINS", `getSettings from ${context}`)
@@ -408,16 +446,65 @@ class StreamDeckHost {
   }
 
   handleInspectorEvent(meta, message) {
+    // Some Property Inspector SDKs incorrectly use the inspector UUID (which has -pi suffix)
+    // as the context for setSettings. We need to resolve the actual button context.
+    const rawContext = message.context
+    // Try to find the actual context - first check if rawContext exists in registry,
+    // if not, try stripping the -pi suffix
+    let resolvedContext = rawContext
+    if (rawContext && !this.contextRegistry.has(rawContext) && rawContext.endsWith("-pi")) {
+      const strippedContext = rawContext.slice(0, -3)
+      if (this.contextRegistry.has(strippedContext)) {
+        resolvedContext = strippedContext
+        this.log("HOST", `Resolved inspector context ${rawContext} -> ${resolvedContext}`)
+      }
+    }
+    // Also check meta.context which might have the correct context from registration
+    if (!this.contextRegistry.has(resolvedContext) && meta.context && this.contextRegistry.has(meta.context)) {
+      resolvedContext = meta.context
+    }
+    
     const pluginUuid =
-      meta.pluginUuid || this.contextRegistry.get(message.context)?.pluginUuid
+      meta.pluginUuid || this.contextRegistry.get(resolvedContext)?.pluginUuid
     switch (message.event) {
       case "setSettings":
-        this.contextSettings.set(message.context, message.payload || {})
+        this.contextSettings.set(resolvedContext, message.payload || {})
+        // Keep contextRegistry entry in sync so getState() returns correct settings
+        if (this.contextRegistry.has(resolvedContext)) {
+          this.contextRegistry.get(resolvedContext).settings = message.payload || {}
+        }
         this.saveState()
-        this.sendSettingsUpdate(pluginUuid, message.context, true)
+        // When inspector sets settings, notify the plugin (it needs to know)
+        // The inspector already knows the settings it just sent
+        if (pluginUuid) {
+          const entry = this.contextRegistry.get(resolvedContext)
+          if (entry) {
+            const settings = this.contextSettings.get(resolvedContext) || {}
+            const settingsJson = JSON.stringify(settings)
+            
+            // Only send if settings have changed from what we last sent to plugin
+            const lastSent = this.lastSentSettingsToPlugin.get(resolvedContext)
+            if (lastSent !== settingsJson) {
+              this.send(pluginUuid, {
+                action: entry.action,
+                event: "didReceiveSettings",
+                context: resolvedContext,
+                device: entry.device,
+                payload: {
+                  settings,
+                  coordinates: entry.coordinates,
+                  isInMultiAction: false,
+                },
+              })
+              this.lastSentSettingsToPlugin.set(resolvedContext, settingsJson)
+            }
+          }
+        }
+        // Update the inspector's last sent cache too (inspector just sent these)
+        this.lastSentSettingsToInspector.set(resolvedContext, JSON.stringify(message.payload || {}))
         break
       case "getSettings":
-        this.sendSettingsUpdate(pluginUuid, message.context)
+        this.sendSettingsUpdate(pluginUuid, resolvedContext)
         break
       case "setGlobalSettings":
         if (pluginUuid) {
@@ -435,7 +522,7 @@ class StreamDeckHost {
         }
         break
       case "sendToPlugin":
-        this.forwardToPlugin(message.context, message)
+        this.forwardToPlugin(resolvedContext, message)
         break
       case "openUrl":
         if (message.payload?.url) {
@@ -458,29 +545,93 @@ class StreamDeckHost {
       return
     }
 
+    const settings = this.contextSettings.get(context) || {}
+    const settingsJson = JSON.stringify(settings)
+
     const payloadMessage = {
       action: entry.action,
       event: "didReceiveSettings",
       context,
       device: entry.device,
       payload: {
-        settings: this.contextSettings.get(context) || {},
+        settings,
         coordinates: entry.coordinates,
         isInMultiAction: false,
       },
     }
-    this.send(pluginUuid, payloadMessage)
+
+    // Only send to plugin if settings have changed
+    const lastSentToPlugin = this.lastSentSettingsToPlugin.get(context)
+    if (lastSentToPlugin !== settingsJson) {
+      this.send(pluginUuid, payloadMessage)
+      this.lastSentSettingsToPlugin.set(context, settingsJson)
+    }
+
+    // Only send to inspector if settings have changed
+    const inspector = this.inspectorByContext.get(context)
+    if (inspector) {
+      const lastSentToInspector = this.lastSentSettingsToInspector.get(context)
+      if (lastSentToInspector !== settingsJson) {
+        this.send(inspector, payloadMessage)
+        this.lastSentSettingsToInspector.set(context, settingsJson)
+      }
+    }
+  }
+
+  /**
+   * Send settings update only to the property inspector (not the plugin).
+   * Used when the plugin itself called setSettings - it already knows what it set.
+   */
+  sendSettingsToInspector(context) {
+    const entry = this.contextRegistry.get(context)
+    if (!entry) return
 
     const inspector = this.inspectorByContext.get(context)
     if (inspector) {
+      const settings = this.contextSettings.get(context) || {}
+      const settingsJson = JSON.stringify(settings)
+
+      // Only send if settings have changed from what we last sent to inspector
+      const lastSent = this.lastSentSettingsToInspector.get(context)
+      if (lastSent === settingsJson) {
+        return // Skip, settings unchanged
+      }
+
+      const payloadMessage = {
+        action: entry.action,
+        event: "didReceiveSettings",
+        context,
+        device: entry.device,
+        payload: {
+          settings,
+          coordinates: entry.coordinates,
+          isInMultiAction: false,
+        },
+      }
       this.send(inspector, payloadMessage)
+      this.lastSentSettingsToInspector.set(context, settingsJson)
     }
   }
 
   emitHostVisualEvent(eventName, context, payload) {
-    if (!this.notifyRenderer) return
     const entry = this.contextRegistry.get(context)
     if (!entry) return
+    
+    // Store visual state for later retrieval (when overlay opens)
+    const currentVisual = this.visualState.get(context) || {}
+    if (eventName === "setImage" && payload?.image) {
+      currentVisual.image = payload.image
+    } else if (eventName === "setTitle" && typeof payload?.title === "string") {
+      currentVisual.title = payload.title
+    } else if (eventName === "setState" && typeof payload?.state === "number") {
+      currentVisual.state = payload.state
+    }
+    if (Object.keys(currentVisual).length > 0) {
+      this.visualState.set(context, currentVisual)
+    }
+    
+    // Notify renderer if available
+    if (!this.notifyRenderer) return
     const message = {
       event: eventName,
       action: entry.action,
@@ -623,12 +774,26 @@ class StreamDeckHost {
   sendToContext(context, eventName, payload = {}) {
     const entry = this.contextRegistry.get(context)
     if (!entry) return
+    
+    // For key events (keyDown, keyUp), include settings and coordinates as per Stream Deck SDK
+    const isKeyEvent = eventName === "keyDown" || eventName === "keyUp"
+    const fullPayload = isKeyEvent
+      ? {
+          settings: this.contextSettings.get(context) || {},
+          coordinates: entry.coordinates,
+          state: entry.state ?? 0,
+          userDesiredState: 0,
+          isInMultiAction: false,
+          ...payload,
+        }
+      : payload
+
     this.send(entry.pluginUuid, {
       event: eventName,
       action: entry.action,
       context,
       device: entry.device,
-      payload,
+      payload: fullPayload,
     })
   }
 
@@ -714,9 +879,34 @@ class StreamDeckHost {
         Object.entries(parsed.globalSettings || {}).forEach(([key, value]) => {
           this.globalSettings.set(key, value)
         })
-        Object.entries(parsed.contextSettings || {}).forEach(([key, value]) => {
+        
+        // Load context settings with migration for -pi suffix issue
+        // Some Property Inspector SDKs incorrectly saved settings with -pi suffix on context
+        const contextSettings = parsed.contextSettings || {}
+        let needsSave = false
+        
+        Object.entries(contextSettings).forEach(([key, value]) => {
+          // Check if this is a -pi suffixed key with non-empty settings
+          if (key.endsWith("-pi") && value && Object.keys(value).length > 0) {
+            const baseContext = key.slice(0, -3)
+            const baseSettings = contextSettings[baseContext]
+            
+            // If the base context has empty settings but -pi has settings, migrate them
+            if (!baseSettings || Object.keys(baseSettings).length === 0) {
+              this.contextSettings.set(baseContext, value)
+              this.log("HOST", `Migrated settings from ${key} to ${baseContext}`)
+              needsSave = true
+            }
+          }
+          // Always load the original key too (for backwards compatibility)
           this.contextSettings.set(key, value)
         })
+        
+        // Save the migrated state if needed
+        if (needsSave) {
+          // Defer save to avoid issues during initialization
+          setTimeout(() => this.saveState(), 1000)
+        }
       }
     } catch (error) {
       this.log("HOST", `loadState failed: ${error.message}`)
@@ -819,7 +1009,18 @@ class StreamDeckHost {
       plugins: pluginStates,
       contexts: Array.from(this.contextRegistry.values()),
       logs: this.logs.slice(-200),
+      iconLibraries: this.iconLibraries || [],
+      language: this.language, // Configured language for plugin i18n
     }
+  }
+
+  /**
+   * Get current visual state for all contexts.
+   * Returns a map of context -> { image?, title?, state? }
+   * This allows the overlay to apply plugin-set visuals when it opens.
+   */
+  getVisualState() {
+    return Object.fromEntries(this.visualState)
   }
 
   log(source, message) {

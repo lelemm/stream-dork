@@ -104,8 +104,77 @@ function ensureWindowsReady(osEntries) {
   })
 }
 
-function discoverPlugins(rootPath, logger = () => {}) {
-  logger("DISCOVERY", `Starting plugin discovery in: ${rootPath}`)
+/**
+ * Loads a localization file for the specified language from the plugin directory.
+ * Per Stream Deck SDK, localization files are named like "en.json", "zh_CN.json", etc.
+ * and placed next to manifest.json.
+ * 
+ * Structure:
+ * {
+ *   "Name": "Localized Plugin Name",
+ *   "Description": "Localized Description",
+ *   "Category": "Localized Category",
+ *   "com.plugin.action.uuid": {
+ *     "Name": "Localized Action Name",
+ *     "Tooltip": "Localized Tooltip"
+ *   },
+ *   "Localization": { ... custom strings ... }
+ * }
+ */
+function loadLocalization(pluginDir, language) {
+  if (!language) return null
+  
+  const localizationPath = path.join(pluginDir, `${language}.json`)
+  if (!fs.existsSync(localizationPath)) {
+    return null
+  }
+
+  try {
+    const localization = JSON.parse(fs.readFileSync(localizationPath, "utf-8"))
+    return localization
+  } catch (error) {
+    // If we can't parse the localization file, return null and use manifest values
+    return null
+  }
+}
+
+/**
+ * Applies localization to plugin info.
+ * Overrides plugin name, description, and action names/tooltips with localized values.
+ */
+function applyLocalization(pluginInfo, localization) {
+  if (!localization) return pluginInfo
+  
+  // Apply top-level localizations
+  if (localization.Name) {
+    pluginInfo.name = localization.Name
+  }
+  if (localization.Description) {
+    pluginInfo.description = localization.Description
+  }
+  if (localization.Category) {
+    pluginInfo.category = localization.Category
+  }
+  
+  // Apply action-specific localizations
+  // Each action can have its own localization keyed by UUID
+  pluginInfo.actions = pluginInfo.actions.map((action) => {
+    const actionLocalization = localization[action.uuid]
+    if (actionLocalization) {
+      return {
+        ...action,
+        name: actionLocalization.Name || action.name,
+        tooltip: actionLocalization.Tooltip || action.tooltip,
+      }
+    }
+    return action
+  })
+  
+  return pluginInfo
+}
+
+function discoverPlugins(rootPath, logger = () => {}, language = "en") {
+  logger("DISCOVERY", `Starting plugin discovery in: ${rootPath} (language: ${language})`)
   
   if (!fs.existsSync(rootPath)) {
     logger("DISCOVERY", `Plugin root path does not exist: ${rootPath}`)
@@ -167,9 +236,16 @@ function discoverPlugins(rootPath, logger = () => {}) {
     const windowsMonitoring = ensureArray(applicationsToMonitor.windows)
 
     const pluginUuid = manifest.UUID || `plugin.${entry.name}`
+    
+    // Load localization file for the specified language
+    const localization = loadLocalization(pluginRoot, language)
+    if (localization) {
+      logger("DISCOVERY", `Loaded ${language}.json localization for plugin: ${entry.name}`)
+    }
+    
     logger("DISCOVERY", `Successfully discovered plugin: ${manifest.Name} (UUID: ${pluginUuid}, Version: ${manifest.Version}, Actions: ${actions.length})`)
 
-    const pluginInfo = {
+    let pluginInfo = {
       folder: entry.name,
       manifestPath: path.join(pluginRoot, "manifest.json"),
       name: manifest.Name,
@@ -209,6 +285,9 @@ function discoverPlugins(rootPath, logger = () => {}) {
       })),
       monitoredApps: windowsMonitoring.map((name) => String(name).toLowerCase()),
     }
+
+    // Apply localization overrides if available
+    pluginInfo = applyLocalization(pluginInfo, localization)
 
     result.push(pluginInfo)
   }

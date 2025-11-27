@@ -14,6 +14,7 @@ contextBridge.exposeInMainWorld("electron", {
   forceHideOverlay: () => ipcRenderer.send("force-hide-overlay"),
   toggleSetup: () => ipcRenderer.send("toggle-setup"),
   getHostState: async () => ipcRenderer.invoke("host:get-state"),
+  getHostVisualState: async () => ipcRenderer.invoke("host:get-visual-state"),
   createHostContext: async (payload) => ipcRenderer.invoke("host:create-context", payload),
   sendHostEvent: async (payload) => ipcRenderer.invoke("host:send-event", payload),
   onHostEvent: (callback) => {
@@ -28,5 +29,25 @@ contextBridge.exposeInMainWorld("electron", {
   },
   notifyInspectorVisibility: ({ context, visible }) =>
     ipcRenderer.send("host:inspector-visibility", { context, visible }),
+  selectIconFile: async () => ipcRenderer.invoke("select-icon-file"),
+  // Notification window methods
+  onNotification: (callback) => {
+    const listener = (event, data) => callback(data)
+    ipcRenderer.on("show-notification", listener)
+    return () => ipcRenderer.off("show-notification", listener)
+  },
+  onNotificationConfig: (callback) => {
+    const listener = (event, data) => callback(data)
+    ipcRenderer.on("notification-config", listener)
+    return () => ipcRenderer.off("notification-config", listener)
+  },
+  onDismissNotification: (callback) => {
+    const listener = (event, data) => callback(data)
+    ipcRenderer.on("dismiss-notification", listener)
+    return () => ipcRenderer.off("dismiss-notification", listener)
+  },
+  getNotificationConfig: async () => ipcRenderer.invoke("get-notification-config"),
+  hideNotification: () => ipcRenderer.send("hide-notification"),
+  dismissNotification: (id) => ipcRenderer.send("dismiss-notification", { id }),
 })
 

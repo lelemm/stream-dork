@@ -1,21 +1,24 @@
-import { useCallback, useEffect, useMemo, useRef } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import type { GridButton } from "@/lib/types"
 import type { HostState, HostActionDescriptor, HostPluginDescriptor } from "@/types/electron"
+import { useDeckStore } from "@/lib/deck-store"
+import { IconSelector } from "@/components/icon-selector"
+import { Trash2, Type } from "lucide-react"
 
 type WebviewTag = (HTMLElement & { executeJavaScript: (code: string) => Promise<any> }) | null
 
-const DEFAULT_DEVICE_ID = "fake-device-0"
+const DEFAULT_DEVICE_ID = "stream-dork-host"
 
 interface PropertyInspectorPanelProps {
   selectedButton: GridButton | null
   hostState: HostState | null
 }
 
-function buildInspectorInfo(plugin: HostPluginDescriptor | undefined) {
+function buildInspectorInfo(plugin: HostPluginDescriptor | undefined, language: string) {
   return {
     application: {
       font: "Segoe UI",
-      language: navigator.language || "en",
+      language, // Use configured language for plugin i18n
       platform: "windows",
       platformVersion: navigator.userAgent,
       version: "stream-dork",
@@ -79,6 +82,11 @@ export function PropertyInspectorPanel({ selectedButton, hostState }: PropertyIn
   const webviewRef = useRef<WebviewTag>(null)
   const lastHandshakeId = useRef<string | null>(null)
   const isWebviewReadyRef = useRef<boolean>(false)
+  
+  const { updateButton, removeButton, setSelectedButton } = useDeckStore()
+  
+  // Local state for title input
+  const [localTitle, setLocalTitle] = useState(selectedButton?.label || "")
 
   const pluginUuid = selectedButton?.action?.pluginUuid
   const actionUuid = selectedButton?.action?.actionUuid
@@ -120,6 +128,14 @@ export function PropertyInspectorPanel({ selectedButton, hostState }: PropertyIn
     [hostState, context],
   )
 
+  // Get icon libraries
+  const iconLibraries = hostState?.iconLibraries || []
+
+  // Sync local title with selected button
+  useEffect(() => {
+    setLocalTitle(selectedButton?.label || "")
+  }, [selectedButton?.id, selectedButton?.label])
+
   // Store connection parameters in refs to avoid recreating callback
   const connectionParamsRef = useRef<{
     port: number
@@ -140,7 +156,8 @@ export function PropertyInspectorPanel({ selectedButton, hostState }: PropertyIn
     }
 
     const inspectorUUID = `${context}-pi`
-    const info = buildInspectorInfo(plugin)
+    const language = hostState.language || "en" // Use configured language for plugin i18n
+    const info = buildInspectorInfo(plugin, language)
     const actionInfo = buildActionInfo(context, contextEntry, actionDescriptor)
 
     connectionParamsRef.current = {
@@ -152,7 +169,7 @@ export function PropertyInspectorPanel({ selectedButton, hostState }: PropertyIn
       info,
       actionInfo,
     }
-  }, [hostState?.port, context, pluginUuid, actionUuid, plugin, contextEntry, actionDescriptor])
+  }, [hostState?.port, hostState?.language, context, pluginUuid, actionUuid, plugin, contextEntry, actionDescriptor])
 
   const handleDomReady = useCallback(() => {
     const webview = webviewRef.current
@@ -292,6 +309,29 @@ export function PropertyInspectorPanel({ selectedButton, hostState }: PropertyIn
     }
   }, [context])
 
+  // Handle icon change
+  const handleIconChange = useCallback((iconDataUrl: string) => {
+    if (selectedButton) {
+      updateButton(selectedButton.id, { icon: iconDataUrl })
+    }
+  }, [selectedButton, updateButton])
+
+  // Handle title change with debounce
+  const handleTitleChange = useCallback((newTitle: string) => {
+    setLocalTitle(newTitle)
+    if (selectedButton) {
+      updateButton(selectedButton.id, { label: newTitle })
+    }
+  }, [selectedButton, updateButton])
+
+  // Handle delete button
+  const handleDelete = useCallback(() => {
+    if (selectedButton) {
+      removeButton(selectedButton.id)
+      setSelectedButton(null)
+    }
+  }, [selectedButton, removeButton, setSelectedButton])
+
   if (!selectedButton) {
     return (
       <div className="flex h-full items-center justify-center text-xs text-muted-foreground">
@@ -300,33 +340,72 @@ export function PropertyInspectorPanel({ selectedButton, hostState }: PropertyIn
     )
   }
 
-  if (!propertyInspectorPath) {
-    return (
-      <div className="flex h-full items-center justify-center text-xs text-muted-foreground">
-        This action has no property inspector configured.
-      </div>
-    )
-  }
+  // Get action category (for header display)
+  const actionCategory = plugin?.name || "Action"
+  const actionName = actionDescriptor?.name || selectedButton.action?.name || "Unknown Action"
 
   return (
-    <div className="h-full w-full overflow-hidden rounded border border-border bg-muted/50">
-      {inspectorUrl && webviewKey ? (
-        <div className="h-full w-full">
-          <webview 
-            key={webviewKey}
-            ref={webviewRef} 
-            src={inspectorUrl} 
-            className="h-full w-full"
-            webpreferences="devTools=yes, nodeIntegration=no, contextIsolation=yes, backgroundThrottling=no"
-            partition="persist:property-inspector"
-            {...({ allowpopups: "true" } as React.HTMLAttributes<HTMLElement>)}
+    <div className="h-full flex flex-col overflow-hidden">
+      {/* Header with action name and delete button */}
+      <div className="flex items-center justify-between px-4 py-2 border-b border-border bg-muted/30">
+        <div className="text-sm">
+          <span className="text-muted-foreground">{actionCategory}: </span>
+          <span className="font-medium text-foreground">{actionName}</span>
+        </div>
+        <button
+          onClick={handleDelete}
+          className="p-1.5 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
+          title="Delete action"
+        >
+          <Trash2 className="w-4 h-4" />
+        </button>
+      </div>
+
+      {/* Icon and Title Configuration */}
+      <div className="flex items-start gap-4 px-4 py-3 border-b border-border">
+        {/* Icon Selector */}
+        <IconSelector
+          currentIcon={selectedButton.icon}
+          iconLibraries={iconLibraries}
+          onIconSelect={handleIconChange}
+        />
+
+        {/* Title Input */}
+        <div className="flex-1">
+          <label className="flex items-center gap-2 text-xs text-muted-foreground mb-1.5">
+            <Type className="w-3 h-3" />
+            Title
+          </label>
+          <input
+            type="text"
+            value={localTitle}
+            onChange={(e) => handleTitleChange(e.target.value)}
+            placeholder="Enter title..."
+            className="w-full px-3 py-2 rounded-md border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
           />
         </div>
-      ) : (
-        <div className="flex h-full items-center justify-center text-xs text-muted-foreground">
-          Unable to load property inspector.
-        </div>
-      )}
+      </div>
+
+      {/* Plugin Property Inspector */}
+      <div className="flex-1 overflow-hidden">
+        {propertyInspectorPath && inspectorUrl && webviewKey ? (
+          <div className="h-full w-full">
+            <webview 
+              key={webviewKey}
+              ref={webviewRef} 
+              src={inspectorUrl} 
+              className="h-full w-full"
+              webpreferences="devTools=yes, nodeIntegration=no, contextIsolation=yes, backgroundThrottling=no"
+              partition="persist:property-inspector"
+              {...({ allowpopups: "true" } as React.HTMLAttributes<HTMLElement>)}
+            />
+          </div>
+        ) : (
+          <div className="flex h-full items-center justify-center text-xs text-muted-foreground">
+            This action has no additional configuration.
+          </div>
+        )}
+      </div>
     </div>
   )
 }

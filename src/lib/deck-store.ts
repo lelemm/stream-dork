@@ -1,5 +1,5 @@
 import { create } from "zustand"
-import type { DeckConfig, GridButton, OverlayPosition, AnimationDirection, AnimationStartCorner, PanelSizes } from "./types"
+import type { DeckConfig, GridButton, OverlayPosition, AnimationDirection, AnimationStartCorner, PanelSizes, NotificationSettings } from "./types"
 
 const defaultConfig: DeckConfig = {
   rows: 3,
@@ -30,9 +30,31 @@ const defaultConfig: DeckConfig = {
     rightPanel: 22,
     bottomPanel: 35,
   },
+  // Plugin language for i18n
+  language: "en",
+  // Notification settings
+  notification: {
+    enabled: true,
+    dismissOnClick: false,
+    autoDismissSeconds: 5,
+    fanDirection: "vertical",
+    alwaysFanOut: false,
+    clickThrough: false,
+    hoverOpacity: 100,
+  },
 }
 
+// Flag to track whether the config has been loaded from main process
+// This prevents race conditions where ResizablePanelGroup triggers onLayout
+// before the actual config is fetched, which would overwrite saved buttons
+let configLoadedFromMain = false
+
 const pushUpdateToMain = (config: DeckConfig) => {
+  // Don't push updates until we've loaded the config from main
+  // This prevents overwriting saved config with default empty values
+  if (!configLoadedFromMain) {
+    return
+  }
   if (typeof window !== "undefined" && typeof window.electron?.updateConfig === "function") {
     window.electron.updateConfig(config).catch(() => {
       /* Best-effort sync */
@@ -63,6 +85,8 @@ interface DeckStore {
   // Auto-dismiss settings
   setAutoDismissEnabled: (enabled: boolean) => void
   setAutoDismissDelaySeconds: (seconds: number) => void
+  // Notification settings
+  setNotificationSettings: (settings: NotificationSettings) => void
   // Panel sizes
   setPanelSizes: (sizes: PanelSizes) => void
   resetPanelSizes: () => void
@@ -86,6 +110,8 @@ export const useDeckStore = create<DeckStore>((set, get) => ({
   selectedButton: null,
 
   setConfigFromMain: (newConfig) => {
+    // Mark that we've received config from main, so future updates can be pushed
+    configLoadedFromMain = true
     set({ config: { ...defaultConfig, ...newConfig } })
   },
 
@@ -219,6 +245,14 @@ export const useDeckStore = create<DeckStore>((set, get) => ({
   setAutoDismissDelaySeconds: (seconds) => {
     set((state) => {
       const updatedConfig = { ...state.config, autoDismissDelaySeconds: seconds }
+      pushUpdateToMain(updatedConfig)
+      return { config: updatedConfig }
+    })
+  },
+
+  setNotificationSettings: (settings) => {
+    set((state) => {
+      const updatedConfig = { ...state.config, notification: settings }
       pushUpdateToMain(updatedConfig)
       return { config: updatedConfig }
     })

@@ -18,9 +18,40 @@ function OverlayPage() {
   useEffect(() => {
     let unsubscribe: (() => void) | undefined
     if (typeof window !== "undefined") {
-      window.electron?.getConfig().then((cfg) => {
+      // Load config first, then apply visual state overrides from the host
+      window.electron?.getConfig().then(async (cfg) => {
         if (cfg) {
           setConfigFromMain(cfg)
+          
+          // After config is loaded, fetch and apply visual state from host
+          // This ensures plugin-set images/titles/states are applied when overlay opens
+          try {
+            const visualState = await window.electron?.getHostVisualState()
+            if (visualState) {
+              Object.entries(visualState).forEach(([context, visual]) => {
+                if (visual.image) {
+                  updateButtonByContext(context, (button) => ({
+                    ...button,
+                    icon: visual.image,
+                  }))
+                }
+                if (typeof visual.title === "string") {
+                  updateButtonByContext(context, (button) => ({
+                    ...button,
+                    label: visual.title,
+                  }))
+                }
+                if (typeof visual.state === "number") {
+                  updateButtonByContext(context, (button) => ({
+                    ...button,
+                    action: button.action ? { ...button.action, state: visual.state } : button.action,
+                  }))
+                }
+              })
+            }
+          } catch (err) {
+            console.error("Failed to load visual state:", err)
+          }
         }
       })
 
@@ -32,7 +63,7 @@ function OverlayPage() {
     return () => {
       unsubscribe?.()
     }
-  }, [setConfigFromMain])
+  }, [setConfigFromMain, updateButtonByContext])
 
   useEffect(() => {
     const handleHostEvent = (message) => {

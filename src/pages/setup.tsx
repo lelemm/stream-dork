@@ -6,6 +6,7 @@ import { useDeckStore } from "@/lib/deck-store"
 import { ButtonGrid } from "@/components/button-grid"
 import { ButtonConfigPanel } from "@/components/button-config-panel"
 import { GridSettings } from "@/components/grid-settings"
+import { NotificationSettings } from "@/components/notification-settings"
 import { HostDebugPanel } from "@/components/host-debug-panel"
 import { PropertyInspectorPanel } from "@/components/property-inspector-panel"
 import { UnifiedActionsPanel } from "@/components/unified-actions-panel"
@@ -14,7 +15,8 @@ import {
   ResizablePanel,
   ResizableHandle,
 } from "@/components/ui/resizable"
-import { Settings } from "lucide-react"
+import { Settings, Search } from "lucide-react"
+import { Input } from "@/components/ui/input"
 import type { HostState } from "@/types/electron"
 
 function SetupPage() {
@@ -22,6 +24,7 @@ function SetupPage() {
   const { config, addButton, setConfigFromMain, selectedButton, setPanelSizes } = useDeckStore()
   const [hostState, setHostState] = useState<HostState | null>(null)
   const [showControlPanel, setShowControlPanel] = useState(false)
+  const [actionFilter, setActionFilter] = useState("")
 
   const handleDrop = async (row: number, col: number) => {
     if (!draggedAction) return
@@ -162,8 +165,11 @@ function SetupPage() {
           >
             {/* Left Sidebar - Grid Settings */}
             <ResizablePanel defaultSize={leftPanelSize} minSize={15} maxSize={35}>
-              <aside className="h-full border-r border-border bg-card p-4 overflow-y-auto">
+              <aside className="h-full border-r border-border bg-card p-4 overflow-y-auto space-y-6">
                 <GridSettings />
+                <div className="border-t border-border pt-4">
+                  <NotificationSettings />
+                </div>
               </aside>
             </ResizablePanel>
 
@@ -180,10 +186,30 @@ function SetupPage() {
 
             {/* Right Sidebar - Available Actions */}
             <ResizablePanel defaultSize={rightPanelSize} minSize={15} maxSize={40}>
-              <aside className="h-full border-l border-border bg-card p-4 overflow-y-auto">
-                <UnifiedActionsPanel plugins={hostState?.plugins || []} onDragStart={setDraggedAction} />
+              <aside className="h-full border-l border-border bg-card p-4 overflow-y-auto flex flex-col">
+                <div className="mb-3 flex-shrink-0">
+                  <div className="relative">
+                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                    <Input
+                      type="text"
+                      placeholder="Filter actions..."
+                      value={actionFilter}
+                      onChange={(e) => setActionFilter(e.target.value)}
+                      className="pl-8"
+                    />
+                  </div>
+                </div>
+                <div className="flex-1 overflow-y-auto">
+                  <UnifiedActionsPanel
+                    plugins={hostState?.plugins || []}
+                    onDragStart={setDraggedAction}
+                    filter={actionFilter}
+                  />
+                </div>
                 {showControlPanel && (
-                  <HostDebugPanel hostState={hostState} refreshHostState={refreshHostState} />
+                  <div className="flex-shrink-0 mt-4">
+                    <HostDebugPanel hostState={hostState} refreshHostState={refreshHostState} />
+                  </div>
                 )}
               </aside>
             </ResizablePanel>

@@ -21,6 +21,7 @@ export default defineConfig({
       input: {
         setup: resolve(__dirname, "src/pages/setup.html"),
         overlay: resolve(__dirname, "src/pages/overlay.html"),
+        notification: resolve(__dirname, "src/pages/notification.html"),
       },
       output: {
         entryFileNames: "js/[name].js",

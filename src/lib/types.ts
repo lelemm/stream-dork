@@ -2,6 +2,9 @@ export type ActionType = "hotkey" | "open-url" | "run-command" | "multi-action" 
 
 export type OverlayPosition = "top-left" | "top-right" | "bottom-left" | "bottom-right" | "center" | "custom"
 
+// Notification fan direction
+export type NotificationFanDirection = "vertical" | "horizontal"
+
 // Animation start corner options
 export type AnimationStartCorner = "bottom-right" | "bottom-left" | "top-right" | "top-left" | "center"
 
@@ -39,6 +42,16 @@ export interface PanelSizes {
   bottomPanel?: number // percentage height
 }
 
+export interface NotificationSettings {
+  enabled: boolean
+  dismissOnClick: boolean
+  autoDismissSeconds: number
+  fanDirection: NotificationFanDirection
+  alwaysFanOut: boolean
+  clickThrough: boolean
+  hoverOpacity: number // 0-100, opacity when hovering (100 = fully opaque)
+}
+
 export interface DeckConfig {
   rows: number
   cols: number
@@ -64,4 +77,8 @@ export interface DeckConfig {
   autoDismissDelaySeconds?: number
   // Panel sizes
   panelSizes?: PanelSizes
+  // Plugin language for i18n (e.g., "en", "zh_CN")
+  language?: string
+  // Notification settings
+  notification?: NotificationSettings
 }

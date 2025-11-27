@@ -6,18 +6,40 @@ const {
   globalShortcut,
   ipcMain,
   nativeImage,
+  dialog,
 } = require("electron")
 const path = require("path")
 const fs = require("fs")
 const { discoverPlugins } = require("./host/plugin-discovery.cjs")
+const { discoverIconLibraries } = require("./host/icon-library-discovery.cjs")
 const { StreamDeckHost } = require("./host/streamdeck-host.cjs")
 
 // Parse command line arguments
+// In packaged apps, process.argv[0] is the executable, process.argv[1] might be the app path
+// User arguments start from process.argv[2], but we should check all args to be safe
+const allArgs = process.argv
 const args = process.argv.slice(2)
-const showControlPanel = args.some(arg => 
-  arg === '--stream-dork-control-panel=1' || 
-  arg === '--stream-dork-control-panel'
-)
+
+// Helper to check if an argument matches (case-insensitive, handles =1 and standalone)
+function hasFlag(argList, flagName) {
+  return argList.some(arg => {
+    if (typeof arg !== 'string') return false
+    const lowerArg = arg.toLowerCase()
+    const lowerFlag = flagName.toLowerCase()
+    return lowerArg === lowerFlag || 
+           lowerArg === `${lowerFlag}=1` ||
+           lowerArg.startsWith(`${lowerFlag}=`)
+  })
+}
+
+const showControlPanel = hasFlag(allArgs, '--stream-dork-control-panel')
+const enableFileLogging = hasFlag(allArgs, '--stream-dork-file-logging')
+
+// Debug: Always log what we received (before app is ready, use console directly)
+console.log('[DEBUG] All process.argv:', JSON.stringify(process.argv))
+console.log('[DEBUG] Parsed args (slice 2):', JSON.stringify(args))
+console.log('[DEBUG] File logging flag detected:', enableFileLogging)
+console.log('[DEBUG] Control panel flag detected:', showControlPanel)
 
 // Enable Chrome DevTools Protocol remote debugging on port 23519
 // This allows debugging Property Inspectors at http://localhost:23519
@@ -39,9 +61,17 @@ app.commandLine.appendSwitch(
   `http://localhost:${REMOTE_DEBUGGING_PORT}`,
 )
 
-const APP_LOG_DIR = path.join(app.getPath("userData"), "logs")
+// APP_LOG_DIR will be initialized after app is ready
+let APP_LOG_DIR = null
 let currentLogDate = null
 let currentLogPath = null
+
+function getAppLogDir() {
+  if (!APP_LOG_DIR) {
+    APP_LOG_DIR = path.join(app.getPath("userData"), "logs")
+  }
+  return APP_LOG_DIR
+}
 
 const rendererLogLevelMap = {
   0: "LOG",
@@ -66,8 +96,9 @@ function safeStringify(value) {
 }
 
 function ensureLogDirectory() {
-  if (!fs.existsSync(APP_LOG_DIR)) {
-    fs.mkdirSync(APP_LOG_DIR, { recursive: true })
+  const logDir = getAppLogDir()
+  if (!fs.existsSync(logDir)) {
+    fs.mkdirSync(logDir, { recursive: true })
   }
 }
 
@@ -75,7 +106,8 @@ function getDailyLogPath() {
   const today = new Date().toISOString().split("T")[0]
   if (currentLogDate !== today || currentLogPath === null) {
     currentLogDate = today
-    currentLogPath = path.join(APP_LOG_DIR, `${today}.txt`)
+    const logDir = getAppLogDir()
+    currentLogPath = path.join(logDir, `${today}.txt`)
   }
 
   ensureLogDirectory()
@@ -83,6 +115,9 @@ function getDailyLogPath() {
 }
 
 function appendLog(level, message) {
+  if (!enableFileLogging) {
+    return
+  }
   const logLine = `${new Date().toISOString()} [${level}] ${message}\n`
   try {
     fs.appendFileSync(getDailyLogPath(), logLine, "utf-8")
@@ -92,6 +127,9 @@ function appendLog(level, message) {
 }
 
 function hookConsole() {
+  if (!enableFileLogging) {
+    return
+  }
   consoleMethods.forEach((method) => {
     rawConsole[method] = console[method].bind(console)
     console[method] = (...args) => {
@@ -140,7 +178,11 @@ app.on("browser-window-created", (event, window) => {
 const PLUGIN_ROOT = app.isPackaged
   ? path.join(process.resourcesPath, "plugins")
   : path.join(__dirname, "..", "plugins")
+const ICON_LIBRARY_ROOT = app.isPackaged
+  ? path.join(process.resourcesPath, "icons")
+  : path.join(__dirname, "..", "icons")
 const HOST_STATE_FILE = path.join(app.getPath("userData"), "host-state.json")
+const CONFIG_FILE = path.join(app.getPath("userData"), "config.json")
 
 function broadcastHostEvent(message) {
   const windows = [setupWindow, overlayWindow]
@@ -149,18 +191,20 @@ function broadcastHostEvent(message) {
       win.webContents.send("host-event", message)
     }
   })
+  
+  // Forward relevant events to the notification window (if enabled)
+  if (message?.event && config.notification?.enabled !== false) {
+    const notificationEvents = ["setTitle", "setImage", "showOk", "showAlert"]
+    if (notificationEvents.includes(message.event)) {
+      showNotification(message)
+    }
+  }
 }
 
-const { plugins: discoveredPlugins, errors: pluginErrors } = discoverPlugins(PLUGIN_ROOT, appendLog)
-pluginErrors.forEach(({ folder, reason }) => appendLog("PLUGIN", `${folder}: ${reason}`))
-const streamDeckHost = new StreamDeckHost({
-  plugins: discoveredPlugins,
-  logger: appendLog,
-  notifyRenderer: broadcastHostEvent,
-  stateFile: HOST_STATE_FILE,
-})
-
-const CONFIG_FILE = path.join(app.getPath("userData"), "config.json")
+// These will be initialized after config is loaded
+let discoveredPlugins = []
+let discoveredIconLibraries = []
+let streamDeckHost = null
 
 const defaultConfig = {
   rows: 3,
@@ -191,12 +235,25 @@ const defaultConfig = {
     rightPanel: 22,
     bottomPanel: 35,
   },
+  // Plugin language for i18n
+  language: "en",
+  // Notification settings
+  notification: {
+    enabled: true,
+    dismissOnClick: false,
+    autoDismissSeconds: 5,
+    fanDirection: "vertical",
+    alwaysFanOut: false,
+    clickThrough: false,
+    hoverOpacity: 100,
+  },
 }
 
 let config = { ...defaultConfig }
 
 let setupWindow
 let overlayWindow
+let notificationWindow
 let tray
 let lastToggleTime = 0
 
@@ -258,6 +315,36 @@ function loadConfigFromDisk() {
   }
 }
 
+/**
+ * Initialize plugins and host after config is loaded.
+ * This allows us to use the configured language for plugin discovery i18n.
+ */
+function initializePluginsAndHost() {
+  const language = config.language || "en"
+  appendLog("CONFIG", `Initializing plugins with language: ${language}`)
+
+  // Discover plugins with the configured language for i18n
+  const { plugins, errors: pluginErrors } = discoverPlugins(PLUGIN_ROOT, appendLog, language)
+  discoveredPlugins = plugins
+  pluginErrors.forEach(({ folder, reason }) => appendLog("PLUGIN", `${folder}: ${reason}`))
+
+  // Discover icon libraries
+  const { iconLibraries, errors: iconLibraryErrors } = discoverIconLibraries(ICON_LIBRARY_ROOT, appendLog)
+  discoveredIconLibraries = iconLibraries
+  iconLibraryErrors.forEach(({ folder, reason }) => appendLog("ICON-LIBRARY", `${folder}: ${reason}`))
+
+  // Create the StreamDeck host with the configured language
+  streamDeckHost = new StreamDeckHost({
+    plugins: discoveredPlugins,
+    iconLibraries: discoveredIconLibraries,
+    logger: appendLog,
+    notifyRenderer: broadcastHostEvent,
+    stateFile: HOST_STATE_FILE,
+    language,
+    enableFileLogging,
+  })
+}
+
 function restorePluginContexts() {
   let changed = false
   config.buttons.forEach((button) => {
@@ -294,6 +381,7 @@ function updateConfig(partial) {
   config = { ...config, ...partial }
   saveConfigToDisk()
   broadcastConfig()
+  updateNotificationConfig()
   return config
 }
 
@@ -429,6 +517,109 @@ function hideOverlayWindow() {
 function forceHideOverlay() {
   if (overlayWindow && !overlayWindow.isDestroyed()) {
     overlayWindow.hide()
+  }
+}
+
+function createNotificationWindow() {
+  appendLog("WINDOW", "Creating notification window")
+  try {
+    const { screen } = require("electron")
+    const primaryDisplay = screen.getPrimaryDisplay()
+    const { width, height } = primaryDisplay.workAreaSize
+    
+    // Window needs to be large enough for expanded card stack (up to 5 cards)
+    // Each card is 72px + 8px gap, plus margin
+    const notificationWidth = 200
+    const notificationHeight = 500
+    const margin = 16
+
+    notificationWindow = new BrowserWindow({
+      width: notificationWidth,
+      height: notificationHeight,
+      x: width - notificationWidth - margin,
+      y: height - notificationHeight - margin,
+      show: false,
+      frame: false,
+      transparent: true,
+      backgroundColor: "#00000000",
+      alwaysOnTop: true,
+      skipTaskbar: true,
+      focusable: false,
+      resizable: false,
+      hasShadow: false,
+      webPreferences: {
+        preload: path.join(__dirname, "preload.js"),
+        contextIsolation: true,
+        nodeIntegration: false,
+      },
+    })
+
+    // Initially click-through, but we'll toggle this when notifications are shown
+    notificationWindow.setIgnoreMouseEvents(true, { forward: true })
+
+    loadRenderer(notificationWindow, "notification")
+    attachWindowLogging(notificationWindow, "NotificationWindow")
+  } catch (error) {
+    appendLog("ERROR", `createNotificationWindow failed: ${error.stack || error}`)
+    throw error
+  }
+
+  notificationWindow.on("close", (event) => {
+    if (!app.isQuiting) {
+      event.preventDefault()
+      notificationWindow.hide()
+    }
+  })
+}
+
+function showNotification(message) {
+  if (!notificationWindow || notificationWindow.isDestroyed()) {
+    createNotificationWindow()
+  }
+
+  // Build notification data from the host event
+  const { event, context, payload } = message
+  
+  // Get button info from config to include icon/title context
+  const button = config.buttons.find(
+    (btn) => btn.action?.context === context
+  )
+  
+  const notificationData = {
+    context,
+    event,
+    icon: payload?.image || button?.icon,
+    title: payload?.title || button?.label,
+    backgroundColor: button?.backgroundColor,
+    textColor: button?.textColor,
+    status: event === "showOk" ? "ok" : event === "showAlert" ? "alert" : undefined,
+  }
+
+  // Show the window and send the notification data
+  notificationWindow.showInactive() // Show without stealing focus
+  
+  // Handle click-through mode based on config
+  const clickThrough = config.notification?.clickThrough ?? false
+  notificationWindow.setIgnoreMouseEvents(clickThrough, { forward: true })
+  
+  notificationWindow.webContents.send("show-notification", notificationData)
+}
+
+function updateNotificationConfig() {
+  if (notificationWindow && !notificationWindow.isDestroyed()) {
+    notificationWindow.webContents.send("notification-config", config.notification)
+    
+    // Update click-through state
+    const clickThrough = config.notification?.clickThrough ?? false
+    notificationWindow.setIgnoreMouseEvents(clickThrough, { forward: true })
+  }
+}
+
+function hideNotification() {
+  if (notificationWindow && !notificationWindow.isDestroyed()) {
+    notificationWindow.hide()
+    // Re-enable click-through for when it's shown again
+    notificationWindow.setIgnoreMouseEvents(true, { forward: true })
   }
 }
 
@@ -573,12 +764,24 @@ app
   .whenReady()
   .then(() => {
     logAppEvent("app.whenReady")
+    if (enableFileLogging) {
+      const logDir = getAppLogDir()
+      appendLog("DEBUG", `📝 File logging enabled - logs will be written to: ${logDir}`)
+      console.log(`[File Logging] Enabled - Logs directory: ${logDir}`)
+    } else {
+      console.log("[File Logging] Disabled - Use --stream-dork-file-logging=1 to enable")
+    }
     appendLog("DEBUG", `🔧 Chrome DevTools Protocol enabled on http://localhost:${REMOTE_DEBUGGING_PORT}`)
     appendLog("DEBUG", `📋 Use this URL to debug Property Inspectors in your browser`)
+    
+    // Load config first, then initialize plugins with the configured language
     loadConfigFromDisk()
+    initializePluginsAndHost()
+    
     createAppMenu()
     showSetupWindow()
     createOverlayWindow()
+    createNotificationWindow()
     streamDeckHost.start()
     restorePluginContexts()
     broadcastConfig()
@@ -602,7 +805,9 @@ app.on("before-quit", () => {
   logAppEvent("before-quit")
   app.isQuiting = true
   globalShortcut.unregisterAll()
-  streamDeckHost.stop()
+  if (streamDeckHost) {
+    streamDeckHost.stop()
+  }
 })
 
 app.on("activate", () => {
@@ -610,6 +815,7 @@ app.on("activate", () => {
   if (BrowserWindow.getAllWindows().length === 0) {
     createSetupWindow()
     createOverlayWindow()
+    createNotificationWindow()
   }
 })
 
@@ -621,6 +827,7 @@ ipcMain.handle("get-config", () => {
 ipcMain.handle("get-app-flags", () => {
   return {
     showControlPanel,
+    fileLogging: enableFileLogging,
   }
 })
 
@@ -630,6 +837,7 @@ ipcMain.handle("update-config", (event, updates) => {
 })
 
 ipcMain.handle("host:get-state", () => streamDeckHost.getState())
+ipcMain.handle("host:get-visual-state", () => streamDeckHost.getVisualState())
 ipcMain.handle("host:create-context", (event, { pluginUuid, actionUuid, coordinates, context } = {}) => {
   return streamDeckHost.createContext(pluginUuid, actionUuid, coordinates, context)
 })
@@ -664,6 +872,58 @@ ipcMain.on("toggle-setup", () => {
     setupWindow.hide()
   } else {
     showSetupWindow()
+  }
+})
+
+ipcMain.on("hide-notification", () => {
+  hideNotification()
+})
+
+ipcMain.handle("get-notification-config", () => {
+  return config.notification
+})
+
+ipcMain.on("dismiss-notification", (event, { id }) => {
+  // Forward the dismiss request to the notification window
+  if (notificationWindow && !notificationWindow.isDestroyed()) {
+    notificationWindow.webContents.send("dismiss-notification", { id })
+  }
+})
+
+// Icon file selection dialog
+ipcMain.handle("select-icon-file", async () => {
+  const result = await dialog.showOpenDialog(setupWindow, {
+    title: "Select Icon",
+    filters: [
+      { name: "Images", extensions: ["png", "jpg", "jpeg", "gif", "svg", "webp"] },
+    ],
+    properties: ["openFile"],
+  })
+
+  if (result.canceled || result.filePaths.length === 0) {
+    return null
+  }
+
+  const filePath = result.filePaths[0]
+  
+  // Load the file and convert to data URL
+  try {
+    const ext = path.extname(filePath).toLowerCase()
+    const mimeTypes = {
+      ".png": "image/png",
+      ".svg": "image/svg+xml",
+      ".gif": "image/gif",
+      ".jpg": "image/jpeg",
+      ".jpeg": "image/jpeg",
+      ".webp": "image/webp",
+    }
+    const mimeType = mimeTypes[ext] || "application/octet-stream"
+    const fileData = fs.readFileSync(filePath)
+    const base64 = fileData.toString("base64")
+    return `data:${mimeType};base64,${base64}`
+  } catch (error) {
+    appendLog("ERROR", `Failed to read icon file: ${error.message}`)
+    return null
   }
 })
 

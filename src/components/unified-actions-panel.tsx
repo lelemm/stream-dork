@@ -22,9 +22,10 @@ interface PluginAction {
 interface UnifiedActionsPanelProps {
   plugins: HostPluginDescriptor[]
   onDragStart: (action: PluginAction) => void
+  filter?: string
 }
 
-export function UnifiedActionsPanel({ plugins, onDragStart }: UnifiedActionsPanelProps) {
+export function UnifiedActionsPanel({ plugins, onDragStart, filter = "" }: UnifiedActionsPanelProps) {
   const [openPlugins, setOpenPlugins] = React.useState<Record<string, boolean>>({})
 
   // Initialize all plugins as open by default
@@ -44,10 +45,36 @@ export function UnifiedActionsPanel({ plugins, onDragStart }: UnifiedActionsPane
     setOpenPlugins((prev) => ({ ...prev, [uuid]: !prev[uuid] }))
   }
 
+  // Filter plugins and actions based on filter text
+  const filterLower = filter.toLowerCase().trim()
+  const filteredPlugins = React.useMemo(() => {
+    if (!filterLower) return plugins
+
+    return plugins
+      .map((plugin) => {
+        const filteredActions = plugin.actions.filter(
+          (action) =>
+            action.name.toLowerCase().includes(filterLower) ||
+            action.tooltip?.toLowerCase().includes(filterLower) ||
+            plugin.name.toLowerCase().includes(filterLower)
+        )
+        return { ...plugin, actions: filteredActions }
+      })
+      .filter((plugin) => plugin.actions.length > 0)
+  }, [plugins, filterLower])
+
   if (plugins.length === 0) {
     return (
       <div className="rounded border border-border bg-muted/50 p-3 text-xs text-muted-foreground">
         No plugins loaded yet. Add plugins to your plugins folder.
+      </div>
+    )
+  }
+
+  if (filteredPlugins.length === 0 && filterLower) {
+    return (
+      <div className="rounded border border-border bg-muted/50 p-3 text-xs text-muted-foreground">
+        No actions match "{filter}".
       </div>
     )
   }
@@ -59,7 +86,7 @@ export function UnifiedActionsPanel({ plugins, onDragStart }: UnifiedActionsPane
       </div>
       
       <div className="flex flex-col gap-2">
-        {plugins.map((plugin) => (
+        {filteredPlugins.map((plugin) => (
           <Collapsible
             key={plugin.uuid}
             open={openPlugins[plugin.uuid] ?? true}
