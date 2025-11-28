@@ -4,16 +4,54 @@ import React from "react"
 import { createRoot } from "react-dom/client"
 import { OverlayButtonGrid } from "@/components/overlay-button-grid"
 import { useDeckStore } from "@/lib/deck-store"
-import { useEffect, useMemo, useRef } from "react"
+import { useEffect, useMemo, useRef, useCallback } from "react"
+
+// Visual state stored separately from React state for double-buffering
+export interface ContextVisualState {
+  icon?: string
+  title?: string
+  status?: "ok" | "alert"
+  state?: number
+}
+
+// Export for use in overlay-button-grid
+export type VisualStateRef = React.MutableRefObject<Map<string, ContextVisualState>>
 
 function OverlayPage() {
   const {
     config,
     setConfigFromMain,
-    updateButtonByContext,
-    setButtonStatusByContext,
   } = useDeckStore()
+  
+  // Double-buffer: visual state stored in ref, not React state
+  // This prevents React re-renders on every setImage/setTitle event
+  const visualStateRef = useRef<Map<string, ContextVisualState>>(new Map())
+  
+  // Refs for status timers (clear status after timeout)
   const statusTimers = useRef(new Map<string, ReturnType<typeof setTimeout>>())
+
+  // Update visual state without triggering React re-render
+  const updateVisualState = useCallback((context: string, updates: Partial<ContextVisualState>) => {
+    const current = visualStateRef.current.get(context) || {}
+    visualStateRef.current.set(context, { ...current, ...updates })
+  }, [])
+
+  // Clear status after timeout
+  const setStatusWithTimeout = useCallback((context: string, status: "ok" | "alert") => {
+    updateVisualState(context, { status })
+    
+    // Clear existing timer
+    clearTimeout(statusTimers.current.get(context))
+    
+    // Set new timer to clear status
+    statusTimers.current.set(
+      context,
+      setTimeout(() => {
+        updateVisualState(context, { status: undefined })
+        statusTimers.current.delete(context)
+      }, 1200)
+    )
+  }, [updateVisualState])
 
   useEffect(() => {
     let unsubscribe: (() => void) | undefined
@@ -23,29 +61,35 @@ function OverlayPage() {
         if (cfg) {
           setConfigFromMain(cfg)
           
+          // If allScenesAlwaysActive is enabled, send willAppear for all scenes' buttons on startup
+          if (cfg.notification?.allScenesAlwaysActive && cfg.scenes) {
+            cfg.scenes.forEach((scene) => {
+              scene.buttons.forEach((btn) => {
+                if (btn.action?.context) {
+                  window.electron?.sendHostEvent({ context: btn.action.context, eventName: "willAppear" })
+                }
+              })
+            })
+          }
+          
           // After config is loaded, fetch and apply visual state from host
           // This ensures plugin-set images/titles/states are applied when overlay opens
           try {
-            const visualState = await window.electron?.getHostVisualState()
-            if (visualState) {
-              Object.entries(visualState).forEach(([context, visual]) => {
+            const hostVisualState = await window.electron?.getHostVisualState()
+            if (hostVisualState) {
+              Object.entries(hostVisualState).forEach(([context, visual]) => {
+                const updates: Partial<ContextVisualState> = {}
                 if (visual.image) {
-                  updateButtonByContext(context, (button) => ({
-                    ...button,
-                    icon: visual.image,
-                  }))
+                  updates.icon = visual.image
                 }
                 if (typeof visual.title === "string") {
-                  updateButtonByContext(context, (button) => ({
-                    ...button,
-                    label: visual.title,
-                  }))
+                  updates.title = visual.title
                 }
                 if (typeof visual.state === "number") {
-                  updateButtonByContext(context, (button) => ({
-                    ...button,
-                    action: button.action ? { ...button.action, state: visual.state } : button.action,
-                  }))
+                  updates.state = visual.state
+                }
+                if (Object.keys(updates).length > 0) {
+                  updateVisualState(context, updates)
                 }
               })
             }
@@ -63,56 +107,33 @@ function OverlayPage() {
     return () => {
       unsubscribe?.()
     }
-  }, [setConfigFromMain, updateButtonByContext])
+  }, [setConfigFromMain, updateVisualState])
 
+  // Handle host events using double-buffer pattern
   useEffect(() => {
-    const handleHostEvent = (message) => {
+    const handleHostEvent = (message: { event?: string; context?: string; payload?: { title?: string; image?: string; state?: number } }) => {
       if (!message?.context) return
       const { event, context, payload } = message
+      
       switch (event) {
         case "setTitle":
           if (typeof payload?.title === "string") {
-            updateButtonByContext(context, (button) => ({
-              ...button,
-              label: payload.title,
-            }))
+            updateVisualState(context, { title: payload.title })
           }
           break
         case "setImage":
           if (typeof payload?.image === "string") {
-            updateButtonByContext(context, (button) => ({
-              ...button,
-              icon: payload.image,
-            }))
+            updateVisualState(context, { icon: payload.image })
           }
           break
         case "setState":
-          updateButtonByContext(context, (button) => ({
-            ...button,
-            action: button.action ? { ...button.action, state: payload?.state ?? 0 } : button.action,
-          }))
+          updateVisualState(context, { state: payload?.state ?? 0 })
           break
         case "showAlert":
-          updateButtonByContext(context, (button) => ({ ...button, status: "alert" }))
-          clearTimeout(statusTimers.current.get(context))
-          statusTimers.current.set(
-            context,
-            setTimeout(() => {
-              setButtonStatusByContext(context, undefined)
-              statusTimers.current.delete(context)
-            }, 1200),
-          )
+          setStatusWithTimeout(context, "alert")
           break
         case "showOk":
-          updateButtonByContext(context, (button) => ({ ...button, status: "ok" }))
-          clearTimeout(statusTimers.current.get(context))
-          statusTimers.current.set(
-            context,
-            setTimeout(() => {
-              setButtonStatusByContext(context, undefined)
-              statusTimers.current.delete(context)
-            }, 1200),
-          )
+          setStatusWithTimeout(context, "ok")
           break
         default:
           break
@@ -125,7 +146,7 @@ function OverlayPage() {
       statusTimers.current.forEach((timer) => clearTimeout(timer))
       statusTimers.current.clear()
     }
-  }, [updateButtonByContext, setButtonStatusByContext])
+  }, [updateVisualState, setStatusWithTimeout])
 
   // Note: Keyboard handling is now done by OverlayButtonGrid component
 
@@ -173,7 +194,7 @@ function OverlayPage() {
   return (
     <div className="h-screen w-screen relative bg-transparent">
       <div className="absolute" style={positionStyles}>
-        <OverlayButtonGrid />
+        <OverlayButtonGrid visualStateRef={visualStateRef} />
       </div>
     </div>
   )

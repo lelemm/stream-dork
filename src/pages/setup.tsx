@@ -1,7 +1,7 @@
 import "@/styles/global.css"
 
 import { createRoot } from "react-dom/client"
-import { useEffect, useState, useCallback } from "react"
+import { useEffect, useState, useCallback, useRef } from "react"
 import { useDeckStore } from "@/lib/deck-store"
 import { ButtonGrid } from "@/components/button-grid"
 import { ButtonConfigPanel } from "@/components/button-config-panel"
@@ -10,6 +10,7 @@ import { NotificationSettings } from "@/components/notification-settings"
 import { HostDebugPanel } from "@/components/host-debug-panel"
 import { PropertyInspectorPanel } from "@/components/property-inspector-panel"
 import { UnifiedActionsPanel } from "@/components/unified-actions-panel"
+import { SceneTabs } from "@/components/scene-tabs"
 import {
   ResizablePanelGroup,
   ResizablePanel,
@@ -21,10 +22,11 @@ import type { HostState } from "@/types/electron"
 
 function SetupPage() {
   const [draggedAction, setDraggedAction] = useState<any>(null)
-  const { config, addButton, setConfigFromMain, selectedButton, setPanelSizes } = useDeckStore()
+  const { config, addButton, setConfigFromMain, selectedButton, setPanelSizes, updateButtonByContext, setButtonStatusByContext } = useDeckStore()
   const [hostState, setHostState] = useState<HostState | null>(null)
   const [showControlPanel, setShowControlPanel] = useState(false)
   const [actionFilter, setActionFilter] = useState("")
+  const statusTimers = useRef(new Map<string, ReturnType<typeof setTimeout>>())
 
   const handleDrop = async (row: number, col: number) => {
     if (!draggedAction) return
@@ -112,6 +114,80 @@ function SetupPage() {
     }
   }
 
+  // Refresh host state when selected button changes to get fresh settings
+  useEffect(() => {
+    if (selectedButton?.action?.context) {
+      refreshHostState()
+    }
+  }, [selectedButton?.action?.context])
+
+  // Listen for host events (setImage, setTitle, showAlert, showOk) to show visual feedback
+  useEffect(() => {
+    const handleHostEvent = (message: { event?: string; context?: string; payload?: { title?: string; image?: string; state?: number; settings?: Record<string, unknown> } }) => {
+      if (!message?.context) return
+      const { event, context, payload } = message
+      switch (event) {
+        case "didReceiveSettings":
+          // Settings changed - refresh host state to get updated context settings
+          refreshHostState()
+          break
+        case "setTitle":
+          if (typeof payload?.title === "string") {
+            updateButtonByContext(context, (button) => ({
+              ...button,
+              label: payload.title!,
+            }))
+          }
+          break
+        case "setImage":
+          if (typeof payload?.image === "string") {
+            updateButtonByContext(context, (button) => ({
+              ...button,
+              icon: payload.image!,
+            }))
+          }
+          break
+        case "setState":
+          updateButtonByContext(context, (button) => ({
+            ...button,
+            action: button.action ? { ...button.action, state: payload?.state ?? 0 } : button.action,
+          }))
+          break
+        case "showAlert":
+          updateButtonByContext(context, (button) => ({ ...button, status: "alert" }))
+          clearTimeout(statusTimers.current.get(context))
+          statusTimers.current.set(
+            context,
+            setTimeout(() => {
+              setButtonStatusByContext(context, undefined)
+              statusTimers.current.delete(context)
+            }, 1200),
+          )
+          break
+        case "showOk":
+          updateButtonByContext(context, (button) => ({ ...button, status: "ok" }))
+          clearTimeout(statusTimers.current.get(context))
+          statusTimers.current.set(
+            context,
+            setTimeout(() => {
+              setButtonStatusByContext(context, undefined)
+              statusTimers.current.delete(context)
+            }, 1200),
+          )
+          break
+        default:
+          break
+      }
+    }
+
+    const unsubscribe = window.electron?.onHostEvent(handleHostEvent)
+    return () => {
+      unsubscribe?.()
+      statusTimers.current.forEach((timer) => clearTimeout(timer))
+      statusTimers.current.clear()
+    }
+  }, [updateButtonByContext, setButtonStatusByContext])
+
   const handleHorizontalLayoutChange = useCallback((sizes: number[]) => {
     if (sizes.length === 3) {
       setPanelSizes({
@@ -177,8 +253,11 @@ function SetupPage() {
 
             {/* Center - Button Grid */}
             <ResizablePanel defaultSize={100 - leftPanelSize - rightPanelSize} minSize={30}>
-              <main className="h-full overflow-auto bg-background">
-                <ButtonGrid isSetupMode fitToViewport onButtonDrop={handleDrop} />
+              <main className="h-full flex flex-col bg-background">
+                <SceneTabs />
+                <div className="flex-1 overflow-auto">
+                  <ButtonGrid isSetupMode fitToViewport onButtonDrop={handleDrop} />
+                </div>
               </main>
             </ResizablePanel>
 

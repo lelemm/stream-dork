@@ -44,7 +44,7 @@ console.log('[DEBUG] Control panel flag detected:', showControlPanel)
 // Enable Chrome DevTools Protocol remote debugging on port 23519
 // This allows debugging Property Inspectors at http://localhost:23519
 // Similar to the real Stream Deck's CEF remote debugging
-const REMOTE_DEBUGGING_PORT = 23519
+const REMOTE_DEBUGGING_PORT = 23520
 app.commandLine.appendSwitch("remote-debugging-port", String(REMOTE_DEBUGGING_PORT))
 
 // Chromium 94+ blocks DevTools WebSocket connections from arbitrary origins
@@ -175,9 +175,7 @@ app.on("browser-window-created", (event, window) => {
   appendLog("WINDOW", `Browser window created (id=${window.id})`)
 })
 
-const PLUGIN_ROOT = app.isPackaged
-  ? path.join(process.resourcesPath, "plugins")
-  : path.join(__dirname, "..", "plugins")
+const PLUGIN_ROOT = path.join(app.getPath("userData"), "plugins")
 const ICON_LIBRARY_ROOT = app.isPackaged
   ? path.join(process.resourcesPath, "icons")
   : path.join(__dirname, "..", "icons")
@@ -206,10 +204,52 @@ let discoveredPlugins = []
 let discoveredIconLibraries = []
 let streamDeckHost = null
 
+// Migration helper: convert old config to new scene-based structure
+function migrateConfig(config) {
+  // If already has scenes, return as-is
+  if (config.scenes && config.scenes.length > 0) {
+    // Ensure activeSceneId is set
+    if (!config.activeSceneId && config.scenes[0]) {
+      return { ...config, activeSceneId: config.scenes[0].id }
+    }
+    return config
+  }
+
+  // Migrate from old structure
+  const rows = config.rows ?? 3
+  const cols = config.cols ?? 5
+  const buttons = config.buttons ?? []
+  
+  const defaultScene = {
+    id: `scene-${Date.now()}`,
+    name: "Scene 1",
+    rows,
+    cols,
+    buttons,
+  }
+
+  return {
+    ...config,
+    scenes: [defaultScene],
+    activeSceneId: defaultScene.id,
+    // Keep legacy fields for backward compatibility during transition
+    rows,
+    cols,
+    buttons,
+  }
+}
+
 const defaultConfig = {
-  rows: 3,
-  cols: 5,
-  buttons: [],
+  scenes: [
+    {
+      id: "scene-default",
+      name: "Scene 1",
+      rows: 3,
+      cols: 5,
+      buttons: [],
+    },
+  ],
+  activeSceneId: "scene-default",
   gridSizePixels: 400,
   backgroundPadding: 8,
   backgroundColor: "#0a0a0a",
@@ -246,7 +286,11 @@ const defaultConfig = {
     alwaysFanOut: false,
     clickThrough: false,
     hoverOpacity: 100,
+    allScenesAlwaysActive: true,
   },
+  // Application settings
+  startWithWindows: false,
+  showSetupOnStart: true,
 }
 
 let config = { ...defaultConfig }
@@ -302,16 +346,27 @@ function ensureConfigDirectory() {
   }
 }
 
+function ensurePluginsDirectory() {
+  if (!fs.existsSync(PLUGIN_ROOT)) {
+    fs.mkdirSync(PLUGIN_ROOT, { recursive: true })
+    appendLog("CONFIG", `Created plugins directory: ${PLUGIN_ROOT}`)
+  }
+}
+
 function loadConfigFromDisk() {
   appendLog("CONFIG", "Loading configuration from disk")
   try {
     if (fs.existsSync(CONFIG_FILE)) {
       const raw = fs.readFileSync(CONFIG_FILE, "utf-8")
       const parsed = JSON.parse(raw)
-      config = { ...defaultConfig, ...parsed }
+      const merged = { ...defaultConfig, ...parsed }
+      config = migrateConfig(merged)
+    } else {
+      config = migrateConfig(defaultConfig)
     }
   } catch (error) {
     appendLog("ERROR", `loadConfigFromDisk failed: ${error.stack || error}`)
+    config = migrateConfig(defaultConfig)
   }
 }
 
@@ -322,6 +377,9 @@ function loadConfigFromDisk() {
 function initializePluginsAndHost() {
   const language = config.language || "en"
   appendLog("CONFIG", `Initializing plugins with language: ${language}`)
+
+  // Ensure plugins directory exists
+  ensurePluginsDirectory()
 
   // Discover plugins with the configured language for i18n
   const { plugins, errors: pluginErrors } = discoverPlugins(PLUGIN_ROOT, appendLog, language)
@@ -342,6 +400,166 @@ function initializePluginsAndHost() {
     stateFile: HOST_STATE_FILE,
     language,
     enableFileLogging,
+  })
+  
+  // Register the plugin launcher callbacks
+  streamDeckHost.onLaunchHtmlPlugin = launchHtmlPlugin
+  streamDeckHost.onLaunchJsPlugin = launchJsPlugin
+}
+
+// Track plugin BrowserWindows (for HTML and JS plugins)
+const pluginWindows = new Map()
+
+/**
+ * Launch an HTML-based plugin in a hidden BrowserWindow.
+ * HTML plugins connect to the WebSocket server just like native plugins.
+ */
+function launchHtmlPlugin(plugin, port, info) {
+  appendLog("HOST", `Creating hidden BrowserWindow for HTML plugin: ${plugin.name}`)
+  
+  const pluginWindow = new BrowserWindow({
+    width: 1,
+    height: 1,
+    show: false,
+    webPreferences: {
+      nodeIntegration: false,
+      contextIsolation: true,
+      webSecurity: true,
+      allowRunningInsecureContent: false,
+    },
+  })
+  
+  pluginWindows.set(plugin.uuid, pluginWindow)
+  
+  // Build the URL with query parameters that the plugin can read
+  const pluginUrl = new URL(`file://${plugin.codePath.replace(/\\/g, "/")}`)
+  
+  // Load the plugin HTML, then inject the connection script
+  pluginWindow.loadURL(pluginUrl.href).then(() => {
+    // Inject a script to connect to the WebSocket and call the SDK function
+    const injectScript = `
+      (function() {
+        // Wait for connectElgatoStreamDeckSocket to be defined
+        function waitForSdk() {
+          if (typeof window.connectElgatoStreamDeckSocket === "function") {
+            window.connectElgatoStreamDeckSocket(
+              ${port},
+              "${plugin.uuid}",
+              "registerPlugin",
+              ${JSON.stringify(JSON.stringify(info))},
+              ""
+            );
+            console.log("[Stream Dork] Plugin connected to host");
+          } else {
+            setTimeout(waitForSdk, 100);
+          }
+        }
+        waitForSdk();
+      })();
+    `
+    
+    pluginWindow.webContents.executeJavaScript(injectScript).catch((err) => {
+      appendLog("HOST", `Failed to inject connection script for ${plugin.name}: ${err.message}`)
+    })
+    
+    appendLog("HOST", `HTML plugin ${plugin.name} loaded successfully`)
+  }).catch((err) => {
+    appendLog("HOST", `Failed to load HTML plugin ${plugin.name}: ${err.message}`)
+    pluginWindow.close()
+    pluginWindows.delete(plugin.uuid)
+  })
+  
+  pluginWindow.on("closed", () => {
+    appendLog("HOST", `HTML plugin window closed: ${plugin.name}`)
+    pluginWindows.delete(plugin.uuid)
+  })
+  
+  // Log console messages from the plugin
+  pluginWindow.webContents.on("console-message", (event, level, message, line, sourceId) => {
+    const levelNames = ["verbose", "info", "warning", "error"]
+    appendLog("PLUGIN-CONSOLE", `[${plugin.name}] [${levelNames[level] || level}] ${message}`)
+  })
+}
+
+/**
+ * Launch a JavaScript-based plugin in a hidden BrowserWindow with Node.js integration.
+ * This allows running Node.js plugins using Electron's bundled Node runtime.
+ */
+function launchJsPlugin(plugin, port, info) {
+  appendLog("HOST", `Creating hidden BrowserWindow for JS plugin: ${plugin.name}`)
+  
+  const pluginDir = path.dirname(plugin.codePath)
+  const pluginFilename = path.basename(plugin.codePath)
+  
+  const pluginWindow = new BrowserWindow({
+    width: 1,
+    height: 1,
+    show: false,
+    webPreferences: {
+      nodeIntegration: true,
+      contextIsolation: false,
+      webSecurity: false, // Allow loading local files
+    },
+  })
+  
+  pluginWindows.set(plugin.uuid, pluginWindow)
+  
+  // Create a minimal HTML wrapper that loads the JS plugin
+  // The plugin runs in a Node.js environment within Electron
+  const wrapperHtml = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <title>${plugin.name}</title>
+    </head>
+    <body>
+      <script>
+        // Set up process.argv to match what plugins expect
+        process.argv = [
+          process.execPath,
+          "${pluginFilename.replace(/\\/g, "\\\\")}",
+          "-port", "${port}",
+          "-pluginUUID", "${plugin.uuid}",
+          "-registerEvent", "registerPlugin",
+          "-info", ${JSON.stringify(JSON.stringify(info))}
+        ];
+        
+        // Set working directory context
+        process.chdir("${pluginDir.replace(/\\/g, "\\\\")}");
+        
+        // Load the plugin
+        try {
+          require("${plugin.codePath.replace(/\\/g, "\\\\")}");
+          console.log("[Stream Dork] JS plugin loaded successfully");
+        } catch (err) {
+          console.error("[Stream Dork] Failed to load JS plugin:", err);
+        }
+      </script>
+    </body>
+    </html>
+  `
+  
+  // Load the wrapper HTML as a data URL
+  const dataUrl = `data:text/html;charset=utf-8,${encodeURIComponent(wrapperHtml)}`
+  
+  pluginWindow.loadURL(dataUrl).then(() => {
+    appendLog("HOST", `JS plugin ${plugin.name} loaded successfully`)
+  }).catch((err) => {
+    appendLog("HOST", `Failed to load JS plugin ${plugin.name}: ${err.message}`)
+    pluginWindow.close()
+    pluginWindows.delete(plugin.uuid)
+  })
+  
+  pluginWindow.on("closed", () => {
+    appendLog("HOST", `JS plugin window closed: ${plugin.name}`)
+    pluginWindows.delete(plugin.uuid)
+  })
+  
+  // Log console messages from the plugin
+  pluginWindow.webContents.on("console-message", (event, level, message, line, sourceId) => {
+    const levelNames = ["verbose", "info", "warning", "error"]
+    appendLog("PLUGIN-CONSOLE", `[${plugin.name}] [${levelNames[level] || level}] ${message}`)
   })
 }
 
@@ -378,10 +596,26 @@ function saveConfigToDisk() {
 }
 
 function updateConfig(partial) {
+  const oldStartWithWindows = config.startWithWindows
   config = { ...config, ...partial }
   saveConfigToDisk()
   broadcastConfig()
   updateNotificationConfig()
+  
+  // Handle startWithWindows setting change
+  if (partial.startWithWindows !== undefined && partial.startWithWindows !== oldStartWithWindows) {
+    const enabled = partial.startWithWindows === true
+    try {
+      app.setLoginItemSettings({
+        openAtLogin: enabled,
+        openAsHidden: false,
+      })
+      appendLog("CONFIG", `Start with Windows ${enabled ? "enabled" : "disabled"}`)
+    } catch (error) {
+      appendLog("ERROR", `Failed to set login item settings: ${error.stack || error}`)
+    }
+  }
+  
   return config
 }
 
@@ -468,6 +702,9 @@ function createOverlayWindow() {
 
     loadRenderer(overlayWindow, "overlay")
     attachWindowLogging(overlayWindow, "OverlayWindow")
+    
+    // Make overlay click-through by default (only interact with actual button grid)
+    overlayWindow.setIgnoreMouseEvents(true, { forward: true })
   } catch (error) {
     appendLog("ERROR", `createOverlayWindow failed: ${error.stack || error}`)
     throw error
@@ -501,6 +738,8 @@ function showOverlayWindow() {
   }
 
   overlayWindow.setAlwaysOnTop(true, "screen-saver")
+  // Ensure click-through is enabled when showing (will be disabled when hovering over button grid)
+  overlayWindow.setIgnoreMouseEvents(true, { forward: true })
   overlayWindow.show()
   overlayWindow.focus()
   // Notify the overlay to start the show animation
@@ -776,10 +1015,27 @@ app
     
     // Load config first, then initialize plugins with the configured language
     loadConfigFromDisk()
+    
+    // Set initial login item settings based on config
+    try {
+      app.setLoginItemSettings({
+        openAtLogin: config.startWithWindows === true,
+        openAsHidden: false,
+      })
+      if (config.startWithWindows) {
+        appendLog("CONFIG", "Start with Windows is enabled")
+      }
+    } catch (error) {
+      appendLog("ERROR", `Failed to set initial login item settings: ${error.stack || error}`)
+    }
+    
     initializePluginsAndHost()
     
     createAppMenu()
-    showSetupWindow()
+    // Only show setup window if showSetupOnStart is true
+    if (config.showSetupOnStart !== false) {
+      showSetupWindow()
+    }
     createOverlayWindow()
     createNotificationWindow()
     streamDeckHost.start()
@@ -805,6 +1061,19 @@ app.on("before-quit", () => {
   logAppEvent("before-quit")
   app.isQuiting = true
   globalShortcut.unregisterAll()
+  
+  // Close all plugin windows (HTML and JS plugins)
+  for (const [uuid, win] of pluginWindows.entries()) {
+    try {
+      if (win && !win.isDestroyed()) {
+        win.close()
+      }
+    } catch (err) {
+      appendLog("HOST", `Error closing plugin window ${uuid}: ${err.message}`)
+    }
+  }
+  pluginWindows.clear()
+  
   if (streamDeckHost) {
     streamDeckHost.stop()
   }
@@ -864,6 +1133,18 @@ ipcMain.on("close-overlay", () => {
 ipcMain.on("force-hide-overlay", () => {
   appendLog("IPC", "force-hide-overlay requested (animation complete)")
   forceHideOverlay()
+})
+
+ipcMain.on("overlay-enable-mouse", () => {
+  if (overlayWindow && !overlayWindow.isDestroyed()) {
+    overlayWindow.setIgnoreMouseEvents(false)
+  }
+})
+
+ipcMain.on("overlay-disable-mouse", () => {
+  if (overlayWindow && !overlayWindow.isDestroyed()) {
+    overlayWindow.setIgnoreMouseEvents(true, { forward: true })
+  }
 })
 
 ipcMain.on("toggle-setup", () => {

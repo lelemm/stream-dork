@@ -1,7 +1,7 @@
 const { WebSocketServer } = require("ws")
 const { shell } = require("electron")
 const crypto = require("crypto")
-const { exec, spawn } = require("child_process")
+const { exec, spawn, fork } = require("child_process")
 const fs = require("fs")
 const path = require("path")
 
@@ -12,6 +12,16 @@ function safeUUID() {
     return crypto.randomUUID()
   }
   return `${Date.now()}-${Math.floor(Math.random() * 1_000_000)}`
+}
+
+/**
+ * Strip ANSI escape codes from a string (color codes, cursor movements, etc.)
+ * @param {string} str - The string to strip
+ * @returns {string} The string without ANSI codes
+ */
+function stripAnsi(str) {
+  // eslint-disable-next-line no-control-regex
+  return str.replace(/\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])/g, "")
 }
 
 class StreamDeckHost {
@@ -171,6 +181,95 @@ class StreamDeckHost {
       ]
     }
 
+    const ext = path.extname(plugin.codePath).toLowerCase()
+    this.log("HOST", `Launching plugin: ${plugin.name} (${plugin.codePath}) [type: ${ext}]`)
+
+    // Handle different plugin types
+    if (ext === ".html" || ext === ".htm") {
+      // HTML-based plugins run in a hidden BrowserWindow
+      this.launchHtmlPlugin(plugin, info)
+    } else if (ext === ".js") {
+      // JavaScript plugins run with Node.js
+      this.launchNodePlugin(plugin, info)
+    } else {
+      // Native executables (.exe, etc.) spawn directly
+      this.launchNativePlugin(plugin, info)
+    }
+  }
+
+  launchHtmlPlugin(plugin, info) {
+    // HTML plugins need to be launched in Electron's main process
+    // We'll use a callback to notify the main process to create a hidden BrowserWindow
+    if (this.onLaunchHtmlPlugin) {
+      this.onLaunchHtmlPlugin(plugin, this.port, info)
+      this.log("HOST", `Requested HTML plugin launch: ${plugin.name}`)
+    } else {
+      this.log("HOST", `Cannot launch HTML plugin ${plugin.name}: no HTML plugin launcher registered`)
+    }
+  }
+
+  launchNodePlugin(plugin, info) {
+    // For JS plugins, we can use Electron's BrowserWindow with nodeIntegration
+    // This allows running JS plugins without requiring Node.js to be installed separately
+    // The plugin will run in a hidden renderer process with Node.js APIs available
+    if (this.onLaunchJsPlugin) {
+      this.onLaunchJsPlugin(plugin, this.port, info)
+      this.log("HOST", `Requested JS plugin launch via Electron: ${plugin.name}`)
+      return
+    }
+    
+    // Fallback: try to spawn with Node.js from PATH (if available)
+    const args = [
+      plugin.codePath,
+      "-port", String(this.port),
+      "-pluginUUID", plugin.uuid,
+      "-registerEvent", "registerPlugin",
+      "-info", JSON.stringify(info)
+    ]
+
+    this.log("HOST", `Plugin args: node ${args.join(" ")}`)
+
+    try {
+      const pluginDir = path.dirname(plugin.codePath)
+      const nodeCmd = process.platform === "win32" ? "node.exe" : "node"
+      const proc = spawn(nodeCmd, args, {
+        cwd: pluginDir,
+        stdio: ["ignore", "pipe", "pipe"],
+        detached: false,
+        windowsHide: true,
+        shell: true // Use shell to find node in PATH
+      })
+
+      this.pluginProcesses.set(plugin.uuid, proc)
+
+      proc.stdout.on("data", (data) => {
+        const lines = data.toString().split("\n").filter(Boolean)
+        lines.forEach((line) => this.log("PLUGIN-STDOUT", `[${plugin.name}] ${stripAnsi(line)}`))
+      })
+
+      proc.stderr.on("data", (data) => {
+        const lines = data.toString().split("\n").filter(Boolean)
+        lines.forEach((line) => this.log("PLUGIN-STDERR", `[${plugin.name}] ${stripAnsi(line)}`))
+      })
+
+      proc.on("error", (error) => {
+        this.log("HOST", `Plugin ${plugin.name} (Node) failed to start: ${error.message}`)
+        this.pluginProcesses.delete(plugin.uuid)
+      })
+
+      proc.on("exit", (code, signal) => {
+        this.log("HOST", `Plugin ${plugin.name} exited (code=${code}, signal=${signal})`)
+        this.pluginProcesses.delete(plugin.uuid)
+        this.pluginSockets.delete(plugin.uuid)
+      })
+
+      this.log("HOST", `Plugin ${plugin.name} launched with Node.js, PID ${proc.pid}`)
+    } catch (error) {
+      this.log("HOST", `Failed to spawn Node plugin ${plugin.name}: ${error.message}`)
+    }
+  }
+
+  launchNativePlugin(plugin, info) {
     const args = [
       "-port", String(this.port),
       "-pluginUUID", plugin.uuid,
@@ -178,7 +277,6 @@ class StreamDeckHost {
       "-info", JSON.stringify(info)
     ]
 
-    this.log("HOST", `Launching plugin: ${plugin.name} (${plugin.codePath})`)
     this.log("HOST", `Plugin args: ${args.join(" ")}`)
 
     try {
@@ -194,12 +292,12 @@ class StreamDeckHost {
 
       proc.stdout.on("data", (data) => {
         const lines = data.toString().split("\n").filter(Boolean)
-        lines.forEach((line) => this.log("PLUGIN-STDOUT", `[${plugin.name}] ${line}`))
+        lines.forEach((line) => this.log("PLUGIN-STDOUT", `[${plugin.name}] ${stripAnsi(line)}`))
       })
 
       proc.stderr.on("data", (data) => {
         const lines = data.toString().split("\n").filter(Boolean)
-        lines.forEach((line) => this.log("PLUGIN-STDERR", `[${plugin.name}] ${line}`))
+        lines.forEach((line) => this.log("PLUGIN-STDERR", `[${plugin.name}] ${stripAnsi(line)}`))
       })
 
       proc.on("error", (error) => {
@@ -404,6 +502,8 @@ class StreamDeckHost {
         // Only notify the inspector (if open), NOT the plugin that just set the settings
         // This prevents an infinite loop where plugin sets settings -> host sends didReceiveSettings -> plugin sets settings again
         this.sendSettingsToInspector(context)
+        // Notify renderer so it can refresh host state for property inspector
+        this.notifySettingsChange(context)
         break
       case "getSettings":
         this.log("PLUGINS", `getSettings from ${context}`)
@@ -476,10 +576,30 @@ class StreamDeckHost {
       resolvedContext = meta.context
     }
     
+    // Associate this inspector socket with the context if not already done
+    // This is needed because the SDK spec doesn't require context in registration message,
+    // but subsequent calls (getSettings, setSettings) need to find the inspector socket
+    if (resolvedContext && this.contextRegistry.has(resolvedContext)) {
+      const currentInspector = this.inspectorByContext.get(resolvedContext)
+      if (!currentInspector || currentInspector !== meta.socket) {
+        this.inspectorByContext.set(resolvedContext, meta.socket)
+        meta.context = resolvedContext
+        this.log("HOST", `Associated inspector socket with context: ${resolvedContext}`)
+      }
+      // Also ensure meta.pluginUuid is set for future messages
+      if (!meta.pluginUuid) {
+        const entryPluginUuid = this.contextRegistry.get(resolvedContext)?.pluginUuid
+        if (entryPluginUuid) {
+          meta.pluginUuid = entryPluginUuid
+        }
+      }
+    }
+    
     const pluginUuid =
       meta.pluginUuid || this.contextRegistry.get(resolvedContext)?.pluginUuid
     switch (message.event) {
       case "setSettings":
+        this.log("HOST", `Inspector setSettings for context: ${resolvedContext}`)
         this.contextSettings.set(resolvedContext, message.payload || {})
         // Keep contextRegistry entry in sync so getState() returns correct settings
         if (this.contextRegistry.has(resolvedContext)) {
@@ -509,14 +629,41 @@ class StreamDeckHost {
                 },
               })
               this.lastSentSettingsToPlugin.set(resolvedContext, settingsJson)
+              this.log("HOST", `Sent didReceiveSettings to plugin ${pluginUuid} for context: ${resolvedContext}`)
             }
           }
+        } else {
+          this.log("HOST", `Warning: Cannot notify plugin - pluginUuid not resolved for context: ${resolvedContext}`)
         }
         // Update the inspector's last sent cache too (inspector just sent these)
         this.lastSentSettingsToInspector.set(resolvedContext, JSON.stringify(message.payload || {}))
+        // Notify renderer so it can refresh host state for property inspector
+        this.notifySettingsChange(resolvedContext)
         break
       case "getSettings":
-        this.sendSettingsUpdate(pluginUuid, resolvedContext)
+        // Send settings directly to the requesting inspector
+        // This ensures the inspector gets a response even if pluginUuid isn't resolved
+        {
+          const entry = this.contextRegistry.get(resolvedContext)
+          if (entry) {
+            const settings = this.contextSettings.get(resolvedContext) || {}
+            this.send(meta.socket, {
+              action: entry.action,
+              event: "didReceiveSettings",
+              context: resolvedContext,
+              device: entry.device,
+              payload: {
+                settings,
+                coordinates: entry.coordinates,
+                isInMultiAction: false,
+              },
+            })
+            this.lastSentSettingsToInspector.set(resolvedContext, JSON.stringify(settings))
+            this.log("HOST", `Sent settings to inspector for context: ${resolvedContext}`)
+          } else {
+            this.log("HOST", `getSettings: context ${resolvedContext} not found in registry`)
+          }
+        }
         break
       case "setGlobalSettings":
         if (pluginUuid) {
@@ -596,7 +743,10 @@ class StreamDeckHost {
    */
   sendSettingsToInspector(context) {
     const entry = this.contextRegistry.get(context)
-    if (!entry) return
+    if (!entry) {
+      this.log("HOST", `sendSettingsToInspector: no entry for context ${context}`)
+      return
+    }
 
     const inspector = this.inspectorByContext.get(context)
     if (inspector) {
@@ -606,6 +756,7 @@ class StreamDeckHost {
       // Only send if settings have changed from what we last sent to inspector
       const lastSent = this.lastSentSettingsToInspector.get(context)
       if (lastSent === settingsJson) {
+        this.log("HOST", `sendSettingsToInspector: skipped (unchanged) for context ${context}`)
         return // Skip, settings unchanged
       }
 
@@ -622,6 +773,9 @@ class StreamDeckHost {
       }
       this.send(inspector, payloadMessage)
       this.lastSentSettingsToInspector.set(context, settingsJson)
+      this.log("HOST", `Sent didReceiveSettings to inspector for context: ${context}`)
+    } else {
+      this.log("HOST", `sendSettingsToInspector: no inspector socket found for context ${context}`)
     }
   }
 
@@ -652,6 +806,25 @@ class StreamDeckHost {
       payload: payload || {},
     }
     this.notifyRenderer(message)
+  }
+
+  /**
+   * Notify renderer that settings have changed for a context.
+   * This allows the setup UI to refresh host state when settings are updated.
+   */
+  notifySettingsChange(context) {
+    if (!this.notifyRenderer) return
+    const entry = this.contextRegistry.get(context)
+    if (!entry) return
+    
+    const settings = this.contextSettings.get(context) || {}
+    this.notifyRenderer({
+      event: "didReceiveSettings",
+      action: entry.action,
+      context,
+      device: entry.device,
+      payload: { settings },
+    })
   }
 
   broadcastGlobalSettings(pluginUuid) {
@@ -753,9 +926,36 @@ class StreamDeckHost {
     if (socket && socket.readyState === socket.OPEN) {
       this.send(socket, message)
       entry.pendingWillAppear = false
-      this.sendSettingsUpdate(entry.pluginUuid, entry.context)
+      // Note: willAppear already includes settings in payload, so we don't need
+      // to send a separate didReceiveSettings. Some plugins (like ScriptDeck)
+      // register handlers for every event and sending duplicate settings causes issues.
     } else {
       entry.pendingWillAppear = true
+    }
+  }
+
+  emitWillDisappear(context) {
+    const entry = this.contextRegistry.get(context)
+    if (!entry) return
+
+    const socket = this.pluginSockets.get(entry.pluginUuid)
+    const currentSettings = this.contextSettings.get(entry.context) || {}
+    const message = {
+      event: "willDisappear",
+      action: entry.action,
+      context: entry.context,
+      device: entry.device,
+      payload: {
+        coordinates: entry.coordinates,
+        settings: currentSettings,
+        controller: entry.controller,
+        state: entry.state,
+        isInMultiAction: false,
+      },
+    }
+
+    if (socket && socket.readyState === socket.OPEN) {
+      this.send(socket, message)
     }
   }
 
@@ -812,11 +1012,16 @@ class StreamDeckHost {
   }
 
   replayPendingContexts(pluginUuid) {
-    this.contextRegistry.forEach((entry) => {
-      if (entry.pluginUuid === pluginUuid && entry.pendingWillAppear) {
-        this.emitWillAppear(entry)
-      }
-    })
+    // Delay willAppear events to give the plugin time to initialize its event handlers.
+    // On real Stream Deck hardware, willAppear only fires when the user navigates to a page,
+    // giving plugins time to set up. Here we simulate that delay after registration.
+    setTimeout(() => {
+      this.contextRegistry.forEach((entry) => {
+        if (entry.pluginUuid === pluginUuid && entry.pendingWillAppear) {
+          this.emitWillAppear(entry)
+        }
+      })
+    }, 1000)
   }
 
   send(recipient, message) {

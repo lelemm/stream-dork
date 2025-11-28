@@ -1,6 +1,6 @@
 {
   "name": "stream-dork",
-  "version": "0.1.0",
+  "version": "0.1.2",
   "description": "Electron overlay for virtual stream deck controls",
   "author": "Leandro Menezes",
   "private": true,
@@ -10,10 +10,10 @@
     "dev:renderer": "vite",
     "dev:electron": "wait-on http://localhost:5173/src/pages/setup.html && cross-env VITE_DEV_SERVER_URL=http://localhost:5173 electron ./src/main.cjs",
     "build": "vite build",
-    "build-electron": "electron-builder --win dir",
+    "build-electron": "electron-builder --win",
     "build-electron-docker": "./build-docker.sh",
     "package-docker": "./build-docker.sh",
-    "zip-windows": "cd dist-electron && zip -r stream-dork-windows.zip win-unpacked && cd ..",
+    "zip-windows": "cd dist-electron && zip -r stream-dork-windows.zip *.exe && cd ..",
     "lint": "eslint ."
   },
   "dependencies": {

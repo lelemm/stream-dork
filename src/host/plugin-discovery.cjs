@@ -235,7 +235,9 @@ function discoverPlugins(rootPath, logger = () => {}, language = "en") {
     const applicationsToMonitor = manifest.ApplicationsToMonitor ?? {}
     const windowsMonitoring = ensureArray(applicationsToMonitor.windows)
 
-    const pluginUuid = manifest.UUID || `plugin.${entry.name}`
+    // Plugin UUID should match the action UUID prefix
+    // Official Stream Deck strips the .sdPlugin suffix from folder names
+    const pluginUuid = manifest.UUID || entry.name.replace(/\.sdPlugin$/, '')
     
     // Load localization file for the specified language
     const localization = loadLocalization(pluginRoot, language)

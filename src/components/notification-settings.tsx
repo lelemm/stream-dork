@@ -20,6 +20,7 @@ export function NotificationSettings() {
   const [alwaysFanOut, setAlwaysFanOut] = useState(config.notification?.alwaysFanOut ?? false)
   const [clickThrough, setClickThrough] = useState(config.notification?.clickThrough ?? false)
   const [hoverOpacity, setHoverOpacity] = useState(config.notification?.hoverOpacity ?? 100)
+  const [allScenesAlwaysActive, setAllScenesAlwaysActive] = useState(config.notification?.allScenesAlwaysActive ?? true)
 
   // Sync with config changes
   useEffect(() => {
@@ -30,6 +31,7 @@ export function NotificationSettings() {
     setAlwaysFanOut(config.notification?.alwaysFanOut ?? false)
     setClickThrough(config.notification?.clickThrough ?? false)
     setHoverOpacity(config.notification?.hoverOpacity ?? 100)
+    setAllScenesAlwaysActive(config.notification?.allScenesAlwaysActive ?? true)
   }, [config.notification])
 
   const handleApply = () => {
@@ -41,6 +43,7 @@ export function NotificationSettings() {
       alwaysFanOut,
       clickThrough,
       hoverOpacity: Math.max(10, Math.min(100, hoverOpacity)),
+      allScenesAlwaysActive,
     })
   }
 
@@ -189,6 +192,24 @@ export function NotificationSettings() {
             />
             <p className="text-[10px] text-muted-foreground">
               Transparency when hovering over notifications (see through to desktop)
+            </p>
+          </div>
+
+          {/* All Scenes Always Active */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="all-scenes-active" className="text-xs flex items-center gap-2">
+                <Layers className="size-3" />
+                All Scenes Always Active
+              </Label>
+              <Switch
+                id="all-scenes-active"
+                checked={allScenesAlwaysActive}
+                onCheckedChange={setAllScenesAlwaysActive}
+              />
+            </div>
+            <p className="text-[10px] text-muted-foreground">
+              Keep all scene buttons active for notifications regardless of current scene
             </p>
           </div>
         </>

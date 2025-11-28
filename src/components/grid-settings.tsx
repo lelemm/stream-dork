@@ -7,12 +7,13 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
-import { Grid3x3, Maximize2, Palette, Move, Download, Upload, Sparkles, Keyboard, Timer } from "lucide-react"
+import { Grid3x3, Maximize2, Palette, Move, Download, Upload, Sparkles, Keyboard, Timer, Power, Monitor } from "lucide-react"
 import type { OverlayPosition, AnimationDirection, AnimationStartCorner } from "@/lib/types"
 
 export function GridSettings() {
   const {
     config,
+    activeScene,
     setGridDimensions,
     setGridSizePixels,
     setBackgroundPadding,
@@ -29,12 +30,17 @@ export function GridSettings() {
     setShortcutDebounceMs,
     setAutoDismissEnabled,
     setAutoDismissDelaySeconds,
+    setStartWithWindows,
+    setShowSetupOnStart,
     exportConfig,
     importConfig,
   } = useDeckStore()
 
-  const [rows, setRows] = useState(config.rows)
-  const [cols, setCols] = useState(config.cols)
+  // Use active scene's dimensions, fallback to legacy config
+  const sceneRows = activeScene?.rows ?? config.rows ?? 3
+  const sceneCols = activeScene?.cols ?? config.cols ?? 5
+  const [rows, setRows] = useState(sceneRows)
+  const [cols, setCols] = useState(sceneCols)
   const [gridSize, setGridSize] = useState(config.gridSizePixels || 400)
   const [bgPadding, setBgPadding] = useState(config.backgroundPadding || 8)
   const [bgColor, setBgColor] = useState(config.backgroundColor || "#0a0a0a")
@@ -54,12 +60,17 @@ export function GridSettings() {
   // Auto-dismiss settings
   const [autoDismiss, setAutoDismiss] = useState(config.autoDismissEnabled ?? false)
   const [dismissDelay, setDismissDelay] = useState(config.autoDismissDelaySeconds || 5)
+  // Application settings
+  const [startWithWindows, setStartWithWindowsLocal] = useState(config.startWithWindows ?? false)
+  const [showSetupOnStart, setShowSetupOnStartLocal] = useState(config.showSetupOnStart !== false)
 
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
-    setRows(config.rows)
-    setCols(config.cols)
+    const sceneRows = activeScene?.rows ?? config.rows ?? 3
+    const sceneCols = activeScene?.cols ?? config.cols ?? 5
+    setRows(sceneRows)
+    setCols(sceneCols)
     setGridSize(config.gridSizePixels || 400)
     setBgPadding(config.backgroundPadding || 8)
     setBgColor(config.backgroundColor || "#0a0a0a")
@@ -76,7 +87,9 @@ export function GridSettings() {
     setDebounceMs(config.shortcutDebounceMs || 300)
     setAutoDismiss(config.autoDismissEnabled ?? false)
     setDismissDelay(config.autoDismissDelaySeconds || 5)
-  }, [config])
+    setStartWithWindowsLocal(config.startWithWindows ?? false)
+    setShowSetupOnStartLocal(config.showSetupOnStart !== false)
+  }, [config, activeScene])
 
   const handleApply = () => {
     const newRows = Math.max(1, Math.min(8, rows))
@@ -100,6 +113,9 @@ export function GridSettings() {
     // Auto-dismiss settings
     setAutoDismissEnabled(autoDismiss)
     setAutoDismissDelaySeconds(Math.max(1, Math.min(60, dismissDelay)))
+    // Application settings
+    setStartWithWindows(startWithWindows)
+    setShowSetupOnStart(showSetupOnStart)
   }
 
   const handleExport = () => {
@@ -135,7 +151,12 @@ export function GridSettings() {
       <div>
         <div className="flex items-center gap-2 mb-3">
           <Grid3x3 className="size-4 text-primary" />
-          <h3 className="font-semibold text-sm">Grid Dimensions</h3>
+          <div>
+            <h3 className="font-semibold text-sm">Grid Dimensions</h3>
+            {activeScene && (
+              <p className="text-[10px] text-muted-foreground">{activeScene.name}</p>
+            )}
+          </div>
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div>
@@ -470,6 +491,46 @@ export function GridSettings() {
               />
             </div>
           )}
+        </div>
+      </div>
+
+      {/* Application Settings */}
+      <div>
+        <div className="flex items-center gap-2 mb-3">
+          <Power className="size-4 text-primary" />
+          <h3 className="font-semibold text-sm">Application</h3>
+        </div>
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex flex-col">
+              <Label htmlFor="startWithWindows" className="text-xs">
+                Start with Windows
+              </Label>
+              <p className="text-[10px] text-muted-foreground mt-0.5">
+                Launch Stream Dork when Windows starts
+              </p>
+            </div>
+            <Switch
+              id="startWithWindows"
+              checked={startWithWindows}
+              onCheckedChange={setStartWithWindowsLocal}
+            />
+          </div>
+          <div className="flex items-center justify-between">
+            <div className="flex flex-col">
+              <Label htmlFor="showSetupOnStart" className="text-xs">
+                Show Setup on Start
+              </Label>
+              <p className="text-[10px] text-muted-foreground mt-0.5">
+                Open setup window when app launches
+              </p>
+            </div>
+            <Switch
+              id="showSetupOnStart"
+              checked={showSetupOnStart}
+              onCheckedChange={setShowSetupOnStartLocal}
+            />
+          </div>
         </div>
       </div>
 

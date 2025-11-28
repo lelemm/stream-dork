@@ -49,5 +49,8 @@ contextBridge.exposeInMainWorld("electron", {
   getNotificationConfig: async () => ipcRenderer.invoke("get-notification-config"),
   hideNotification: () => ipcRenderer.send("hide-notification"),
   dismissNotification: (id) => ipcRenderer.send("dismiss-notification", { id }),
+  // Overlay mouse event control
+  enableOverlayMouse: () => ipcRenderer.send("overlay-enable-mouse"),
+  disableOverlayMouse: () => ipcRenderer.send("overlay-disable-mouse"),
 })
 

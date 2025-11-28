@@ -72,9 +72,10 @@ Stream Dork is compatible with Stream Deck plugins that support Windows. You can
 ### Installing Plugins
 
 1. **Download or obtain a Stream Deck plugin** (`.sdPlugin` folder)
-2. **Place the plugin folder** in the `plugins/` directory:
+2. **Place the plugin folder** in the plugins directory in your appdata:
+   - **Windows**: `%APPDATA%/stream-dork/plugins/`
    ```
-   plugins/
+   %APPDATA%/stream-dork/plugins/
    └── com.example.plugin.sdPlugin/
        ├── manifest.json
        ├── plugin.exe
@@ -132,7 +133,13 @@ If a plugin doesn't work, check the application logs for error messages.
 ## Configuration
 
 Configuration is stored in the Electron `userData` directory:
-- **Windows**: `%APPDATA%/stream-dork/config.json`
+- **Windows**: `%APPDATA%/stream-dork/`
+
+Files in this directory:
+- `config.json` - Application configuration
+- `host-state.json` - Plugin host state
+- `plugins/` - Plugin directory (place `.sdPlugin` folders here)
+- `logs/` - Application logs
 
 ### Grid Settings
 
@@ -162,10 +169,10 @@ WebSocket messages between Stream Dork and plugins are logged to:
 
 ### Chrome DevTools Protocol
 
-Stream Dork enables remote debugging on port **23519**. This allows debugging Property Inspectors in your browser:
+Stream Dork enables remote debugging on port **23520**. This allows debugging Property Inspectors in your browser:
 
 1. Open Chrome/Edge
-2. Navigate to `http://localhost:23519`
+2. Navigate to `http://localhost:23520`
 3. Select the webview to inspect
 
 ### Debug Panel
@@ -197,7 +204,7 @@ Stream Dork implements a subset of the [Stream Deck SDK](https://docs.elgato.com
 
 1. Have a `manifest.json` with Windows OS support declared
 2. Implement WebSocket communication per the SDK spec
-3. Be placed in the `plugins/` folder as `*.sdPlugin` directories
+3. Be placed in the plugins directory in your appdata (`%APPDATA%/stream-dork/plugins/` on Windows) as `*.sdPlugin` directories
 
 ### Supported Events
 

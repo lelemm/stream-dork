@@ -42,6 +42,14 @@ export interface PanelSizes {
   bottomPanel?: number // percentage height
 }
 
+export interface Scene {
+  id: string
+  name: string
+  rows: number
+  cols: number
+  buttons: GridButton[]
+}
+
 export interface NotificationSettings {
   enabled: boolean
   dismissOnClick: boolean
@@ -50,12 +58,17 @@ export interface NotificationSettings {
   alwaysFanOut: boolean
   clickThrough: boolean
   hoverOpacity: number // 0-100, opacity when hovering (100 = fully opaque)
+  allScenesAlwaysActive?: boolean // willAppear for all, never willDisappear on scene switch
 }
 
 export interface DeckConfig {
-  rows: number
-  cols: number
-  buttons: GridButton[]
+  // Legacy fields (for migration): rows, cols, buttons
+  rows?: number
+  cols?: number
+  buttons?: GridButton[]
+  // New scene-based structure
+  scenes?: Scene[]
+  activeSceneId?: string
   gridSizePixels?: number
   backgroundPadding?: number
   backgroundColor?: string
@@ -81,4 +94,7 @@ export interface DeckConfig {
   language?: string
   // Notification settings
   notification?: NotificationSettings
+  // Application settings
+  startWithWindows?: boolean
+  showSetupOnStart?: boolean
 }

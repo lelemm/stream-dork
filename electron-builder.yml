@@ -15,11 +15,19 @@ files:
 
 win:
   target:
-    - target: dir
+    - target: nsis
       arch: [x64]
   icon: src/assets/tray-icon.png
+  requestedExecutionLevel: requireAdministrator
 
-nsis: false
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: Stream Dork
+  uninstallDisplayName: Stream Dork
+
 nsisWeb: false
 squirrelWindows: false
 msi: false

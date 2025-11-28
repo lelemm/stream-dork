@@ -1,10 +1,11 @@
 import { useDeckStore } from "@/lib/deck-store"
-import { useMemo, useState, useEffect, useCallback, useRef } from "react"
-import type { GridButton as GridButtonType, AnimationDirection, AnimationStartCorner } from "@/lib/types"
+import { useMemo, useState, useEffect, useCallback, useRef, memo } from "react"
+import type { GridButton as GridButtonType, AnimationDirection, AnimationStartCorner, Scene } from "@/lib/types"
 import { Search } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { motion, useSpring, useTransform } from "motion/react"
 import { interpolate } from "flubber"
+import type { VisualStateRef, ContextVisualState } from "@/pages/overlay"
 
 interface ButtonWithHint extends GridButtonType {
   filterHint: string
@@ -13,6 +14,7 @@ interface ButtonWithHint extends GridButtonType {
 
 interface OverlayButtonGridProps {
   onButtonActivated?: () => void
+  visualStateRef?: VisualStateRef
 }
 
 // Direction the button animates FROM (where it "comes from" in the spiral)
@@ -205,10 +207,61 @@ function calculateCenterOutwardSpiral(
 
 type AnimationPhase = "idle" | "showing" | "visible" | "hiding" | "hidden"
 
-export function OverlayButtonGrid({ onButtonActivated }: OverlayButtonGridProps) {
-  const { config, executeAction } = useDeckStore()
+interface SceneWithHint extends Scene {
+  filterHint: string
+}
+
+// Generate filter hints for scenes (same algorithm as button hints)
+function generateSceneHints(scenes: Scene[]): SceneWithHint[] {
+  const letterGroups = new Map<string, Scene[]>()
+
+  scenes.forEach((scene) => {
+    const label = scene.name || ""
+    const firstLetter = label.charAt(0).toUpperCase() || "?"
+    if (!letterGroups.has(firstLetter)) {
+      letterGroups.set(firstLetter, [])
+    }
+    letterGroups.get(firstLetter)!.push(scene)
+  })
+
+  const result: SceneWithHint[] = []
+
+  letterGroups.forEach((scenesInGroup, letter) => {
+    scenesInGroup.forEach((scene, index) => {
+      let hint: string
+
+      if (scenesInGroup.length === 1) {
+        hint = letter
+      } else if (scenesInGroup.length <= 10) {
+        const num = index < 9 ? (index + 1).toString() : "0"
+        hint = `${letter}${num}`
+      } else {
+        if (index < 10) {
+          const num = index < 9 ? (index + 1).toString() : "0"
+          hint = `${letter}${num}`
+        } else {
+          const extIndex = index - 10
+          const num = extIndex < 9 ? (extIndex + 1).toString() : "0"
+          hint = `${letter}O${num}`
+        }
+      }
+
+      result.push({
+        ...scene,
+        filterHint: hint,
+      })
+    })
+  })
+
+  return result
+}
+
+export function OverlayButtonGrid({ onButtonActivated, visualStateRef }: OverlayButtonGridProps) {
+  const { config, activeScene, setActiveScene, executeAction } = useDeckStore()
   const [typedCombo, setTypedCombo] = useState("")
   const [focusedButton, setFocusedButton] = useState<ButtonWithHint | null>(null)
+  const [altPressed, setAltPressed] = useState(false)
+  const [sceneTypedCombo, setSceneTypedCombo] = useState("")
   const gridRef = useRef<HTMLDivElement>(null)
   
   // Animation state
@@ -238,19 +291,28 @@ export function OverlayButtonGrid({ onButtonActivated }: OverlayButtonGridProps)
   const animationDuration = config.animationDuration || 250
   const staggerDelay = Math.max(10, animationDuration / 10)
 
+  // Use active scene's dimensions, fallback to legacy config
+  const rows = activeScene?.rows ?? config.rows ?? 3
+  const cols = activeScene?.cols ?? config.cols ?? 5
+
   // Calculate spiral order for animation based on config
   const spiralOrder = useMemo(() => {
     return calculateSpiralOrder(
-      config.rows, 
-      config.cols,
+      rows, 
+      cols,
       config.animationStartCorner || 'bottom-right',
       config.animationDirection || 'clockwise'
     )
-  }, [config.rows, config.cols, config.animationStartCorner, config.animationDirection])
+  }, [rows, cols, config.animationStartCorner, config.animationDirection])
+
+  // Get active scene's buttons
+  const sceneButtons = useMemo(() => {
+    return activeScene?.buttons ?? config.buttons ?? []
+  }, [activeScene, config.buttons])
 
   // Get all buttons with their positions sorted left-to-right, top-to-bottom
   const sortedButtons = useMemo(() => {
-    return [...config.buttons]
+    return [...sceneButtons]
       .filter((btn) => btn.action) // Only buttons with actions
       .sort((a, b) => {
         if (a.position.row !== b.position.row) {
@@ -258,7 +320,19 @@ export function OverlayButtonGrid({ onButtonActivated }: OverlayButtonGridProps)
         }
         return a.position.col - b.position.col
       })
-  }, [config.buttons])
+  }, [sceneButtons])
+
+  // Get scenes with hints for filtering
+  const scenes = config.scenes || []
+  const scenesWithHints = useMemo(() => generateSceneHints(scenes), [scenes])
+
+  // Find matching scenes based on typed combo (when ALT is pressed)
+  const matchingScenes = useMemo(() => {
+    if (!sceneTypedCombo) return scenesWithHints
+    return scenesWithHints.filter((scene) =>
+      scene.filterHint.toUpperCase().startsWith(sceneTypedCombo.toUpperCase())
+    )
+  }, [scenesWithHints, sceneTypedCombo])
 
   // Generate filter hints for each button
   const buttonsWithHints = useMemo((): ButtonWithHint[] => {
@@ -324,11 +398,55 @@ export function OverlayButtonGrid({ onButtonActivated }: OverlayButtonGridProps)
   // Check if we have exactly one match
   const singleMatch = matchingButtons.length === 1 ? matchingButtons[0] : null
 
+  // Handle ALT key state
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Alt" || e.altKey) {
+        setAltPressed(true)
+        setSceneTypedCombo("")
+      }
+    }
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (e.key === "Alt" || !e.altKey) {
+        // On ALT release, switch scene if exactly one matches
+        if (matchingScenes.length === 1 && sceneTypedCombo) {
+          setActiveScene(matchingScenes[0].id)
+        }
+        setAltPressed(false)
+        setSceneTypedCombo("")
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown)
+    window.addEventListener("keyup", handleKeyUp)
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown)
+      window.removeEventListener("keyup", handleKeyUp)
+    }
+  }, [matchingScenes, sceneTypedCombo, setActiveScene])
+
   // Handle keyboard input
   const handleKeyDown = useCallback(
     (event: KeyboardEvent) => {
       // Reset auto-dismiss timer on any key press
       resetAutoDismissTimer()
+
+      // If ALT is pressed, handle scene switching
+      if (altPressed || event.altKey) {
+        if (event.key === "Escape") {
+          setAltPressed(false)
+          setSceneTypedCombo("")
+          return
+        }
+        if (event.key === "Backspace") {
+          setSceneTypedCombo((prev) => prev.slice(0, -1))
+          return
+        }
+        if (/^[a-zA-Z0-9]$/.test(event.key)) {
+          setSceneTypedCombo((prev) => prev + event.key.toUpperCase())
+        }
+        return
+      }
 
       // Escape closes overlay
       if (event.key === "Escape") {
@@ -372,7 +490,7 @@ export function OverlayButtonGrid({ onButtonActivated }: OverlayButtonGridProps)
         setTypedCombo((prev) => prev + event.key.toUpperCase())
       }
     },
-    [focusedButton, singleMatch, executeAction, onButtonActivated, resetAutoDismissTimer]
+    [focusedButton, singleMatch, executeAction, onButtonActivated, resetAutoDismissTimer, altPressed]
   )
 
   useEffect(() => {
@@ -393,6 +511,8 @@ export function OverlayButtonGrid({ onButtonActivated }: OverlayButtonGridProps)
         // Reset focus mode when showing
         setFocusedButton(null)
         setTypedCombo("")
+        setAltPressed(false)
+        setSceneTypedCombo("")
         
         if (animationEnabled) {
           // Start show animation
@@ -401,7 +521,7 @@ export function OverlayButtonGrid({ onButtonActivated }: OverlayButtonGridProps)
         } else {
           // Skip animation - show all immediately
           setAnimationPhase("visible")
-          setVisibleButtonCount(config.rows * config.cols)
+          setVisibleButtonCount(rows * cols)
         }
         
         // Set up auto-dismiss if enabled
@@ -434,7 +554,7 @@ export function OverlayButtonGrid({ onButtonActivated }: OverlayButtonGridProps)
   // Animation loop for showing buttons
   useEffect(() => {
     if (animationPhase === "showing") {
-      const totalPositions = config.rows * config.cols
+      const totalPositions = rows * cols
       
       if (visibleButtonCount < totalPositions) {
         animationRef.current = setTimeout(() => {
@@ -450,12 +570,12 @@ export function OverlayButtonGrid({ onButtonActivated }: OverlayButtonGridProps)
         clearTimeout(animationRef.current)
       }
     }
-  }, [animationPhase, visibleButtonCount, config.rows, config.cols])
+  }, [animationPhase, visibleButtonCount, rows, cols, staggerDelay])
 
   // Animation loop for hiding buttons
   useEffect(() => {
     if (animationPhase === "hiding") {
-      const totalPositions = config.rows * config.cols
+      const totalPositions = rows * cols
       
       // If starting from 0 (edge case), initialize to full
       if (visibleButtonCount === 0) {
@@ -483,7 +603,7 @@ export function OverlayButtonGrid({ onButtonActivated }: OverlayButtonGridProps)
         clearTimeout(animationRef.current)
       }
     }
-  }, [animationPhase, visibleButtonCount, config.rows, config.cols])
+  }, [animationPhase, visibleButtonCount, rows, cols, staggerDelay])
 
   // Calculate which positions are currently visible based on animation
   const visiblePositions = useMemo(() => {
@@ -539,9 +659,9 @@ export function OverlayButtonGrid({ onButtonActivated }: OverlayButtonGridProps)
   const bgColor = config.backgroundColor || "#0a0a0a"
   const bgOpacity = (config.backgroundOpacity ?? 100) / 100
   const gridSize = config.gridSizePixels || 400
-  const buttonSize = Math.floor(gridSize / Math.max(config.rows, config.cols))
-  const gridWidth = buttonSize * config.cols
-  const gridHeight = buttonSize * config.rows
+  const buttonSize = Math.floor(gridSize / Math.max(rows, cols))
+  const gridWidth = buttonSize * cols
+  const gridHeight = buttonSize * rows
 
   return (
     <div 
@@ -550,7 +670,7 @@ export function OverlayButtonGrid({ onButtonActivated }: OverlayButtonGridProps)
       onMouseEnter={resetAutoDismissTimer}
     >
       {/* Search indicator */}
-      {typedCombo && !focusedButton && (
+      {typedCombo && !focusedButton && !altPressed && (
         <div
           className="absolute -top-12 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 px-4 py-2 rounded-full"
           style={{
@@ -562,6 +682,68 @@ export function OverlayButtonGrid({ onButtonActivated }: OverlayButtonGridProps)
           <span className="text-white font-mono text-lg tracking-widest">
             {typedCombo}
           </span>
+        </div>
+      )}
+
+      {/* Scene filter indicator (when ALT is pressed) */}
+      {altPressed && (
+        <div
+          className="absolute -top-12 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 px-4 py-2 rounded-full"
+          style={{
+            backgroundColor: "rgba(139, 92, 246, 0.8)",
+            backdropFilter: "blur(8px)",
+          }}
+        >
+          <span className="text-white text-xs font-medium">ALT</span>
+          <Search className="size-4 text-white/70" />
+          <span className="text-white font-mono text-lg tracking-widest">
+            {sceneTypedCombo || "..."}
+          </span>
+        </div>
+      )}
+
+      {/* Scene indicator strip - shows all scenes with their shortcuts */}
+      {altPressed && (
+        <div
+          className="absolute -bottom-20 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center gap-2 px-4 py-3 rounded-lg shadow-2xl"
+          style={{
+            backgroundColor: "rgba(0, 0, 0, 0.9)",
+            backdropFilter: "blur(12px)",
+            border: "1px solid rgba(139, 92, 246, 0.3)",
+          }}
+        >
+          <div className="text-xs font-semibold text-purple-300 mb-1">Switch Scene (ALT + keys)</div>
+          <div className="flex items-center gap-2 flex-wrap justify-center max-w-[600px]">
+            {scenesWithHints.map((scene) => {
+              const isMatching = matchingScenes.some((s) => s.id === scene.id)
+              const isActive = activeScene?.id === scene.id
+              return (
+                <div
+                  key={scene.id}
+                  className={cn(
+                    "px-3 py-1.5 rounded-md text-sm font-medium transition-all flex items-center gap-2",
+                    isMatching 
+                      ? "bg-purple-500/20 text-white border border-purple-400/50" 
+                      : "bg-gray-800/50 text-gray-400 border border-gray-700/50",
+                    isActive && "ring-2 ring-purple-400 ring-offset-2 ring-offset-black"
+                  )}
+                >
+                  <span className="font-mono text-xs bg-black/40 px-1.5 py-0.5 rounded font-bold text-purple-300">
+                    {scene.filterHint}
+                  </span>
+                  <span>{scene.name}</span>
+                  {isActive && (
+                    <span className="text-[10px] text-purple-300 font-semibold">(active)</span>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+          {sceneTypedCombo && (
+            <div className="text-xs text-gray-400 mt-1">
+              Typed: <span className="font-mono text-purple-300">{sceneTypedCombo}</span>
+            </div>
+          )}
         </div>
       )}
 
@@ -579,6 +761,7 @@ export function OverlayButtonGrid({ onButtonActivated }: OverlayButtonGridProps)
               isDimmed={false}
               showHint={false}
               isFocused={true}
+              visualStateRef={visualStateRef}
             />
           </div>
           <div className="absolute bottom-8 text-white/60 text-sm bg-black/50 px-4 py-2 rounded-lg pointer-events-auto">
@@ -592,7 +775,15 @@ export function OverlayButtonGrid({ onButtonActivated }: OverlayButtonGridProps)
       <div
         ref={gridRef}
         onMouseMove={resetAutoDismissTimer}
-        onMouseEnter={resetAutoDismissTimer}
+        onMouseEnter={() => {
+          resetAutoDismissTimer()
+          // Enable mouse events when hovering over the button grid
+          window.electron?.enableOverlayMouse?.()
+        }}
+        onMouseLeave={() => {
+          // Disable mouse events when leaving the button grid (make click-through again)
+          window.electron?.disableOverlayMouse?.()
+        }}
         className={cn(
           "relative transition-opacity duration-200",
           focusedButton && "opacity-0 pointer-events-none"
@@ -605,8 +796,8 @@ export function OverlayButtonGrid({ onButtonActivated }: OverlayButtonGridProps)
       >
         {/* Background layer - uses configured background color with opacity */}
         <MergedBackground
-          rows={config.rows}
-          cols={config.cols}
+          rows={rows}
+          cols={cols}
           buttonsWithHints={buttonsWithHints}
           padding={padding}
           radius={radius}
@@ -621,13 +812,13 @@ export function OverlayButtonGrid({ onButtonActivated }: OverlayButtonGridProps)
         <div
           className="relative grid"
           style={{
-            gridTemplateColumns: `repeat(${config.cols}, ${buttonSize}px)`,
-            gridTemplateRows: `repeat(${config.rows}, ${buttonSize}px)`,
+            gridTemplateColumns: `repeat(${cols}, ${buttonSize}px)`,
+            gridTemplateRows: `repeat(${rows}, ${buttonSize}px)`,
           }}
         >
-          {Array.from({ length: config.rows * config.cols }).map((_, index) => {
-            const row = Math.floor(index / config.cols)
-            const col = index % config.cols
+          {Array.from({ length: rows * cols }).map((_, index) => {
+            const row = Math.floor(index / cols)
+            const col = index % cols
             const button = getButtonAtPosition(row, col)
             const isVisible = isPositionVisible(row, col)
             const { index: animIndex, direction: stretchDirection } = getPositionAnimationInfo(row, col)
@@ -654,6 +845,7 @@ export function OverlayButtonGrid({ onButtonActivated }: OverlayButtonGridProps)
                     stretchDirection={stretchDirection}
                     animationDurationMs={animationDuration}
                     staggerDelayMs={staggerDelay}
+                    visualStateRef={visualStateRef}
                     onClick={() => {
                       executeAction(button.id)
                       onButtonActivated?.()
@@ -684,6 +876,7 @@ interface OverlayButtonProps {
   animationDurationMs?: number
   staggerDelayMs?: number
   onClick?: () => void
+  visualStateRef?: VisualStateRef
 }
 
 // Get animation properties based on stretch direction
@@ -713,7 +906,8 @@ function getStretchAnimation(direction: StretchDirection, isVisible: boolean) {
   }
 }
 
-function OverlayButton({
+// Memoized OverlayButton that uses refs for visual updates (double-buffer pattern)
+const OverlayButton = memo(function OverlayButton({
   button,
   buttonSize,
   radius,
@@ -726,13 +920,98 @@ function OverlayButton({
   animationDurationMs = 250,
   staggerDelayMs = 25,
   onClick,
+  visualStateRef,
 }: OverlayButtonProps) {
   const innerPadding = 4
   const innerRadius = Math.max(radius - 4, 4)
   
+  // Refs for direct DOM manipulation (double-buffer pattern)
+  const iconImgRef = useRef<HTMLImageElement>(null)
+  const iconTextRef = useRef<HTMLDivElement>(null)
+  const labelRef = useRef<HTMLParagraphElement>(null)
+  const statusRef = useRef<HTMLSpanElement>(null)
+  
+  // Get context from button for visual state lookup
+  const context = button.action?.context
+  
+  // RAF loop to update visual state without React re-renders
+  useEffect(() => {
+    if (!context || !visualStateRef) return
+    
+    let rafId: number
+    let lastIcon: string | undefined
+    let lastTitle: string | undefined
+    let lastStatus: "ok" | "alert" | undefined
+    
+    const updateVisuals = () => {
+      const state = visualStateRef.current.get(context)
+      
+      // Update icon if changed
+      const icon = state?.icon ?? button.icon
+      if (icon !== lastIcon) {
+        lastIcon = icon
+        const isImageIcon = icon && (icon.startsWith("data:") || icon.startsWith("http"))
+        
+        if (iconImgRef.current) {
+          if (isImageIcon) {
+            iconImgRef.current.src = icon
+            iconImgRef.current.style.display = "block"
+          } else {
+            iconImgRef.current.style.display = "none"
+          }
+        }
+        
+        if (iconTextRef.current) {
+          if (!isImageIcon) {
+            iconTextRef.current.textContent = icon || "🎮"
+            iconTextRef.current.style.display = "block"
+          } else {
+            iconTextRef.current.style.display = "none"
+          }
+        }
+      }
+      
+      // Update label if changed
+      const title = state?.title ?? button.label
+      if (title !== lastTitle) {
+        lastTitle = title
+        if (labelRef.current) {
+          labelRef.current.textContent = title || ""
+        }
+      }
+      
+      // Update status if changed
+      const status = state?.status ?? button.status
+      if (status !== lastStatus) {
+        lastStatus = status
+        if (statusRef.current) {
+          if (status) {
+            statusRef.current.style.display = "flex"
+            statusRef.current.style.backgroundColor = status === "alert" ? "#f97316" : "#22c55e"
+            statusRef.current.textContent = status === "alert" ? "!" : "OK"
+          } else {
+            statusRef.current.style.display = "none"
+          }
+        }
+      }
+      
+      rafId = requestAnimationFrame(updateVisuals)
+    }
+    
+    rafId = requestAnimationFrame(updateVisuals)
+    return () => cancelAnimationFrame(rafId)
+  }, [context, visualStateRef, button.icon, button.label, button.status])
+  
   // Use per-button duration if set, otherwise use the passed default
   const duration = (button.animationDuration ?? animationDurationMs) / 1000
   const stretchAnim = getStretchAnimation(stretchDirection, isVisible)
+  
+  // Get initial visual state
+  const initialState = context && visualStateRef ? visualStateRef.current.get(context) : undefined
+  const initialIcon = initialState?.icon ?? button.icon
+  const initialLabel = initialState?.title ?? button.label
+  const initialStatus = initialState?.status ?? button.status
+  const isImageIcon = initialIcon && (initialIcon.startsWith("data:") || initialIcon.startsWith("http"))
 
   return (
     <motion.div
@@ -788,59 +1067,84 @@ function OverlayButton({
             ease: [0.34, 1.56, 0.64, 1]
           }}
         >
-          {button?.icon &&
-          (button.icon.startsWith("data:") || button.icon.startsWith("http")) ? (
-            <img
-              src={button.icon}
-              alt={button.label || "Button icon"}
-              className={cn("size-10 object-contain", isFocused && "size-16")}
-            />
-          ) : (
-            <div
-              className={cn("text-2xl", isFocused && "text-4xl")}
-              style={{ color: button?.textColor || "#ffffff" }}
-            >
-              {button?.icon || "🎮"}
-            </div>
-          )}
+          {/* Image icon - shown/hidden via RAF */}
+          <img
+            ref={iconImgRef}
+            src={isImageIcon ? initialIcon : ""}
+            alt={initialLabel || "Button icon"}
+            className={cn("size-10 object-contain", isFocused && "size-16")}
+            style={{ display: isImageIcon ? "block" : "none" }}
+          />
+          
+          {/* Text/emoji icon - shown/hidden via RAF */}
+          <div
+            ref={iconTextRef}
+            className={cn("text-2xl", isFocused && "text-4xl")}
+            style={{ 
+              color: button?.textColor || "#ffffff",
+              display: isImageIcon ? "none" : "block"
+            }}
+          >
+            {initialIcon || "🎮"}
+          </div>
         </motion.div>
 
-        {/* Label */}
-        {button?.label && (
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={isVisible ? { opacity: 1 } : { opacity: 0 }}
-            transition={{
-              duration: duration * 0.6,
-              delay: isVisible ? animationIndex * (staggerDelayMs / 1000) : 0,
-              ease: [0.34, 1.56, 0.64, 1]
-            }}
-            className={cn(
-              "text-[10px] font-medium text-center line-clamp-2 px-1",
-              isFocused && "text-sm"
-            )}
-            style={{ color: button?.textColor || "#ffffff" }}
-          >
-            {button.label}
-          </motion.p>
-        )}
+        {/* Label - updated via RAF */}
+        <motion.p
+          ref={labelRef}
+          initial={{ opacity: 0 }}
+          animate={isVisible ? { opacity: 1 } : { opacity: 0 }}
+          transition={{
+            duration: duration * 0.6,
+            delay: isVisible ? animationIndex * (staggerDelayMs / 1000) : 0,
+            ease: [0.34, 1.56, 0.64, 1]
+          }}
+          className={cn(
+            "text-[10px] font-medium text-center truncate w-full px-1",
+            isFocused && "text-sm"
+          )}
+          style={{ color: button?.textColor || "#ffffff" }}
+        >
+          {initialLabel || ""}
+        </motion.p>
 
-        {/* Status indicator */}
-        {button?.status && (
-          <span
-            className="absolute top-1 right-1 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase"
-            style={{
-              backgroundColor: button.status === "alert" ? "#f97316" : "#22c55e",
-              color: "#000",
-            }}
-          >
-            {button.status === "alert" ? "!" : "OK"}
-          </span>
-        )}
+        {/* Status indicator - updated via RAF */}
+        <span
+          ref={statusRef}
+          className="absolute top-1 right-1 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase items-center justify-center"
+          style={{
+            backgroundColor: initialStatus === "alert" ? "#f97316" : "#22c55e",
+            color: "#000",
+            display: initialStatus ? "flex" : "none",
+          }}
+        >
+          {initialStatus === "alert" ? "!" : "OK"}
+        </span>
       </div>
     </motion.div>
   )
-}
+}, (prevProps, nextProps) => {
+  // Only re-render for structural/animation changes, NOT visual state updates
+  // Visual state updates are handled via RAF + refs
+  return (
+    prevProps.button.id === nextProps.button.id &&
+    prevProps.button.filterHint === nextProps.button.filterHint &&
+    prevProps.button.position.row === nextProps.button.position.row &&
+    prevProps.button.position.col === nextProps.button.position.col &&
+    prevProps.button.textColor === nextProps.button.textColor &&
+    prevProps.button.animationDuration === nextProps.button.animationDuration &&
+    prevProps.buttonSize === nextProps.buttonSize &&
+    prevProps.radius === nextProps.radius &&
+    prevProps.isDimmed === nextProps.isDimmed &&
+    prevProps.showHint === nextProps.showHint &&
+    prevProps.isFocused === nextProps.isFocused &&
+    prevProps.isVisible === nextProps.isVisible &&
+    prevProps.animationIndex === nextProps.animationIndex &&
+    prevProps.stretchDirection === nextProps.stretchDirection &&
+    prevProps.animationDurationMs === nextProps.animationDurationMs &&
+    prevProps.staggerDelayMs === nextProps.staggerDelayMs
+  )
+})
 
 interface MergedBackgroundProps {
   rows: number
