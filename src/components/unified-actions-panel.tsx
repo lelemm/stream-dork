@@ -124,8 +124,8 @@ export function UnifiedActionsPanel({ plugins, onDragStart, filter = "" }: Unifi
                   <Card
                     key={action.uuid}
                     draggable
-                    onDragStart={() =>
-                      onDragStart({
+                    onDragStart={(e) => {
+                      const actionData = {
                         type: "plugin",
                         pluginUuid: plugin.uuid,
                         actionUuid: action.uuid,
@@ -134,8 +134,15 @@ export function UnifiedActionsPanel({ plugins, onDragStart, filter = "" }: Unifi
                         tooltip: action.tooltip,
                         icon: action.icon || plugin.icon,
                         propertyInspectorPath: action.propertyInspectorPath || plugin.propertyInspectorPath,
-                      })
-                    }
+                      }
+                      // Debug: log drag start so we can verify DnD is firing
+                      console.log("[Setup] UnifiedActionsPanel dragStart", actionData)
+                      // Set data on dataTransfer for native drag/drop
+                      e.dataTransfer.setData("application/x-plugin-action", JSON.stringify(actionData))
+                      e.dataTransfer.effectAllowed = "copy"
+                      // Also call the callback for React state
+                      onDragStart(actionData)
+                    }}
                     className="p-2.5 cursor-grab active:cursor-grabbing hover:bg-accent/50 transition-colors"
                   >
                     <div className="flex items-start gap-2.5">

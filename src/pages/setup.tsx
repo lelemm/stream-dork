@@ -28,31 +28,38 @@ function SetupPage() {
   const [actionFilter, setActionFilter] = useState("")
   const statusTimers = useRef(new Map<string, ReturnType<typeof setTimeout>>())
 
-  const handleDrop = async (row: number, col: number) => {
-    if (!draggedAction) return
+  const handleDragEnd = () => {
+    setDraggedAction(null)
+  }
 
-    if (draggedAction.type === "plugin" && draggedAction.pluginUuid && draggedAction.actionUuid) {
+  const handleDrop = async (row: number, col: number, actionData?: { type: string; pluginUuid?: string; actionUuid?: string; name?: string; propertyInspectorPath?: string; icon?: string; id?: string }) => {
+    console.log("[Setup] handleDrop called", { row, col, actionData, draggedAction })
+    // Use action data from dataTransfer if available, fall back to state
+    const action = actionData || draggedAction
+    if (!action) return
+
+    if (action.type === "plugin" && action.pluginUuid && action.actionUuid) {
       const context = await window.electron?.createHostContext({
-        pluginUuid: draggedAction.pluginUuid,
-        actionUuid: draggedAction.actionUuid,
+        pluginUuid: action.pluginUuid,
+        actionUuid: action.actionUuid,
         coordinates: { column: col, row },
       })
       const newButton = {
         id: `${Date.now()}-${Math.random()}`,
         position: { row, col },
         action: {
-          id: `${draggedAction.pluginUuid}-${draggedAction.actionUuid}`,
+          id: `${action.pluginUuid}-${action.actionUuid}`,
           type: "plugin" as const,
-          name: draggedAction.name,
-          pluginUuid: draggedAction.pluginUuid,
-          actionUuid: draggedAction.actionUuid,
+          name: action.name || "Action",
+          pluginUuid: action.pluginUuid,
+          actionUuid: action.actionUuid,
           context: context || undefined,
-          propertyInspectorPath: draggedAction.propertyInspectorPath,
-          icon: draggedAction.icon,
+          propertyInspectorPath: action.propertyInspectorPath,
+          icon: action.icon,
           config: {},
         },
-        label: draggedAction.name,
-        icon: draggedAction.icon,
+        label: action.name || "Action",
+        icon: action.icon,
       }
       addButton(newButton)
       setDraggedAction(null)
@@ -64,12 +71,12 @@ function SetupPage() {
       id: `${Date.now()}-${Math.random()}`,
       position: { row, col },
       action: {
-        id: draggedAction.id,
-        type: draggedAction.type,
-        name: draggedAction.name,
+        id: action.id || `${Date.now()}`,
+        type: action.type as "plugin" | "hotkey" | "command",
+        name: action.name || "Action",
         config: {},
       },
-      label: draggedAction.name,
+      label: action.name || "Action",
       icon: undefined,
     }
 
@@ -279,11 +286,13 @@ function SetupPage() {
                   </div>
                 </div>
                 <div className="flex-1 overflow-y-auto">
-                  <UnifiedActionsPanel
-                    plugins={hostState?.plugins || []}
-                    onDragStart={setDraggedAction}
-                    filter={actionFilter}
-                  />
+                  <div onDragEnd={handleDragEnd}>
+                    <UnifiedActionsPanel
+                      plugins={hostState?.plugins || []}
+                      onDragStart={setDraggedAction}
+                      filter={actionFilter}
+                    />
+                  </div>
                 </div>
                 {showControlPanel && (
                   <div className="flex-shrink-0 mt-4">

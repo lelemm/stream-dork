@@ -10,11 +10,22 @@ import {
   ContextMenuTrigger,
 } from "@/components/ui/context-menu"
 
+interface PluginActionData {
+  type: "plugin"
+  pluginUuid: string
+  actionUuid: string
+  name: string
+  pluginName: string
+  tooltip?: string
+  propertyInspectorPath?: string
+  icon?: string
+}
+
 interface GridButtonProps {
   button?: GridButtonType
   isSetupMode: boolean
   isSelected?: boolean
-  onDrop?: (row: number, col: number) => void
+  onDrop?: (row: number, col: number, actionData?: PluginActionData) => void
   onMove?: (row: number, col: number) => void
   onClick?: () => void
   onRemove?: () => void
@@ -47,15 +58,47 @@ export function GridButton({
 }: GridButtonProps) {
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault()
-    e.dataTransfer.dropEffect = e.dataTransfer.types.includes("application/x-button-move") ? "move" : "copy"
+    e.stopPropagation()
+    // Debug: see what types are present during drag over
+    // Using slice() so DOMStringList in older Electron versions is safely logged
+    try {
+      const types = Array.from(e.dataTransfer.types as unknown as string[] | string[])
+      console.log("[Setup] GridButton dragOver types", types)
+    } catch {
+      // ignore
+    }
+    if (e.dataTransfer.types.includes("application/x-button-move")) {
+      e.dataTransfer.dropEffect = "move"
+    } else if (e.dataTransfer.types.includes("application/x-plugin-action")) {
+      e.dataTransfer.dropEffect = "copy"
+    } else {
+      e.dataTransfer.dropEffect = "copy"
+    }
   }
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault()
+    e.stopPropagation()
+    console.log("[Setup] GridButton drop at", position)
     // Check if this is a move operation (existing button being dragged)
     if (e.dataTransfer.types.includes("application/x-button-move")) {
+      console.log("[Setup] GridButton drop detected button move")
       onMove?.(position.row, position.col)
+    } else if (e.dataTransfer.types.includes("application/x-plugin-action")) {
+      // This is a plugin action being dropped - read data from dataTransfer
+      try {
+        const actionDataStr = e.dataTransfer.getData("application/x-plugin-action")
+        const actionData = JSON.parse(actionDataStr) as PluginActionData
+        console.log("[Setup] GridButton drop detected plugin action", actionData)
+        onDrop?.(position.row, position.col, actionData)
+      } catch {
+        // Fallback if parsing fails
+        console.warn("[Setup] GridButton drop failed to parse action data")
+        onDrop?.(position.row, position.col)
+      }
     } else {
+      // Other action types
+      console.log("[Setup] GridButton drop unknown type, calling onDrop without data")
       onDrop?.(position.row, position.col)
     }
   }

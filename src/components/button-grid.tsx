@@ -3,10 +3,21 @@ import { GridButton } from "./grid-button"
 import { useMemo, useState, useRef } from "react"
 import type { GridButton as GridButtonType } from "@/lib/types"
 
+interface PluginActionData {
+  type: "plugin"
+  pluginUuid: string
+  actionUuid: string
+  name: string
+  pluginName: string
+  tooltip?: string
+  propertyInspectorPath?: string
+  icon?: string
+}
+
 interface ButtonGridProps {
   isSetupMode: boolean
   fitToViewport?: boolean
-  onButtonDrop?: (row: number, col: number) => void
+  onButtonDrop?: (row: number, col: number, actionData?: PluginActionData) => void
   onButtonClick?: (buttonId: string) => void
 }
 
@@ -121,7 +132,18 @@ export function ButtonGrid({ isSetupMode, fitToViewport = false, onButtonDrop, o
                 key={`${row}-${col}`}
                 className="relative aspect-square"
                 style={{ gridColumn: col + 1, gridRow: row + 1 }}
-                onDragStart={() => button && handleDragStart(button.id)}
+                onDragStart={(e) => {
+                  if (button) {
+                    handleDragStart(button.id)
+                  } else {
+                    // Prevent dragging empty cells
+                    e.preventDefault()
+                  }
+                }}
+                onDragOver={(e) => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                }}
               >
                 <GridButton
                   button={button}
@@ -189,7 +211,17 @@ export function ButtonGrid({ isSetupMode, fitToViewport = false, onButtonDrop, o
           return (
             <div
               key={`${row}-${col}`}
-              onDragStart={() => button && handleDragStart(button.id)}
+              onDragStart={(e) => {
+                if (button) {
+                  handleDragStart(button.id)
+                } else {
+                  e.preventDefault()
+                }
+              }}
+              onDragOver={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+              }}
             >
               <GridButton
                 button={button}
