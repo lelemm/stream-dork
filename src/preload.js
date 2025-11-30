@@ -52,5 +52,11 @@ contextBridge.exposeInMainWorld("electron", {
   // Overlay mouse event control
   enableOverlayMouse: () => ipcRenderer.send("overlay-enable-mouse"),
   disableOverlayMouse: () => ipcRenderer.send("overlay-disable-mouse"),
+  // Save completion events
+  onSaveCompleted: (callback) => {
+    const listener = (event, data) => callback(data)
+    ipcRenderer.on("save-completed", listener)
+    return () => ipcRenderer.off("save-completed", listener)
+  },
 })
 

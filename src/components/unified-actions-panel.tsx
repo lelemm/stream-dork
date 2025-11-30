@@ -6,9 +6,9 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible"
-import type { HostPluginDescriptor } from "@/types/electron"
+import type { HostActionDescriptor, HostPluginDescriptor } from "@/types/electron"
 
-interface PluginAction {
+export interface PluginAction {
   type: "plugin"
   pluginUuid: string
   actionUuid: string
@@ -121,55 +121,12 @@ export function UnifiedActionsPanel({ plugins, onDragStart, filter = "" }: Unifi
             <CollapsibleContent>
               <div className="flex flex-col gap-1.5 pl-4 pt-2">
                 {plugin.actions.map((action) => (
-                  <Card
+                  <DraggableActionCard
                     key={action.uuid}
-                    draggable
-                    onDragStart={(e) => {
-                      const actionData = {
-                        type: "plugin",
-                        pluginUuid: plugin.uuid,
-                        actionUuid: action.uuid,
-                        name: action.name,
-                        pluginName: plugin.name,
-                        tooltip: action.tooltip,
-                        icon: action.icon || plugin.icon,
-                        propertyInspectorPath: action.propertyInspectorPath || plugin.propertyInspectorPath,
-                      }
-                      // Debug: log drag start so we can verify DnD is firing
-                      console.log("[Setup] UnifiedActionsPanel dragStart", actionData)
-                      // Set data on dataTransfer for native drag/drop
-                      e.dataTransfer.setData("application/x-plugin-action", JSON.stringify(actionData))
-                      e.dataTransfer.effectAllowed = "copy"
-                      // Also call the callback for React state
-                      onDragStart(actionData)
-                    }}
-                    className="p-2.5 cursor-grab active:cursor-grabbing hover:bg-accent/50 transition-colors"
-                  >
-                    <div className="flex items-start gap-2.5">
-                      <div className="flex items-center justify-center size-7 rounded bg-primary/10 text-primary flex-shrink-0">
-                        {action.icon || plugin.icon ? (
-                          <img
-                            src={action.icon || plugin.icon}
-                            alt={`${action.name} icon`}
-                            className="size-4"
-                          />
-                        ) : (
-                          <span className="text-xs font-semibold">{action.name?.[0] ?? "?"}</span>
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <p className="text-xs font-medium text-foreground">{action.name}</p>
-                          <Grip className="size-3 text-muted-foreground ml-auto flex-shrink-0" />
-                        </div>
-                        {action.tooltip && (
-                          <p className="text-[10px] text-muted-foreground mt-0.5 line-clamp-2">
-                            {action.tooltip}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  </Card>
+                    plugin={plugin}
+                    action={action}
+                    onDragStart={onDragStart}
+                  />
                 ))}
               </div>
             </CollapsibleContent>
@@ -180,3 +137,76 @@ export function UnifiedActionsPanel({ plugins, onDragStart, filter = "" }: Unifi
   )
 }
 
+interface DraggableActionCardProps {
+  plugin: HostPluginDescriptor
+  action: HostActionDescriptor
+  onDragStart: (action: PluginAction) => void
+}
+
+function DraggableActionCard({ plugin, action, onDragStart }: DraggableActionCardProps) {
+  const [isDragging, setIsDragging] = React.useState(false)
+  
+  const actionData: PluginAction = {
+    type: "plugin",
+    pluginUuid: plugin.uuid,
+    actionUuid: action.uuid,
+    name: action.name,
+    pluginName: plugin.name,
+    tooltip: action.tooltip,
+    icon: action.icon || plugin.icon,
+    propertyInspectorPath: action.propertyInspectorPath || plugin.propertyInspectorPath,
+  }
+
+  const handleDragStart = (e: React.DragEvent) => {
+    console.log("[UnifiedActionsPanel] Native DragStart", actionData)
+    setIsDragging(true)
+    
+    // Set the drag data as JSON
+    e.dataTransfer.setData("application/json", JSON.stringify(actionData))
+    e.dataTransfer.setData("text/plain", actionData.name)
+    e.dataTransfer.effectAllowed = "copy"
+    
+    // Notify the parent handler
+    onDragStart(actionData)
+  }
+  
+  const handleDragEnd = () => {
+    setIsDragging(false)
+  }
+
+  return (
+    <Card
+      draggable
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+      className={`p-2.5 cursor-grab active:cursor-grabbing hover:bg-accent/50 transition-colors ${
+        isDragging ? "opacity-60" : ""
+      }`}
+    >
+      <div className="flex items-start gap-2.5">
+        <div className="flex items-center justify-center size-7 rounded bg-primary/10 text-primary flex-shrink-0">
+          {action.icon || plugin.icon ? (
+            <img
+              src={action.icon || plugin.icon}
+              alt={`${action.name} icon`}
+              className="size-4"
+            />
+          ) : (
+            <span className="text-xs font-semibold">{action.name?.[0] ?? "?"}</span>
+          )}
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <p className="text-xs font-medium text-foreground">{action.name}</p>
+            <Grip className="size-3 text-muted-foreground ml-auto flex-shrink-0" />
+          </div>
+          {action.tooltip && (
+            <p className="text-[10px] text-muted-foreground mt-0.5 line-clamp-2">
+              {action.tooltip}
+            </p>
+          )}
+        </div>
+      </div>
+    </Card>
+  )
+}

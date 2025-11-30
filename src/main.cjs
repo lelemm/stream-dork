@@ -182,6 +182,15 @@ const ICON_LIBRARY_ROOT = app.isPackaged
 const HOST_STATE_FILE = path.join(app.getPath("userData"), "host-state.json")
 const CONFIG_FILE = path.join(app.getPath("userData"), "config.json")
 
+// Debounce timers for saving
+let configSaveTimer = null
+let hostStateSaveTimer = null
+const SAVE_DEBOUNCE_MS = 500
+
+// Track last save times for notifications
+let lastConfigSaveTime = 0
+let lastHostStateSaveTime = 0
+
 function broadcastHostEvent(message) {
   const windows = [setupWindow, overlayWindow]
   windows.forEach((win) => {
@@ -397,6 +406,7 @@ function initializePluginsAndHost() {
     iconLibraries: discoveredIconLibraries,
     logger: appendLog,
     notifyRenderer: broadcastHostEvent,
+    notifySave: (type) => broadcastSaveEvent(type),
     stateFile: HOST_STATE_FILE,
     language,
     enableFileLogging,
@@ -585,14 +595,35 @@ function restorePluginContexts() {
   }
 }
 
-function saveConfigToDisk() {
+function saveConfigToDiskImmediate() {
   appendLog("CONFIG", "Saving configuration to disk")
   try {
     ensureConfigDirectory()
     fs.writeFileSync(CONFIG_FILE, JSON.stringify(config, null, 2), "utf-8")
+    lastConfigSaveTime = Date.now()
+    broadcastSaveEvent("config")
   } catch (error) {
     appendLog("ERROR", `saveConfigToDisk failed: ${error.stack || error}`)
   }
+}
+
+function saveConfigToDisk() {
+  if (configSaveTimer) {
+    clearTimeout(configSaveTimer)
+  }
+  configSaveTimer = setTimeout(() => {
+    saveConfigToDiskImmediate()
+    configSaveTimer = null
+  }, SAVE_DEBOUNCE_MS)
+}
+
+function broadcastSaveEvent(type) {
+  const windows = [setupWindow, overlayWindow]
+  windows.forEach((win) => {
+    if (win && !win.isDestroyed()) {
+      win.webContents.send("save-completed", { type, timestamp: Date.now() })
+    }
+  })
 }
 
 function updateConfig(partial) {

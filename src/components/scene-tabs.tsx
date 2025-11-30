@@ -132,7 +132,6 @@ export function SceneTabs() {
   }
 
   const handleDragStart = (e: React.DragEvent, sceneId: string) => {
-    console.log("[Setup] SceneTabs dragStart", sceneId)
     setDraggedSceneId(sceneId)
     e.dataTransfer.effectAllowed = "move"
     e.dataTransfer.setData("application/x-scene-id", sceneId)
@@ -141,10 +140,6 @@ export function SceneTabs() {
   const handleDragOver = (e: React.DragEvent, index: number) => {
     e.preventDefault()
     e.dataTransfer.dropEffect = "move"
-    // Debug: track which index we're dragging over
-    if (dragOverIndex !== index) {
-      console.log("[Setup] SceneTabs dragOver index", index)
-    }
     setDragOverIndex(index)
   }
 
@@ -156,13 +151,10 @@ export function SceneTabs() {
     e.preventDefault()
     setDragOverIndex(null)
 
-    // Read scene ID from dataTransfer (more reliable than React state)
-    const sceneId = e.dataTransfer.getData("application/x-scene-id") || draggedSceneId
-    console.log("[Setup] SceneTabs drop at index", targetIndex, "sceneId:", sceneId)
-    if (!sceneId) return
+    if (!draggedSceneId) return
 
     const currentOrder = scenes.map((s) => s.id)
-    const draggedIndex = currentOrder.indexOf(sceneId)
+    const draggedIndex = currentOrder.indexOf(draggedSceneId)
 
     if (draggedIndex === -1 || draggedIndex === targetIndex) {
       setDraggedSceneId(null)
@@ -172,7 +164,7 @@ export function SceneTabs() {
     // Reorder
     const newOrder = [...currentOrder]
     newOrder.splice(draggedIndex, 1)
-    newOrder.splice(targetIndex, 0, sceneId)
+    newOrder.splice(targetIndex, 0, draggedSceneId)
 
     reorderScenes(newOrder)
     setDraggedSceneId(null)

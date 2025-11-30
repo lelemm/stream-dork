@@ -24,8 +24,10 @@ function stripAnsi(str) {
   return str.replace(/\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])/g, "")
 }
 
+const SAVE_DEBOUNCE_MS = 500
+
 class StreamDeckHost {
-  constructor({ plugins = [], iconLibraries = [], logger = () => {}, notifyRenderer = () => {}, stateFile, language = "en", enableFileLogging = false }) {
+  constructor({ plugins = [], iconLibraries = [], logger = () => {}, notifyRenderer = () => {}, notifySave = () => {}, stateFile, language = "en", enableFileLogging = false }) {
     this.plugins = plugins
     this.iconLibraries = iconLibraries
     this.logger = logger
@@ -44,7 +46,10 @@ class StreamDeckHost {
     this.logs = []
     this.actionLookup = new Map()
     this.notifyRenderer = notifyRenderer
+    this.notifySave = notifySave // Callback to notify renderer when state is saved
     this.stateFile = stateFile
+    // Debounce timer for saving state
+    this.saveTimer = null
     // Track visual state (image, title, state) per context for runtime overrides from plugins
     // This allows the overlay to get the current visual state when it opens
     this.visualState = new Map()
@@ -1132,7 +1137,7 @@ class StreamDeckHost {
     }
   }
 
-  saveState() {
+  saveStateImmediate() {
     if (!this.stateFile) return
     try {
       const payload = {
@@ -1140,9 +1145,25 @@ class StreamDeckHost {
         contextSettings: Object.fromEntries(this.contextSettings),
       }
       fs.writeFileSync(this.stateFile, JSON.stringify(payload), "utf-8")
+      this.log("HOST", "Host state saved to disk")
+      // Notify renderer that save completed
+      if (this.notifySave) {
+        this.notifySave("host-state")
+      }
     } catch (error) {
       this.log("HOST", `saveState failed: ${error.message}`)
     }
+  }
+
+  saveState() {
+    // Debounce saves to avoid race conditions with rapid updates
+    if (this.saveTimer) {
+      clearTimeout(this.saveTimer)
+    }
+    this.saveTimer = setTimeout(() => {
+      this.saveStateImmediate()
+      this.saveTimer = null
+    }, SAVE_DEBOUNCE_MS)
   }
 
   startApplicationWatcher() {
