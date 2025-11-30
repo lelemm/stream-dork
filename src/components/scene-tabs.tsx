@@ -121,9 +121,12 @@ export function SceneTabs() {
     const scene = scenes.find((s) => s.id === sceneId)
     if (!scene) return
 
+    // Count buttons for this scene from the flat buttons array
+    const buttonCount = config.buttons.filter((btn) => (btn.sceneId || "default") === sceneId).length
+
     // Confirm if scene has buttons
-    if (scene.buttons.length > 0) {
-      if (!confirm(`Delete "${scene.name}"? This scene has ${scene.buttons.length} button(s).`)) {
+    if (buttonCount > 0) {
+      if (!confirm(`Delete "${scene.name}"? This scene has ${buttonCount} button(s).`)) {
         return
       }
     }

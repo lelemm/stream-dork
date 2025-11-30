@@ -49,5 +49,6 @@ contextBridge.exposeInMainWorld("electron", {
   getNotificationConfig: async () => ipcRenderer.invoke("get-notification-config"),
   hideNotification: () => ipcRenderer.send("hide-notification"),
   dismissNotification: (id) => ipcRenderer.send("dismiss-notification", { id }),
+  openPluginFolder: () => ipcRenderer.send("open-plugin-folder"),
 })
 

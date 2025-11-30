@@ -15,8 +15,12 @@ export function ButtonGrid({ isSetupMode, fitToViewport = false, onButtonDrop, o
   const [clipboard, setClipboard] = useState<GridButtonType | null>(null)
   const draggedButtonId = useRef<string | null>(null)
 
+  // Filter buttons for current scene
+  const activeSceneId = config.activeSceneId || "default"
+  const sceneButtons = config.buttons.filter((btn) => (btn.sceneId || "default") === activeSceneId)
+
   const getButtonAtPosition = (row: number, col: number) => {
-    return config.buttons.find((btn) => btn.position.row === row && btn.position.col === col)
+    return sceneButtons.find((btn) => btn.position.row === row && btn.position.col === col)
   }
 
   const hasIcon = (row: number, col: number) => {
@@ -33,7 +37,7 @@ export function ButtonGrid({ isSetupMode, fitToViewport = false, onButtonDrop, o
       }
     }
     return map
-  }, [config.buttons, config.rows, config.cols])
+  }, [sceneButtons, config.rows, config.cols])
 
   const handleButtonClick = (row: number, col: number) => {
     const button = getButtonAtPosition(row, col)
@@ -79,7 +83,11 @@ export function ButtonGrid({ isSetupMode, fitToViewport = false, onButtonDrop, o
   const bgColor = config.backgroundColor || "#1a1a1a"
 
   if (fitToViewport) {
-    // Setup mode: fit to viewport with square buttons
+    // Setup mode: fit to viewport with square buttons, max 128px each
+    const maxButtonSize = 128
+    const maxGridWidth = config.cols * maxButtonSize
+    const maxGridHeight = config.rows * maxButtonSize
+    
     return (
       <div className="w-full h-full flex items-center justify-center p-6">
         <div
@@ -89,8 +97,8 @@ export function ButtonGrid({ isSetupMode, fitToViewport = false, onButtonDrop, o
             gridTemplateColumns: `repeat(${config.cols}, 1fr)`,
             gridTemplateRows: `repeat(${config.rows}, 1fr)`,
             aspectRatio: `${config.cols} / ${config.rows}`,
-            maxWidth: "100%",
-            maxHeight: "100%",
+            maxWidth: `min(100%, ${maxGridWidth}px)`,
+            maxHeight: `min(100%, ${maxGridHeight}px)`,
             width: config.cols >= config.rows ? "100%" : "auto",
             height: config.cols < config.rows ? "100%" : "auto",
           }}

@@ -175,9 +175,7 @@ app.on("browser-window-created", (event, window) => {
   appendLog("WINDOW", `Browser window created (id=${window.id})`)
 })
 
-const PLUGIN_ROOT = app.isPackaged
-  ? path.join(process.resourcesPath, "plugins")
-  : path.join(__dirname, "..", "plugins")
+const PLUGIN_ROOT = path.join(app.getPath("userData"), "plugins")
 const ICON_LIBRARY_ROOT = app.isPackaged
   ? path.join(process.resourcesPath, "icons")
   : path.join(__dirname, "..", "icons")
@@ -316,12 +314,25 @@ function loadConfigFromDisk() {
 }
 
 /**
+ * Ensure the plugins directory exists in userData
+ */
+function ensurePluginsDirectory() {
+  if (!fs.existsSync(PLUGIN_ROOT)) {
+    fs.mkdirSync(PLUGIN_ROOT, { recursive: true })
+    appendLog("CONFIG", `Created plugins directory: ${PLUGIN_ROOT}`)
+  }
+}
+
+/**
  * Initialize plugins and host after config is loaded.
  * This allows us to use the configured language for plugin discovery i18n.
  */
 function initializePluginsAndHost() {
   const language = config.language || "en"
   appendLog("CONFIG", `Initializing plugins with language: ${language}`)
+
+  // Ensure plugins directory exists
+  ensurePluginsDirectory()
 
   // Discover plugins with the configured language for i18n
   const { plugins, errors: pluginErrors } = discoverPlugins(PLUGIN_ROOT, appendLog, language)
@@ -873,6 +884,12 @@ ipcMain.on("toggle-setup", () => {
   } else {
     showSetupWindow()
   }
+})
+
+ipcMain.on("open-plugin-folder", () => {
+  appendLog("IPC", "open-plugin-folder requested")
+  const { shell } = require("electron")
+  shell.openPath(PLUGIN_ROOT)
 })
 
 ipcMain.on("hide-notification", () => {

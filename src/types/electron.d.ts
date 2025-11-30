@@ -130,6 +130,7 @@ export interface ElectronAPI {
   getNotificationConfig?: () => Promise<NotificationSettings>
   hideNotification?: () => void
   dismissNotification?: (id: string) => void
+  openPluginFolder?: () => void
 }
 
 declare global {

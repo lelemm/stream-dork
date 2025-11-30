@@ -26,6 +26,7 @@ export interface ButtonAction {
 export interface GridButton {
   id: string
   position: { row: number; col: number }
+  sceneId?: string // Which scene this button belongs to (undefined = default scene)
   action?: ButtonAction
   label?: string
   icon?: string
@@ -34,6 +35,14 @@ export interface GridButton {
   status?: "alert" | "ok"
   // Per-button animation duration override (in ms)
   animationDuration?: number
+}
+
+// Scene metadata (buttons are stored separately in the flat buttons array)
+export interface Scene {
+  id: string
+  name: string
+  rows: number
+  cols: number
 }
 
 export interface PanelSizes {
@@ -56,6 +65,9 @@ export interface DeckConfig {
   rows: number
   cols: number
   buttons: GridButton[]
+  // Scenes support - scenes store metadata, buttons reference sceneId
+  scenes?: Scene[]
+  activeSceneId?: string
   gridSizePixels?: number
   backgroundPadding?: number
   backgroundColor?: string

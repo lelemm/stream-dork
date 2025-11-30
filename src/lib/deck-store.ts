@@ -1,10 +1,14 @@
 import { create } from "zustand"
-import type { DeckConfig, GridButton, OverlayPosition, AnimationDirection, AnimationStartCorner, PanelSizes, NotificationSettings } from "./types"
+import type { DeckConfig, GridButton, OverlayPosition, AnimationDirection, AnimationStartCorner, PanelSizes, NotificationSettings, Scene } from "./types"
+
+const DEFAULT_SCENE_ID = "default"
 
 const defaultConfig: DeckConfig = {
   rows: 3,
   cols: 5,
   buttons: [],
+  scenes: [{ id: DEFAULT_SCENE_ID, name: "Scene 1", rows: 3, cols: 5 }],
+  activeSceneId: DEFAULT_SCENE_ID,
   gridSizePixels: 400,
   backgroundPadding: 8,
   backgroundColor: "#0a0a0a",
@@ -62,11 +66,33 @@ const pushUpdateToMain = (config: DeckConfig) => {
   }
 }
 
+// Helper to get active scene
+const getActiveScene = (config: DeckConfig): Scene => {
+  const scenes = config.scenes || [{ id: DEFAULT_SCENE_ID, name: "Scene 1", rows: config.rows, cols: config.cols }]
+  const activeId = config.activeSceneId || DEFAULT_SCENE_ID
+  return scenes.find((s) => s.id === activeId) || scenes[0]
+}
+
+// Helper to get buttons for active scene
+const getSceneButtons = (config: DeckConfig): GridButton[] => {
+  const activeId = config.activeSceneId || DEFAULT_SCENE_ID
+  return config.buttons.filter((btn) => (btn.sceneId || DEFAULT_SCENE_ID) === activeId)
+}
+
 interface DeckStore {
   config: DeckConfig
   selectedButton: GridButton | null
+  // Computed getters for current scene
+  activeScene: Scene
+  sceneButtons: GridButton[]
   setConfigFromMain: (config: DeckConfig) => void
   setGridDimensions: (rows: number, cols: number) => void
+  // Scene management
+  addScene: (name?: string) => string
+  removeScene: (sceneId: string) => void
+  renameScene: (sceneId: string, name: string) => void
+  reorderScenes: (sceneIds: string[]) => void
+  setActiveScene: (sceneId: string) => void
   setGridSizePixels: (size: number) => void
   setBackgroundPadding: (padding: number) => void
   setBackgroundColor: (color: string) => void
@@ -108,25 +134,121 @@ interface DeckStore {
 export const useDeckStore = create<DeckStore>((set, get) => ({
   config: defaultConfig,
   selectedButton: null,
+  
+  // Computed: active scene metadata
+  get activeScene() {
+    return getActiveScene(get().config)
+  },
+  
+  // Computed: buttons for active scene only
+  get sceneButtons() {
+    return getSceneButtons(get().config)
+  },
 
   setConfigFromMain: (newConfig) => {
     // Mark that we've received config from main, so future updates can be pushed
     configLoadedFromMain = true
-    set({ config: { ...defaultConfig, ...newConfig } })
+    // Ensure scenes exist with migration
+    const migrated = { ...defaultConfig, ...newConfig }
+    if (!migrated.scenes || migrated.scenes.length === 0) {
+      migrated.scenes = [{ id: DEFAULT_SCENE_ID, name: "Scene 1", rows: migrated.rows, cols: migrated.cols }]
+      migrated.activeSceneId = DEFAULT_SCENE_ID
+    }
+    set({ config: migrated })
   },
 
   setGridDimensions: (rows, cols) => {
     set((state) => {
-      const updatedConfig = {
-        ...state.config,
-        rows,
-        cols,
-        buttons: state.config.buttons.filter(
-          (btn) => btn.position.row < rows && btn.position.col < cols,
-        ),
-      }
+      const activeSceneId = state.config.activeSceneId || DEFAULT_SCENE_ID
+      // Update scene dimensions
+      const scenes = (state.config.scenes || []).map((scene) =>
+        scene.id === activeSceneId ? { ...scene, rows, cols } : scene
+      )
+      // Filter buttons for current scene that are out of bounds
+      const buttons = state.config.buttons.filter((btn) => {
+        if ((btn.sceneId || DEFAULT_SCENE_ID) !== activeSceneId) return true
+        return btn.position.row < rows && btn.position.col < cols
+      })
+      const updatedConfig = { ...state.config, rows, cols, scenes, buttons }
       pushUpdateToMain(updatedConfig)
       return { config: updatedConfig }
+    })
+  },
+
+  addScene: (name) => {
+    const newId = `scene-${Date.now()}`
+    set((state) => {
+      const sceneCount = (state.config.scenes?.length || 0) + 1
+      const newScene: Scene = {
+        id: newId,
+        name: name || `Scene ${sceneCount}`,
+        rows: 3,
+        cols: 5,
+      }
+      const scenes = [...(state.config.scenes || []), newScene]
+      const updatedConfig = { ...state.config, scenes }
+      pushUpdateToMain(updatedConfig)
+      return { config: updatedConfig }
+    })
+    return newId
+  },
+
+  removeScene: (sceneId) => {
+    set((state) => {
+      const scenes = state.config.scenes || []
+      if (scenes.length <= 1) return { config: state.config } // Can't remove last scene
+      
+      // Remove scene and its buttons
+      const newScenes = scenes.filter((s) => s.id !== sceneId)
+      const buttons = state.config.buttons.filter((btn) => (btn.sceneId || DEFAULT_SCENE_ID) !== sceneId)
+      
+      // If removing active scene, switch to first available
+      let activeSceneId = state.config.activeSceneId
+      if (activeSceneId === sceneId) {
+        activeSceneId = newScenes[0]?.id || DEFAULT_SCENE_ID
+      }
+      
+      const updatedConfig = { ...state.config, scenes: newScenes, buttons, activeSceneId }
+      pushUpdateToMain(updatedConfig)
+      return { config: updatedConfig }
+    })
+  },
+
+  renameScene: (sceneId, name) => {
+    set((state) => {
+      const scenes = (state.config.scenes || []).map((scene) =>
+        scene.id === sceneId ? { ...scene, name } : scene
+      )
+      const updatedConfig = { ...state.config, scenes }
+      pushUpdateToMain(updatedConfig)
+      return { config: updatedConfig }
+    })
+  },
+
+  reorderScenes: (sceneIds) => {
+    set((state) => {
+      const sceneMap = new Map((state.config.scenes || []).map((s) => [s.id, s]))
+      const scenes = sceneIds.map((id) => sceneMap.get(id)).filter(Boolean) as Scene[]
+      const updatedConfig = { ...state.config, scenes }
+      pushUpdateToMain(updatedConfig)
+      return { config: updatedConfig }
+    })
+  },
+
+  setActiveScene: (sceneId) => {
+    set((state) => {
+      const scene = state.config.scenes?.find((s) => s.id === sceneId)
+      if (!scene) return { config: state.config }
+      
+      const updatedConfig = {
+        ...state.config,
+        activeSceneId: sceneId,
+        // Update global rows/cols to match scene
+        rows: scene.rows,
+        cols: scene.cols,
+      }
+      pushUpdateToMain(updatedConfig)
+      return { config: updatedConfig, selectedButton: null }
     })
   },
 
@@ -282,9 +404,14 @@ export const useDeckStore = create<DeckStore>((set, get) => ({
 
   addButton: (button) => {
     set((state) => {
+      // Add button with current scene ID
+      const buttonWithScene = {
+        ...button,
+        sceneId: state.config.activeSceneId || DEFAULT_SCENE_ID,
+      }
       const updatedConfig = {
         ...state.config,
-        buttons: [...state.config.buttons, button],
+        buttons: [...state.config.buttons, buttonWithScene],
       }
       pushUpdateToMain(updatedConfig)
       return { config: updatedConfig }
