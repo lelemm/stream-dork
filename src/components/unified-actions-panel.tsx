@@ -74,7 +74,7 @@ export function UnifiedActionsPanel({ plugins, onDragStart, filter = "" }: Unifi
   if (filteredPlugins.length === 0 && filterLower) {
     return (
       <div className="rounded border border-border bg-muted/50 p-3 text-xs text-muted-foreground">
-        No actions match "{filter}".
+        No actions match &quot;{filter}&quot;.
       </div>
     )
   }

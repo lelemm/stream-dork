@@ -17,7 +17,7 @@ const compat = new FlatCompat({
 
 const eslintConfig = [
   {
-    ignores: ["dist/**", ".next/**", "node_modules/**"],
+    ignores: ["dist/**", ".next/**", "node_modules/**", "plugins/**", "dist-electron/**"],
   },
   ...compat.extends("eslint:recommended", "plugin:react/recommended"),
   {

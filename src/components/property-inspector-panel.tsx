@@ -395,7 +395,9 @@ export function PropertyInspectorPanel({ selectedButton, hostState }: PropertyIn
               ref={webviewRef} 
               src={inspectorUrl} 
               className="h-full w-full"
+              // eslint-disable-next-line react/no-unknown-property
               webpreferences="devTools=yes, nodeIntegration=no, contextIsolation=yes, backgroundThrottling=no"
+              // eslint-disable-next-line react/no-unknown-property
               partition="persist:property-inspector"
               {...({ allowpopups: "true" } as React.HTMLAttributes<HTMLElement>)}
             />

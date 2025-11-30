@@ -183,7 +183,7 @@ function NotificationPage() {
     setNotifications((prev) => {
       const next = prev.filter((n) => n.id !== id)
       if (next.length === 0) {
-        window.electron?.hideNotification()
+        window.electron?.hideNotification?.()
       }
       return next
     })

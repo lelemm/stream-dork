@@ -66,23 +66,25 @@ function OverlayPage() {
   }, [setConfigFromMain, updateButtonByContext])
 
   useEffect(() => {
-    const handleHostEvent = (message) => {
+    const handleHostEvent = (message: { event: string; context: string; payload?: Record<string, unknown> }) => {
       if (!message?.context) return
       const { event, context, payload } = message
       switch (event) {
         case "setTitle":
           if (typeof payload?.title === "string") {
+            const title = payload.title as string
             updateButtonByContext(context, (button) => ({
               ...button,
-              label: payload.title,
+              label: title,
             }))
           }
           break
         case "setImage":
           if (typeof payload?.image === "string") {
+            const image = payload.image as string
             updateButtonByContext(context, (button) => ({
               ...button,
-              icon: payload.image,
+              icon: image,
             }))
           }
           break

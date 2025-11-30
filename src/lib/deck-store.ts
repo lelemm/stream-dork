@@ -518,10 +518,11 @@ export const useDeckStore = create<DeckStore>((set, get) => ({
 
     switch (button.action.type) {
       case "plugin":
-        if (button.action.context) {
-          window.electron?.sendHostEvent({ context: button.action.context, eventName: "keyDown" })
+        if (button.action?.context) {
+          const ctx = button.action.context
+          window.electron?.sendHostEvent({ context: ctx, eventName: "keyDown" })
           setTimeout(() => {
-            window.electron?.sendHostEvent({ context: button.action.context, eventName: "keyUp" })
+            window.electron?.sendHostEvent({ context: ctx, eventName: "keyUp" })
           }, 120)
         }
         break

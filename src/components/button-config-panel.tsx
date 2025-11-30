@@ -250,7 +250,7 @@ export function ButtonConfigPanel() {
               className="mt-1.5"
             />
             <p className="text-[10px] text-muted-foreground mt-1">
-              Set a custom duration for this button's reveal animation
+              Set a custom duration for this button&apos;s reveal animation
             </p>
           </div>
 
