@@ -11,18 +11,12 @@ interface ButtonGridProps {
 }
 
 export function ButtonGrid({ isSetupMode, fitToViewport = false, onButtonDrop, onButtonClick }: ButtonGridProps) {
-  const { config, activeScene, selectedButton, setSelectedButton, removeButton, moveButton, copyButton, pasteButton, executeAction } = useDeckStore()
+  const { config, selectedButton, setSelectedButton, removeButton, moveButton, copyButton, pasteButton, executeAction } = useDeckStore()
   const [clipboard, setClipboard] = useState<GridButtonType | null>(null)
   const draggedButtonId = useRef<string | null>(null)
 
-  // Use active scene's config, fallback to legacy config
-  const scene = activeScene || (config.scenes && config.scenes[0]) || null
-  const rows = scene?.rows ?? config.rows ?? 3
-  const cols = scene?.cols ?? config.cols ?? 5
-  const buttons = scene?.buttons ?? config.buttons ?? []
-
   const getButtonAtPosition = (row: number, col: number) => {
-    return buttons.find((btn) => btn.position.row === row && btn.position.col === col)
+    return config.buttons.find((btn) => btn.position.row === row && btn.position.col === col)
   }
 
   const hasIcon = (row: number, col: number) => {
@@ -32,14 +26,14 @@ export function ButtonGrid({ isSetupMode, fitToViewport = false, onButtonDrop, o
 
   const iconMap = useMemo(() => {
     const map: boolean[][] = []
-    for (let r = 0; r < rows; r++) {
+    for (let r = 0; r < config.rows; r++) {
       map[r] = []
-      for (let c = 0; c < cols; c++) {
+      for (let c = 0; c < config.cols; c++) {
         map[r][c] = !!hasIcon(r, c)
       }
     }
     return map
-  }, [buttons, rows, cols])
+  }, [config.buttons, config.rows, config.cols])
 
   const handleButtonClick = (row: number, col: number) => {
     const button = getButtonAtPosition(row, col)
@@ -92,18 +86,18 @@ export function ButtonGrid({ isSetupMode, fitToViewport = false, onButtonDrop, o
           className="relative"
           style={{
             display: "grid",
-            gridTemplateColumns: `repeat(${cols}, 1fr)`,
-            gridTemplateRows: `repeat(${rows}, 1fr)`,
-            aspectRatio: `${cols} / ${rows}`,
+            gridTemplateColumns: `repeat(${config.cols}, 1fr)`,
+            gridTemplateRows: `repeat(${config.rows}, 1fr)`,
+            aspectRatio: `${config.cols} / ${config.rows}`,
             maxWidth: "100%",
             maxHeight: "100%",
-            width: cols >= rows ? "100%" : "auto",
-            height: cols < rows ? "100%" : "auto",
+            width: config.cols >= config.rows ? "100%" : "auto",
+            height: config.cols < config.rows ? "100%" : "auto",
           }}
         >
           <MergedBackground
-            rows={rows}
-            cols={cols}
+            rows={config.rows}
+            cols={config.cols}
             iconMap={iconMap}
             padding={padding}
             radius={radius}
@@ -111,9 +105,9 @@ export function ButtonGrid({ isSetupMode, fitToViewport = false, onButtonDrop, o
           />
 
           {/* Buttons layer */}
-          {Array.from({ length: rows * cols }).map((_, index) => {
-            const row = Math.floor(index / cols)
-            const col = index % cols
+          {Array.from({ length: config.rows * config.cols }).map((_, index) => {
+            const row = Math.floor(index / config.cols)
+            const col = index % config.cols
             const button = getButtonAtPosition(row, col)
 
             return (
@@ -121,6 +115,7 @@ export function ButtonGrid({ isSetupMode, fitToViewport = false, onButtonDrop, o
                 key={`${row}-${col}`}
                 className="relative aspect-square"
                 style={{ gridColumn: col + 1, gridRow: row + 1 }}
+                onDragStart={() => button && handleDragStart(button.id)}
               >
                 <GridButton
                   button={button}
@@ -149,9 +144,9 @@ export function ButtonGrid({ isSetupMode, fitToViewport = false, onButtonDrop, o
 
   // Overlay mode: use configured pixel size with square buttons
   const gridSize = config.gridSizePixels || 400
-  const buttonSize = Math.floor(gridSize / Math.max(rows, cols))
-  const gridWidth = buttonSize * cols
-  const gridHeight = buttonSize * rows
+  const buttonSize = Math.floor(gridSize / Math.max(config.rows, config.cols))
+  const gridWidth = buttonSize * config.cols
+  const gridHeight = buttonSize * config.rows
 
   return (
     <div
@@ -163,8 +158,8 @@ export function ButtonGrid({ isSetupMode, fitToViewport = false, onButtonDrop, o
       }}
     >
       <MergedBackground
-        rows={rows}
-        cols={cols}
+        rows={config.rows}
+        cols={config.cols}
         iconMap={iconMap}
         padding={padding}
         radius={radius}
@@ -176,18 +171,19 @@ export function ButtonGrid({ isSetupMode, fitToViewport = false, onButtonDrop, o
       <div
         className="relative grid"
         style={{
-          gridTemplateColumns: `repeat(${cols}, ${buttonSize}px)`,
-          gridTemplateRows: `repeat(${rows}, ${buttonSize}px)`,
+          gridTemplateColumns: `repeat(${config.cols}, ${buttonSize}px)`,
+          gridTemplateRows: `repeat(${config.rows}, ${buttonSize}px)`,
         }}
       >
-        {Array.from({ length: rows * cols }).map((_, index) => {
-          const row = Math.floor(index / cols)
-          const col = index % cols
+        {Array.from({ length: config.rows * config.cols }).map((_, index) => {
+          const row = Math.floor(index / config.cols)
+          const col = index % config.cols
           const button = getButtonAtPosition(row, col)
 
           return (
             <div
               key={`${row}-${col}`}
+              onDragStart={() => button && handleDragStart(button.id)}
             >
               <GridButton
                 button={button}

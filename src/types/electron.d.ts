@@ -130,11 +130,6 @@ export interface ElectronAPI {
   getNotificationConfig?: () => Promise<NotificationSettings>
   hideNotification?: () => void
   dismissNotification?: (id: string) => void
-  // Overlay mouse event control
-  enableOverlayMouse?: () => void
-  disableOverlayMouse?: () => void
-  // Save completion events
-  onSaveCompleted?: (callback: (data: { type: string; timestamp: number }) => void) => () => void
 }
 
 declare global {

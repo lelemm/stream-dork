@@ -47,43 +47,17 @@ export function GridButton({
 }: GridButtonProps) {
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault()
-    e.stopPropagation()
-    
-    // Determine the drop effect based on what's being dragged
-    const types = e.dataTransfer.types
-    if (types.includes("application/x-button-move")) {
-      e.dataTransfer.dropEffect = "move"
-    } else if (types.includes("application/json")) {
-      e.dataTransfer.dropEffect = "copy"
-    } else {
-      e.dataTransfer.dropEffect = "copy"
-    }
+    e.dataTransfer.dropEffect = e.dataTransfer.types.includes("application/x-button-move") ? "move" : "copy"
   }
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault()
-    e.stopPropagation()
-    
-    const types = e.dataTransfer.types
-    console.log("[GridButton] Drop event", { position, types: Array.from(types) })
-    
-    // Check if this is a move operation (existing button being dragged within grid)
-    if (types.includes("application/x-button-move")) {
-      console.log("[GridButton] Button move operation")
+    // Check if this is a move operation (existing button being dragged)
+    if (e.dataTransfer.types.includes("application/x-button-move")) {
       onMove?.(position.row, position.col)
-      return
-    }
-    
-    // Check if this is a new action being dropped from the actions panel
-    if (types.includes("application/json")) {
-      console.log("[GridButton] New action drop operation")
+    } else {
       onDrop?.(position.row, position.col)
-      return
     }
-    
-    // Fallback for other drag types
-    console.log("[GridButton] Fallback drop operation")
-    onDrop?.(position.row, position.col)
   }
 
   const handleDragStart = (e: React.DragEvent) => {
