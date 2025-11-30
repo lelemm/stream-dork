@@ -745,9 +745,9 @@ function createTray() {
 
     const contextMenu = Menu.buildFromTemplate([
     {
-      label: "Open Setup",
+      label: "Open Overlay",
       click: () => {
-        showSetupWindow()
+        toggleOverlayWindow()
       },
     },
     { type: "separator" },
@@ -763,7 +763,7 @@ function createTray() {
     tray.setContextMenu(contextMenu)
     tray.setToolTip("Stream Dork")
     tray.on("double-click", () => {
-      toggleOverlayWindow()
+      showSetupWindow()
     })
   } catch (error) {
     appendLog("ERROR", `createTray failed: ${error.stack || error}`)
