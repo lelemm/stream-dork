@@ -199,7 +199,7 @@ export function SceneTabs() {
           return (
             <div
               key={scene.id}
-              draggable
+              draggable={!isEditing}
               onDragStart={(e) => handleDragStart(e, scene.id)}
               onDragOver={(e) => handleDragOver(e, index)}
               onDragLeave={handleDragLeave}
@@ -226,6 +226,7 @@ export function SceneTabs() {
                   onKeyDown={handleKeyDown}
                   className="h-6 px-1.5 text-xs min-w-[80px] max-w-[200px]"
                   onClick={(e) => e.stopPropagation()}
+                  onDragStart={(e) => e.preventDefault()}
                 />
               ) : (
                 <>

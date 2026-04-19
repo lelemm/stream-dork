@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
 import { Slider } from "@/components/ui/slider"
-import { Bell, BellOff, MousePointer, Timer, Layers, Eye } from "lucide-react"
+import { Bell, BellOff, MousePointer, Timer, Layers, Eye, Maximize2 } from "lucide-react"
 import type { NotificationFanDirection } from "@/lib/types"
 
 export function NotificationSettings() {
@@ -20,6 +20,7 @@ export function NotificationSettings() {
   const [alwaysFanOut, setAlwaysFanOut] = useState(config.notification?.alwaysFanOut ?? false)
   const [clickThrough, setClickThrough] = useState(config.notification?.clickThrough ?? false)
   const [hoverOpacity, setHoverOpacity] = useState(config.notification?.hoverOpacity ?? 100)
+  const [iconSize, setIconSize] = useState(config.notification?.iconSize ?? 72)
 
   // Sync with config changes
   useEffect(() => {
@@ -30,17 +31,19 @@ export function NotificationSettings() {
     setAlwaysFanOut(config.notification?.alwaysFanOut ?? false)
     setClickThrough(config.notification?.clickThrough ?? false)
     setHoverOpacity(config.notification?.hoverOpacity ?? 100)
+    setIconSize(config.notification?.iconSize ?? 72)
   }, [config.notification])
 
   const handleApply = () => {
     setNotificationSettings({
       enabled,
       dismissOnClick,
-      autoDismissSeconds: Math.max(1, Math.min(60, autoDismissSeconds)),
+      autoDismissSeconds: Math.max(0, Math.min(60, autoDismissSeconds)),
       fanDirection,
       alwaysFanOut,
       clickThrough,
       hoverOpacity: Math.max(10, Math.min(100, hoverOpacity)),
+      iconSize: Math.max(32, Math.min(128, iconSize)),
     })
   }
 
@@ -81,14 +84,14 @@ export function NotificationSettings() {
             <Input
               id="auto-dismiss-seconds"
               type="number"
-              min={1}
+              min={0}
               max={60}
               value={autoDismissSeconds}
               onChange={(e) => setAutoDismissSeconds(Number(e.target.value))}
               className="h-8"
             />
             <p className="text-[10px] text-muted-foreground">
-              How long notifications stay visible (1-60 seconds)
+              How long notifications stay visible (0 = manual dismiss only, 1-60 seconds)
             </p>
           </div>
 
@@ -189,6 +192,25 @@ export function NotificationSettings() {
             />
             <p className="text-[10px] text-muted-foreground">
               Transparency when hovering over notifications (see through to desktop)
+            </p>
+          </div>
+
+          {/* Icon Size */}
+          <div className="space-y-2">
+            <Label htmlFor="icon-size" className="text-xs flex items-center gap-2">
+              <Maximize2 className="size-3" />
+              Icon Size: {iconSize}px
+            </Label>
+            <Slider
+              id="icon-size"
+              min={32}
+              max={128}
+              step={8}
+              value={[iconSize]}
+              onValueChange={([value]) => setIconSize(value)}
+            />
+            <p className="text-[10px] text-muted-foreground">
+              Size of notification icons (32-128 pixels)
             </p>
           </div>
         </>

@@ -59,6 +59,7 @@ export interface NotificationSettings {
   alwaysFanOut: boolean
   clickThrough: boolean
   hoverOpacity: number // 0-100, opacity when hovering (100 = fully opaque)
+  iconSize: number // Size of notification icons in pixels (32-128)
 }
 
 export interface DeckConfig {
@@ -83,6 +84,7 @@ export interface DeckConfig {
   animationDirection?: AnimationDirection
   animationStartCorner?: AnimationStartCorner
   // Shortcut settings
+  overlayShortcut?: string // Global shortcut to toggle overlay (e.g., "Control+Alt+Space")
   shortcutDebounceMs?: number
   // Auto-dismiss settings
   autoDismissEnabled?: boolean

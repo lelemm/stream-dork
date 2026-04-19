@@ -10,6 +10,41 @@ const {
 } = require("electron")
 const path = require("path")
 const fs = require("fs")
+
+// Windows API for forcing window to stay on top (above Teams screen sharing, etc.)
+let setWindowTopmost = null
+if (process.platform === "win32") {
+  try {
+    const koffi = require("koffi")
+    const user32 = koffi.load("user32.dll")
+    
+    // SetWindowPos constants
+    const HWND_TOPMOST = -1
+    const SWP_NOSIZE = 0x0001
+    const SWP_NOMOVE = 0x0002
+    const SWP_NOACTIVATE = 0x0010
+    const SWP_SHOWWINDOW = 0x0040
+    
+    // Define SetWindowPos: BOOL SetWindowPos(HWND hWnd, HWND hWndInsertAfter, int X, int Y, int cx, int cy, UINT uFlags)
+    // Note: hWndInsertAfter is passed as int since HWND_TOPMOST is -1
+    const SetWindowPos = user32.func("SetWindowPos", "bool", ["pointer", "int", "int", "int", "int", "int", "uint"])
+    
+    setWindowTopmost = (browserWindow) => {
+      if (!browserWindow || browserWindow.isDestroyed()) return false
+      try {
+        const hwnd = browserWindow.getNativeWindowHandle()
+        return SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE | SWP_SHOWWINDOW)
+      } catch (err) {
+        console.error("SetWindowPos failed:", err)
+        return false
+      }
+    }
+    console.log("[Windows API] koffi loaded successfully for native window positioning")
+  } catch (err) {
+    console.warn("[Windows API] Failed to load koffi, falling back to Electron alwaysOnTop:", err.message)
+  }
+}
+
 const { discoverPlugins } = require("./host/plugin-discovery.cjs")
 const { discoverIconLibraries } = require("./host/icon-library-discovery.cjs")
 const { StreamDeckHost } = require("./host/streamdeck-host.cjs")
@@ -223,6 +258,7 @@ const defaultConfig = {
   animationDirection: "clockwise",
   animationStartCorner: "bottom-right",
   // Shortcut defaults
+  overlayShortcut: "Control+Alt+Space",
   shortcutDebounceMs: 300,
   // Auto-dismiss defaults
   autoDismissEnabled: false,
@@ -254,6 +290,70 @@ let overlayWindow
 let notificationWindow
 let tray
 let lastToggleTime = 0
+let currentRegisteredShortcut = null
+
+// Do Not Disturb state
+let doNotDisturb = false
+
+// Snoozed contexts: Map<context, expiryTimestamp>
+const snoozedContexts = new Map()
+
+// Function to register or re-register the overlay shortcut
+function registerOverlayShortcut() {
+  const shortcut = config.overlayShortcut || "Control+Alt+Space"
+  
+  // Unregister previous shortcut if it changed
+  if (currentRegisteredShortcut && currentRegisteredShortcut !== shortcut) {
+    try {
+      globalShortcut.unregister(currentRegisteredShortcut)
+      appendLog("INPUT", `Unregistered previous shortcut: ${currentRegisteredShortcut}`)
+    } catch (error) {
+      appendLog("ERROR", `Failed to unregister shortcut ${currentRegisteredShortcut}: ${error}`)
+    }
+    currentRegisteredShortcut = null
+  }
+  
+  // Skip if already registered with same shortcut
+  if (currentRegisteredShortcut === shortcut) {
+    appendLog("INPUT", `Shortcut already registered: ${shortcut}`)
+    return { success: true, shortcut }
+  }
+  
+  // Register the new shortcut
+  try {
+    const success = globalShortcut.register(shortcut, () => {
+      appendLog("INPUT", `${shortcut} shortcut triggered`)
+      toggleOverlayWindow()
+    })
+    
+    if (success) {
+      currentRegisteredShortcut = shortcut
+      appendLog("INPUT", `Registered overlay shortcut: ${shortcut}`)
+      return { success: true, shortcut }
+    } else {
+      appendLog("ERROR", `Failed to register shortcut: ${shortcut} (already in use or invalid)`)
+      return { success: false, shortcut, error: "Shortcut may already be in use by another application or is invalid" }
+    }
+  } catch (error) {
+    appendLog("ERROR", `Error registering shortcut ${shortcut}: ${error}`)
+    return { success: false, shortcut, error: String(error) }
+  }
+}
+
+// Test if a shortcut is valid without permanently registering it
+function testShortcut(shortcut) {
+  try {
+    // Try to register temporarily
+    const success = globalShortcut.register(shortcut, () => {})
+    if (success) {
+      globalShortcut.unregister(shortcut)
+      return { valid: true }
+    }
+    return { valid: false, error: "Shortcut may already be in use" }
+  } catch (error) {
+    return { valid: false, error: String(error) }
+  }
+}
 
 // In packaged builds we should never try to talk to the Vite dev server.
 // Use Electron's app.isPackaged flag instead of NODE_ENV, which may be unset.
@@ -300,16 +400,57 @@ function ensureConfigDirectory() {
   }
 }
 
+/**
+ * Validate config structure - returns true if config is valid for current version
+ */
+function isConfigValid(parsed) {
+  // Config must have buttons as a flat array (not in scenes)
+  if (!Array.isArray(parsed.buttons)) {
+    return false
+  }
+  
+  // If scenes exist, they should NOT have a buttons property (old format)
+  if (parsed.scenes && Array.isArray(parsed.scenes)) {
+    for (const scene of parsed.scenes) {
+      if (scene.buttons && Array.isArray(scene.buttons) && scene.buttons.length > 0) {
+        // Old format with buttons inside scenes - invalid
+        return false
+      }
+    }
+  }
+  
+  return true
+}
+
 function loadConfigFromDisk() {
   appendLog("CONFIG", "Loading configuration from disk")
   try {
     if (fs.existsSync(CONFIG_FILE)) {
       const raw = fs.readFileSync(CONFIG_FILE, "utf-8")
       const parsed = JSON.parse(raw)
+      
+      // Validate config structure - if invalid, delete and start fresh
+      if (!isConfigValid(parsed)) {
+        appendLog("CONFIG", "Invalid config format detected (old scene-based structure), deleting and starting fresh")
+        fs.unlinkSync(CONFIG_FILE)
+        config = { ...defaultConfig }
+        return
+      }
+      
       config = { ...defaultConfig, ...parsed }
     }
   } catch (error) {
     appendLog("ERROR", `loadConfigFromDisk failed: ${error.stack || error}`)
+    // If config is corrupted, delete it and start fresh
+    try {
+      if (fs.existsSync(CONFIG_FILE)) {
+        fs.unlinkSync(CONFIG_FILE)
+        appendLog("CONFIG", "Deleted corrupted config file, starting fresh")
+      }
+    } catch (deleteError) {
+      appendLog("ERROR", `Failed to delete corrupted config: ${deleteError}`)
+    }
+    config = { ...defaultConfig }
   }
 }
 
@@ -321,6 +462,161 @@ function ensurePluginsDirectory() {
     fs.mkdirSync(PLUGIN_ROOT, { recursive: true })
     appendLog("CONFIG", `Created plugins directory: ${PLUGIN_ROOT}`)
   }
+}
+
+// Track HTML/JS plugin windows so we can clean them up
+const pluginWindows = new Map()
+
+/**
+ * Launch an HTML-based plugin in a hidden BrowserWindow.
+ * The Stream Deck SDK expects the host to call connectElgatoStreamDeckSocket after the page loads.
+ */
+function launchHtmlPluginWindow(plugin, port, info) {
+  appendLog("PLUGIN", `Launching HTML plugin: ${plugin.name}`)
+  
+  const win = new BrowserWindow({
+    width: 1,
+    height: 1,
+    show: false,
+    webPreferences: {
+      nodeIntegration: false,
+      contextIsolation: false,
+      // Allow loading local resources from the plugin directory
+      webSecurity: false,
+    },
+  })
+  
+  pluginWindows.set(plugin.uuid, win)
+  
+  // Load the HTML file
+  const htmlPath = plugin.codePath
+  win.loadFile(htmlPath).then(() => {
+    appendLog("PLUGIN", `HTML plugin loaded: ${plugin.name}`)
+    
+    // Call the Stream Deck SDK initialization function
+    // The SDK expects: connectElgatoStreamDeckSocket(port, uuid, registerEvent, info)
+    const infoJson = JSON.stringify(info).replace(/\\/g, "\\\\").replace(/'/g, "\\'")
+    const script = `
+      if (typeof connectElgatoStreamDeckSocket === 'function') {
+        connectElgatoStreamDeckSocket(${port}, '${plugin.uuid}', 'registerPlugin', '${infoJson}');
+      } else if (window.connectElgatoStreamDeckSocket) {
+        window.connectElgatoStreamDeckSocket(${port}, '${plugin.uuid}', 'registerPlugin', '${infoJson}');
+      } else {
+        console.error('Stream Deck SDK not found - connectElgatoStreamDeckSocket is not defined');
+      }
+    `
+    win.webContents.executeJavaScript(script).catch((err) => {
+      appendLog("PLUGIN", `Failed to initialize HTML plugin ${plugin.name}: ${err.message}`)
+    })
+  }).catch((err) => {
+    appendLog("PLUGIN", `Failed to load HTML plugin ${plugin.name}: ${err.message}`)
+    pluginWindows.delete(plugin.uuid)
+    win.destroy()
+  })
+  
+  win.webContents.on("console-message", (event, level, message, line, sourceId) => {
+    const levelNames = ["LOG", "WARN", "ERROR", "DEBUG"]
+    const levelName = levelNames[level] || "LOG"
+    appendLog(`PLUGIN-${levelName}`, `[${plugin.name}] ${message}`)
+  })
+  
+  win.on("closed", () => {
+    appendLog("PLUGIN", `HTML plugin window closed: ${plugin.name}`)
+    pluginWindows.delete(plugin.uuid)
+  })
+}
+
+/**
+ * Launch a JavaScript-based plugin in a hidden BrowserWindow with Node.js integration.
+ * This allows running JS plugins without requiring Node.js to be installed separately.
+ */
+function launchJsPluginWindow(plugin, port, info) {
+  appendLog("PLUGIN", `Launching JS plugin: ${plugin.name}`)
+  
+  const pluginDir = path.dirname(plugin.codePath)
+  
+  const win = new BrowserWindow({
+    width: 1,
+    height: 1,
+    show: false,
+    webPreferences: {
+      nodeIntegration: true,
+      contextIsolation: false,
+      // Allow require() and other Node.js APIs
+      webSecurity: false,
+    },
+  })
+  
+  pluginWindows.set(plugin.uuid, win)
+  
+  // Create a minimal HTML that loads the JS plugin
+  const jsPath = plugin.codePath.replace(/\\/g, "/")
+  const infoJson = JSON.stringify(info).replace(/\\/g, "\\\\").replace(/`/g, "\\`")
+  
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <title>${plugin.name}</title>
+    </head>
+    <body>
+      <script>
+        // Set up the global connection function that Stream Deck plugins expect
+        window.connectElgatoStreamDeckSocket = function(port, uuid, registerEvent, info) {
+          // Plugin's own code will handle this
+        };
+        
+        // Provide connection parameters as globals (some plugins read these)
+        window.$SD = window.$SD || {};
+        window.$SD.port = ${port};
+        window.$SD.uuid = '${plugin.uuid}';
+        window.$SD.registerEvent = 'registerPlugin';
+        window.$SD.info = ${infoJson};
+        
+        // Load the plugin
+        try {
+          require('${jsPath}');
+        } catch (err) {
+          console.error('Failed to load plugin:', err);
+        }
+      </script>
+    </body>
+    </html>
+  `
+  
+  win.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(html)}`).catch((err) => {
+    appendLog("PLUGIN", `Failed to load JS plugin ${plugin.name}: ${err.message}`)
+    pluginWindows.delete(plugin.uuid)
+    win.destroy()
+  })
+  
+  win.webContents.on("console-message", (event, level, message, line, sourceId) => {
+    const levelNames = ["LOG", "WARN", "ERROR", "DEBUG"]
+    const levelName = levelNames[level] || "LOG"
+    appendLog(`PLUGIN-${levelName}`, `[${plugin.name}] ${message}`)
+  })
+  
+  win.on("closed", () => {
+    appendLog("PLUGIN", `JS plugin window closed: ${plugin.name}`)
+    pluginWindows.delete(plugin.uuid)
+  })
+}
+
+/**
+ * Close all plugin windows (called on app quit)
+ */
+function closeAllPluginWindows() {
+  for (const [uuid, win] of pluginWindows.entries()) {
+    try {
+      if (!win.isDestroyed()) {
+        win.destroy()
+      }
+    } catch (err) {
+      appendLog("PLUGIN", `Error closing plugin window ${uuid}: ${err.message}`)
+    }
+  }
+  pluginWindows.clear()
 }
 
 /**
@@ -354,6 +650,16 @@ function initializePluginsAndHost() {
     language,
     enableFileLogging,
   })
+
+  // Register HTML plugin launcher - runs in a hidden BrowserWindow
+  streamDeckHost.onLaunchHtmlPlugin = (plugin, port, info) => {
+    launchHtmlPluginWindow(plugin, port, info)
+  }
+
+  // Register JS plugin launcher - runs in a hidden BrowserWindow with nodeIntegration
+  streamDeckHost.onLaunchJsPlugin = (plugin, port, info) => {
+    launchJsPluginWindow(plugin, port, info)
+  }
 }
 
 function restorePluginContexts() {
@@ -389,11 +695,38 @@ function saveConfigToDisk() {
 }
 
 function updateConfig(partial) {
+  const previousShortcut = config.overlayShortcut
   config = { ...config, ...partial }
   saveConfigToDisk()
   broadcastConfig()
   updateNotificationConfig()
+  
+  // Re-register shortcut if it changed
+  if (partial.overlayShortcut !== undefined && partial.overlayShortcut !== previousShortcut) {
+    registerOverlayShortcut()
+  }
+  
+  // Clean up orphaned contexts when buttons change
+  if (partial.buttons !== undefined && streamDeckHost) {
+    cleanupOrphanedHostContexts()
+  }
+  
   return config
+}
+
+/**
+ * Clean up host contexts that no longer have corresponding buttons in the config.
+ * This prevents host-state.json from accumulating data from removed actions.
+ */
+function cleanupOrphanedHostContexts() {
+  if (!streamDeckHost) return
+  
+  // Get all active contexts from current config
+  const activeContexts = config.buttons
+    .filter((btn) => btn.action?.context)
+    .map((btn) => btn.action.context)
+  
+  streamDeckHost.cleanupOrphanedContexts(activeContexts)
 }
 
 function broadcastConfig() {
@@ -448,6 +781,43 @@ function createSetupWindow() {
   })
 }
 
+// Interval reference for aggressive alwaysOnTop polling
+let overlayAlwaysOnTopInterval = null
+// Burst timers to repeatedly reassert topmost status after show/blur events
+let overlayTopmostBurstTimeouts = []
+const OVERLAY_TOPMOST_INTERVAL_MS = 200
+
+function clearOverlayTopmostBurst() {
+  overlayTopmostBurstTimeouts.forEach(clearTimeout)
+  overlayTopmostBurstTimeouts = []
+}
+
+function reassertOverlayTopmost(reason = "") {
+  if (!overlayWindow || overlayWindow.isDestroyed()) return
+  try {
+    if (setWindowTopmost) {
+      setWindowTopmost(overlayWindow)
+    }
+    overlayWindow.setAlwaysOnTop(true, "screen-saver")
+  } catch (error) {
+    appendLog("ERROR", `reassertOverlayTopmost failed${reason ? ` (${reason})` : ""}: ${error.stack || error}`)
+  }
+}
+
+function scheduleOverlayTopmostBurst(reason = "") {
+  clearOverlayTopmostBurst()
+  const delays = [0, 75, 200, 400, 800]
+  delays.forEach((delay) => {
+    overlayTopmostBurstTimeouts.push(
+      setTimeout(() => {
+        if (overlayWindow && !overlayWindow.isDestroyed() && overlayWindow.isVisible()) {
+          reassertOverlayTopmost(reason)
+        }
+      }, delay)
+    )
+  })
+}
+
 function createOverlayWindow() {
   appendLog("WINDOW", "Creating overlay window")
   try {
@@ -484,6 +854,13 @@ function createOverlayWindow() {
     throw error
   }
 
+  // Re-assert alwaysOnTop when window loses focus (combats Teams screen sharing)
+  overlayWindow.on("blur", () => {
+    if (overlayWindow && !overlayWindow.isDestroyed() && overlayWindow.isVisible()) {
+      scheduleOverlayTopmostBurst("blur")
+    }
+  })
+
   overlayWindow.on("close", (event) => {
     if (!app.isQuiting) {
       event.preventDefault()
@@ -511,14 +888,57 @@ function showOverlayWindow() {
     createOverlayWindow()
   }
 
-  overlayWindow.setAlwaysOnTop(true, "screen-saver")
+  // Move and resize the overlay window so it covers the display
+  // where the mouse cursor is currently located. This ensures
+  // multi-monitor setups behave correctly and we respect the
+  // target monitor's resolution and work area.
+  try {
+    const { screen } = require("electron")
+    const cursorPoint = screen.getCursorScreenPoint()
+    const display = screen.getDisplayNearestPoint(cursorPoint)
+
+    if (display && overlayWindow && !overlayWindow.isDestroyed()) {
+      const { x, y, width, height } = display.workArea
+      overlayWindow.setBounds({ x, y, width, height })
+    }
+  } catch (error) {
+    appendLog("ERROR", `showOverlayWindow positioning failed: ${error.stack || error}`)
+  }
+
+  // Reassert topmost status immediately before showing
+  reassertOverlayTopmost("pre-show")
   overlayWindow.show()
   overlayWindow.focus()
+  // Fire a burst of reassertions after show/focus to fight apps (Teams screen sharing) that steal z-order
+  scheduleOverlayTopmostBurst("post-show")
+
+  // Start aggressive alwaysOnTop polling to combat apps like Teams that steal z-order
+  // This re-asserts the window's position every few hundred ms while visible
+  if (overlayAlwaysOnTopInterval) {
+    clearInterval(overlayAlwaysOnTopInterval)
+  }
+  overlayAlwaysOnTopInterval = setInterval(() => {
+    if (overlayWindow && !overlayWindow.isDestroyed() && overlayWindow.isVisible()) {
+      reassertOverlayTopmost("interval")
+    } else {
+      clearInterval(overlayAlwaysOnTopInterval)
+      overlayAlwaysOnTopInterval = null
+      clearOverlayTopmostBurst()
+    }
+  }, OVERLAY_TOPMOST_INTERVAL_MS)
+
   // Notify the overlay to start the show animation
   overlayWindow.webContents.send("overlay-visibility", { visible: true })
 }
 
 function hideOverlayWindow() {
+  // Stop the alwaysOnTop polling interval
+  if (overlayAlwaysOnTopInterval) {
+    clearInterval(overlayAlwaysOnTopInterval)
+    overlayAlwaysOnTopInterval = null
+  }
+  clearOverlayTopmostBurst()
+  
   if (overlayWindow && !overlayWindow.isDestroyed()) {
     // Notify the overlay to start the hide animation, then hide the window after animation completes
     overlayWindow.webContents.send("overlay-visibility", { visible: false })
@@ -526,29 +946,40 @@ function hideOverlayWindow() {
 }
 
 function forceHideOverlay() {
+  // Stop the alwaysOnTop polling interval
+  if (overlayAlwaysOnTopInterval) {
+    clearInterval(overlayAlwaysOnTopInterval)
+    overlayAlwaysOnTopInterval = null
+  }
+  clearOverlayTopmostBurst()
+  
   if (overlayWindow && !overlayWindow.isDestroyed()) {
     overlayWindow.hide()
   }
 }
 
+// Track pending notifications while window is loading
+let pendingNotification = null
+let notificationWindowReady = false
+
 function createNotificationWindow() {
   appendLog("WINDOW", "Creating notification window")
+  notificationWindowReady = false
   try {
     const { screen } = require("electron")
     const primaryDisplay = screen.getPrimaryDisplay()
     const { width, height } = primaryDisplay.workAreaSize
     
-    // Window needs to be large enough for expanded card stack (up to 5 cards)
-    // Each card is 72px + 8px gap, plus margin
-    const notificationWidth = 200
-    const notificationHeight = 500
-    const margin = 16
+    // Make window full height of viewport so notifications don't get clipped
+    // Width is wide enough for horizontal fan-out (5 cards * ~80px each)
+    const notificationWidth = 500
+    const notificationHeight = height
 
     notificationWindow = new BrowserWindow({
       width: notificationWidth,
       height: notificationHeight,
-      x: width - notificationWidth - margin,
-      y: height - notificationHeight - margin,
+      x: width - notificationWidth,
+      y: 0,
       show: false,
       frame: false,
       transparent: true,
@@ -568,6 +999,17 @@ function createNotificationWindow() {
     // Initially click-through, but we'll toggle this when notifications are shown
     notificationWindow.setIgnoreMouseEvents(true, { forward: true })
 
+    // Wait for the page to finish loading before sending notifications
+    notificationWindow.webContents.on("did-finish-load", () => {
+      appendLog("WINDOW", "Notification window finished loading")
+      notificationWindowReady = true
+      // Send any pending notification
+      if (pendingNotification) {
+        sendNotificationToWindow(pendingNotification)
+        pendingNotification = null
+      }
+    })
+
     loadRenderer(notificationWindow, "notification")
     attachWindowLogging(notificationWindow, "NotificationWindow")
   } catch (error) {
@@ -581,48 +1023,81 @@ function createNotificationWindow() {
       notificationWindow.hide()
     }
   })
+
+  notificationWindow.on("closed", () => {
+    notificationWindowReady = false
+    notificationWindow = null
+  })
+}
+
+function sendNotificationToWindow(notificationData) {
+  if (!notificationWindow || notificationWindow.isDestroyed()) return
+  
+  // Show the window and send the notification data
+  notificationWindow.showInactive() // Show without stealing focus
+
+  notificationWindow.webContents.send("show-notification", notificationData)
 }
 
 function showNotification(message) {
-  if (!notificationWindow || notificationWindow.isDestroyed()) {
-    createNotificationWindow()
+  // Check Do Not Disturb mode
+  if (doNotDisturb) {
+    appendLog("NOTIFICATION", "Notification blocked - Do Not Disturb is enabled")
+    return
   }
 
-  // Build notification data from the host event
   const { event, context, payload } = message
-  
+
+  // Check if this context is snoozed
+  const snoozeExpiry = snoozedContexts.get(context)
+  if (snoozeExpiry) {
+    if (Date.now() < snoozeExpiry) {
+      appendLog("NOTIFICATION", `Notification blocked - context ${context} is snoozed until ${new Date(snoozeExpiry).toISOString()}`)
+      return
+    } else {
+      // Snooze expired, remove it
+      snoozedContexts.delete(context)
+      updateTrayMenu()
+    }
+  }
+
   // Get button info from config to include icon/title context
   const button = config.buttons.find(
     (btn) => btn.action?.context === context
   )
   
+  // Get current visual state from host (plugin-set image/title takes precedence over config)
+  const visualState = streamDeckHost?.getVisualState()?.[context]
+  
   const notificationData = {
     context,
     event,
-    icon: payload?.image || button?.icon,
-    title: payload?.title || button?.label,
+    // Priority: payload (from current event) > visual state (from host) > config
+    icon: payload?.image || visualState?.image || button?.icon,
+    title: payload?.title || visualState?.title || button?.label,
     backgroundColor: button?.backgroundColor,
     textColor: button?.textColor,
     status: event === "showOk" ? "ok" : event === "showAlert" ? "alert" : undefined,
   }
 
-  // Show the window and send the notification data
-  notificationWindow.showInactive() // Show without stealing focus
-  
-  // Handle click-through mode based on config
-  const clickThrough = config.notification?.clickThrough ?? false
-  notificationWindow.setIgnoreMouseEvents(clickThrough, { forward: true })
-  
-  notificationWindow.webContents.send("show-notification", notificationData)
+  // Create window if needed
+  if (!notificationWindow || notificationWindow.isDestroyed()) {
+    createNotificationWindow()
+  }
+
+  // If window is ready, send immediately; otherwise queue it
+  if (notificationWindowReady) {
+    sendNotificationToWindow(notificationData)
+  } else {
+    // Queue the notification - only keep the latest for this context
+    pendingNotification = notificationData
+    appendLog("NOTIFICATION", `Queued notification for ${context} (window loading)`)
+  }
 }
 
 function updateNotificationConfig() {
   if (notificationWindow && !notificationWindow.isDestroyed()) {
     notificationWindow.webContents.send("notification-config", config.notification)
-    
-    // Update click-through state
-    const clickThrough = config.notification?.clickThrough ?? false
-    notificationWindow.setIgnoreMouseEvents(clickThrough, { forward: true })
   }
 }
 
@@ -731,6 +1206,60 @@ function createAppMenu() {
   Menu.setApplicationMenu(menu)
 }
 
+function buildTrayMenuTemplate() {
+  const template = [
+    {
+      label: "Open Overlay",
+      click: () => {
+        toggleOverlayWindow()
+      },
+    },
+    { type: "separator" },
+    {
+      label: "Do Not Disturb",
+      type: "checkbox",
+      checked: doNotDisturb,
+      click: () => {
+        doNotDisturb = !doNotDisturb
+        appendLog("NOTIFICATION", `Do Not Disturb ${doNotDisturb ? "enabled" : "disabled"}`)
+        updateTrayMenu()
+      },
+    },
+  ]
+
+  // Add "Wake all action notifications" if there are snoozed contexts
+  if (snoozedContexts.size > 0) {
+    template.push({
+      label: `Wake all action notifications (${snoozedContexts.size})`,
+      click: () => {
+        snoozedContexts.clear()
+        appendLog("NOTIFICATION", "All snoozed notifications have been woken")
+        updateTrayMenu()
+      },
+    })
+  }
+
+  template.push(
+    { type: "separator" },
+    {
+      label: "Quit",
+      click: () => {
+        app.isQuiting = true
+        app.quit()
+      },
+    }
+  )
+
+  return template
+}
+
+function updateTrayMenu() {
+  if (tray && !tray.isDestroyed()) {
+    const contextMenu = Menu.buildFromTemplate(buildTrayMenuTemplate())
+    tray.setContextMenu(contextMenu)
+  }
+}
+
 function createTray() {
   appendLog("APP", "Creating tray icon")
   try {
@@ -742,25 +1271,7 @@ function createTray() {
     const trayIcon = nativeImage.createFromPath(trayIconPath)
 
     tray = new Tray(trayIcon)
-
-    const contextMenu = Menu.buildFromTemplate([
-    {
-      label: "Open Overlay",
-      click: () => {
-        toggleOverlayWindow()
-      },
-    },
-    { type: "separator" },
-    {
-      label: "Quit",
-      click: () => {
-        app.isQuiting = true
-        app.quit()
-      },
-    },
-  ])
-
-    tray.setContextMenu(contextMenu)
+    updateTrayMenu()
     tray.setToolTip("Stream Dork")
     tray.on("double-click", () => {
       showSetupWindow()
@@ -798,10 +1309,7 @@ app
     broadcastConfig()
     createTray()
 
-    globalShortcut.register("Control+Alt+Space", () => {
-      appendLog("INPUT", "Control+Alt+Space shortcut triggered")
-      toggleOverlayWindow()
-    })
+    registerOverlayShortcut()
   })
   .catch((error) => {
     appendLog("ERROR", `app.whenReady failed: ${error.stack || error}`)
@@ -816,6 +1324,7 @@ app.on("before-quit", () => {
   logAppEvent("before-quit")
   app.isQuiting = true
   globalShortcut.unregisterAll()
+  closeAllPluginWindows()
   if (streamDeckHost) {
     streamDeckHost.stop()
   }
@@ -847,6 +1356,16 @@ ipcMain.handle("update-config", (event, updates) => {
   return updateConfig(updates)
 })
 
+ipcMain.handle("test-shortcut", (event, shortcut) => {
+  appendLog("IPC", `test-shortcut: ${shortcut}`)
+  return testShortcut(shortcut)
+})
+
+ipcMain.handle("register-overlay-shortcut", () => {
+  appendLog("IPC", "register-overlay-shortcut")
+  return registerOverlayShortcut()
+})
+
 ipcMain.handle("host:get-state", () => streamDeckHost.getState())
 ipcMain.handle("host:get-visual-state", () => streamDeckHost.getVisualState())
 ipcMain.handle("host:create-context", (event, { pluginUuid, actionUuid, coordinates, context } = {}) => {
@@ -870,6 +1389,18 @@ ipcMain.on("show-setup", () => {
 ipcMain.on("close-overlay", () => {
   appendLog("IPC", "close-overlay requested")
   hideOverlayWindow()
+})
+
+ipcMain.on("set-ignore-mouse-events", (event, { ignore, forward }) => {
+  if (overlayWindow && !overlayWindow.isDestroyed()) {
+    overlayWindow.setIgnoreMouseEvents(ignore, { forward: forward ?? true })
+  }
+})
+
+ipcMain.on("set-notification-ignore-mouse-events", (event, { ignore, forward }) => {
+  if (notificationWindow && !notificationWindow.isDestroyed()) {
+    notificationWindow.setIgnoreMouseEvents(ignore, { forward: forward ?? true })
+  }
 })
 
 ipcMain.on("force-hide-overlay", () => {
@@ -900,11 +1431,40 @@ ipcMain.handle("get-notification-config", () => {
   return config.notification
 })
 
-ipcMain.on("dismiss-notification", (event, { id }) => {
+ipcMain.on("dismiss-notification", (event, { context }) => {
   // Forward the dismiss request to the notification window
   if (notificationWindow && !notificationWindow.isDestroyed()) {
-    notificationWindow.webContents.send("dismiss-notification", { id })
+    notificationWindow.webContents.send("dismiss-notification", { context })
   }
+})
+
+// Snooze a specific context for a given duration (in minutes)
+ipcMain.handle("snooze-notification", (event, { context, minutes }) => {
+  const expiryTime = Date.now() + minutes * 60 * 1000
+  snoozedContexts.set(context, expiryTime)
+  appendLog("NOTIFICATION", `Snoozed context ${context} for ${minutes} minutes until ${new Date(expiryTime).toISOString()}`)
+  updateTrayMenu()
+  return { success: true, expiryTime }
+})
+
+// Wake (unsnooze) a specific context
+ipcMain.handle("wake-notification", (event, { context }) => {
+  const wasSnozed = snoozedContexts.has(context)
+  snoozedContexts.delete(context)
+  if (wasSnozed) {
+    appendLog("NOTIFICATION", `Woke context ${context}`)
+    updateTrayMenu()
+  }
+  return { success: true, wasSnozed }
+})
+
+// Get all snoozed contexts
+ipcMain.handle("get-snoozed-contexts", () => {
+  const result = {}
+  snoozedContexts.forEach((expiry, context) => {
+    result[context] = expiry
+  })
+  return result
 })
 
 // Icon file selection dialog

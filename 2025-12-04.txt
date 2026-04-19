@@ -1,0 +1,1333 @@
+2025-12-04T01:34:55.241Z [APP] app.whenReady
+2025-12-04T01:34:55.243Z [DEBUG] 📝 File logging enabled - logs will be written to: C:\Users\LeandroMenezes\AppData\Roaming\stream-dork\logs
+2025-12-04T01:34:55.245Z [LOG] [File Logging] Enabled - Logs directory: C:\Users\LeandroMenezes\AppData\Roaming\stream-dork\logs
+2025-12-04T01:34:55.246Z [DEBUG] 🔧 Chrome DevTools Protocol enabled on http://localhost:23519
+2025-12-04T01:34:55.246Z [DEBUG] 📋 Use this URL to debug Property Inspectors in your browser
+2025-12-04T01:34:55.247Z [CONFIG] Loading configuration from disk
+2025-12-04T01:34:55.273Z [CONFIG] Initializing plugins with language: en
+2025-12-04T01:34:55.277Z [DISCOVERY] Starting plugin discovery in: C:\Users\LeandroMenezes\AppData\Roaming\stream-dork\plugins (language: en)
+2025-12-04T01:34:55.278Z [DISCOVERY] Found 4 entries in plugin directory
+2025-12-04T01:34:55.279Z [DISCOVERY] Discovering plugin in folder: com.leandro-menezes.aichat.sdPlugin
+2025-12-04T01:34:55.281Z [DISCOVERY] Successfully discovered plugin: AI Chat (UUID: plugin.com.leandro-menezes.aichat.sdPlugin, Version: 1.0.0, Actions: 1)
+2025-12-04T01:34:55.288Z [DISCOVERY] Discovering plugin in folder: com.leandro-menezes.formbuilder.sdPlugin
+2025-12-04T01:34:55.289Z [DISCOVERY] Successfully discovered plugin: Form Builder (UUID: plugin.com.leandro-menezes.formbuilder.sdPlugin, Version: 1.0.0, Actions: 1)
+2025-12-04T01:34:55.292Z [DISCOVERY] Discovering plugin in folder: com.leandromenezes.teamsavatar.sdPlugin
+2025-12-04T01:34:55.293Z [DISCOVERY] Successfully discovered plugin: Teams Avatar (UUID: plugin.com.leandromenezes.teamsavatar.sdPlugin, Version: 1.0.0, Actions: 2)
+2025-12-04T01:34:55.298Z [DISCOVERY] Discovering plugin in folder: com.pedrofuentes.ical.sdPlugin
+2025-12-04T01:34:55.299Z [DISCOVERY] Successfully discovered plugin: iCal (UUID: plugin.com.pedrofuentes.ical.sdPlugin, Version: 1.1.0, Actions: 2)
+2025-12-04T01:34:55.303Z [DISCOVERY] Plugin discovery completed: 4 plugins discovered, 0 errors
+2025-12-04T01:34:55.304Z [DISCOVERY] Starting icon library discovery in: C:\Users\LeandroMenezes\AppData\Local\Programs\Stream Dork\resources\icons
+2025-12-04T01:34:55.305Z [DISCOVERY] Icon library root path does not exist: C:\Users\LeandroMenezes\AppData\Local\Programs\Stream Dork\resources\icons
+2025-12-04T01:34:55.313Z [WINDOW] Creating setup window
+2025-12-04T01:34:55.373Z [WINDOW] Browser window created (id=1)
+2025-12-04T01:34:55.380Z [RENDERER] Loading setup.html from C:\Users\LeandroMenezes\AppData\Local\Programs\Stream Dork\resources\app.asar\dist\src\pages\setup.html
+2025-12-04T01:34:55.402Z [WINDOW] Creating overlay window
+2025-12-04T01:34:55.412Z [WINDOW] Browser window created (id=2)
+2025-12-04T01:34:55.419Z [RENDERER] Loading overlay.html from C:\Users\LeandroMenezes\AppData\Local\Programs\Stream Dork\resources\app.asar\dist\src\pages\overlay.html
+2025-12-04T01:34:55.426Z [WINDOW] Creating notification window
+2025-12-04T01:34:55.435Z [WINDOW] Browser window created (id=3)
+2025-12-04T01:34:55.441Z [RENDERER] Loading notification.html from C:\Users\LeandroMenezes\AppData\Local\Programs\Stream Dork\resources\app.asar\dist\src\pages\notification.html
+2025-12-04T01:34:55.546Z [APP] Creating tray icon
+2025-12-04T01:34:55.664Z [INPUT] Registered overlay shortcut: Control+`
+2025-12-04T01:34:55.665Z [HOST] WebSocket server listening on port 50069
+2025-12-04T01:34:55.666Z [HOST] Launching plugin: AI Chat (C:\Users\LeandroMenezes\AppData\Roaming\stream-dork\plugins\com.leandro-menezes.aichat.sdPlugin\AIChat.exe) [type: .exe]
+2025-12-04T01:34:55.667Z [HOST] Plugin args: -port 50069 -pluginUUID plugin.com.leandro-menezes.aichat.sdPlugin -registerEvent registerPlugin -info {"application":{"font":"Segoe UI","language":"en","platform":"windows","platformVersion":"10.0","version":"6.0.0"},"plugin":{"uuid":"plugin.com.leandro-menezes.aichat.sdPlugin","version":"1.0.0"},"devicePixelRatio":2,"colors":{"buttonPressedBackgroundColor":"#303030FF","buttonPressedBorderColor":"#646464FF","buttonPressedTextColor":"#969696FF","disabledColor":"#F7821B59","highlightColor":"#F7821BFF","mouseDownColor":"#CF6304FF"},"devices":[{"id":"stream-dork-host","name":"Stream Dork","size":{"columns":5,"rows":3},"type":0}]}
+2025-12-04T01:34:55.690Z [HOST] Plugin AI Chat launched with PID 10564
+2025-12-04T01:34:55.691Z [HOST] Launching plugin: Form Builder (C:\Users\LeandroMenezes\AppData\Roaming\stream-dork\plugins\com.leandro-menezes.formbuilder.sdPlugin\FormBuilder.exe) [type: .exe]
+2025-12-04T01:34:55.692Z [HOST] Plugin args: -port 50069 -pluginUUID plugin.com.leandro-menezes.formbuilder.sdPlugin -registerEvent registerPlugin -info {"application":{"font":"Segoe UI","language":"en","platform":"windows","platformVersion":"10.0","version":"6.0.0"},"plugin":{"uuid":"plugin.com.leandro-menezes.formbuilder.sdPlugin","version":"1.0.0"},"devicePixelRatio":2,"colors":{"buttonPressedBackgroundColor":"#303030FF","buttonPressedBorderColor":"#646464FF","buttonPressedTextColor":"#969696FF","disabledColor":"#F7821B59","highlightColor":"#F7821BFF","mouseDownColor":"#CF6304FF"},"devices":[{"id":"stream-dork-host","name":"Stream Dork","size":{"columns":5,"rows":3},"type":0}]}
+2025-12-04T01:34:55.713Z [HOST] Plugin Form Builder launched with PID 12544
+2025-12-04T01:34:55.714Z [HOST] Launching plugin: Teams Avatar (C:\Users\LeandroMenezes\AppData\Roaming\stream-dork\plugins\com.leandromenezes.teamsavatar.sdPlugin\app.html) [type: .html]
+2025-12-04T01:34:55.715Z [PLUGIN] Launching HTML plugin: Teams Avatar
+2025-12-04T01:34:55.730Z [WINDOW] Browser window created (id=4)
+2025-12-04T01:34:55.736Z [HOST] Requested HTML plugin launch: Teams Avatar
+2025-12-04T01:34:55.737Z [HOST] Launching plugin: iCal (C:\Users\LeandroMenezes\AppData\Roaming\stream-dork\plugins\com.pedrofuentes.ical.sdPlugin\app.html) [type: .html]
+2025-12-04T01:34:55.737Z [PLUGIN] Launching HTML plugin: iCal
+2025-12-04T01:34:55.753Z [WINDOW] Browser window created (id=5)
+2025-12-04T01:34:55.760Z [HOST] Requested HTML plugin launch: iCal
+2025-12-04T01:34:55.936Z [PLUGIN-STDOUT] [Form Builder] 
+2025-12-04T01:34:55.971Z [PLUGIN-STDOUT] [AI Chat] 
+2025-12-04T01:34:56.332Z [PLUGIN] HTML plugin loaded: Teams Avatar
+2025-12-04T01:34:56.337Z [PLUGIN] HTML plugin loaded: iCal
+2025-12-04T01:34:56.406Z [WINDOW] Notification window finished loading
+2025-12-04T01:34:56.423Z [RENDERER] NotificationWindow console DEBUG: Uncaught Error: Minified React error #185; visit https://react.dev/errors/185 for the full message or use the non-minified dev environment for full errors and additional helpful warnings. (file:///C:/Users/LeandroMenezes/AppData/Local/Programs/Stream%20Dork/resources/app.asar/dist/js/createLucideIcon-D4vTcVm7.js:48)
+2025-12-04T01:34:56.483Z [WINDOW] SetupWindow shown
+2025-12-04T01:34:56.502Z [WINDOW] SetupWindow focused
+2025-12-04T01:34:56.534Z [IPC] get-config requested
+2025-12-04T01:34:56.593Z [PLUGIN-STDOUT] [Form Builder] [DEBUG] Command line arguments: [
+2025-12-04T01:34:56.594Z [PLUGIN-STDOUT] [Form Builder]   'C:\\Users\\LeandroMenezes\\AppData\\Roaming\\stream-dork\\plugins\\com.leandro-menezes.formbuilder.sdPlugin\\FormBuilder.exe',
+2025-12-04T01:34:56.595Z [PLUGIN-STDOUT] [Form Builder]   '-port',
+2025-12-04T01:34:56.596Z [PLUGIN-STDOUT] [Form Builder]   '50069',
+2025-12-04T01:34:56.596Z [PLUGIN-STDOUT] [Form Builder]   '-pluginUUID',
+2025-12-04T01:34:56.597Z [PLUGIN-STDOUT] [Form Builder]   'plugin.com.leandro-menezes.formbuilder.sdPlugin',
+2025-12-04T01:34:56.598Z [PLUGIN-STDOUT] [Form Builder]   '-registerEvent',
+2025-12-04T01:34:56.598Z [PLUGIN-STDOUT] [Form Builder]   'registerPlugin',
+2025-12-04T01:34:56.599Z [PLUGIN-STDOUT] [Form Builder]   '-info',
+2025-12-04T01:34:56.599Z [PLUGIN-STDOUT] [Form Builder]   '{"application":{"font":"Segoe UI","language":"en","platform":"windows","platformVersion":"10.0","version":"6.0.0"},"plugin":{"uuid":"plugin.com.leandro-menezes.formbuilder.sdPlugin","version":"1.0.0"},"devicePixelRatio":2,"colors":{"buttonPressedBackgroundColor":"#303030FF","buttonPressedBorderColor":"#646464FF","buttonPressedTextColor":"#969696FF","disabledColor":"#F7821B59","highlightColor":"#F7821BFF","mouseDownColor":"#CF6304FF"},"devices":[{"id":"stream-dork-host","name":"Stream Dork","size":{"columns":5,"rows":3},"type":0}]}'
+2025-12-04T01:34:56.600Z [PLUGIN-STDOUT] [Form Builder] ]
+2025-12-04T01:34:56.601Z [PLUGIN-STDOUT] [Form Builder] [DEBUG] Found port: 50069
+2025-12-04T01:34:56.602Z [PLUGIN-STDOUT] [Form Builder] [DEBUG] Found pluginUUID: plugin.com.leandro-menezes.formbuilder.sdPlugin
+2025-12-04T01:34:56.603Z [PLUGIN-STDOUT] [Form Builder] [DEBUG] Found registerEvent: registerPlugin
+2025-12-04T01:34:56.603Z [PLUGIN-STDOUT] [Form Builder] [DEBUG] Found info: {
+2025-12-04T01:34:56.604Z [PLUGIN-STDOUT] [Form Builder]   application: {
+2025-12-04T01:34:56.605Z [PLUGIN-STDOUT] [Form Builder]     font: 'Segoe UI',
+2025-12-04T01:34:56.606Z [PLUGIN-STDOUT] [Form Builder]     language: 'en',
+2025-12-04T01:34:56.606Z [PLUGIN-STDOUT] [Form Builder]     platform: 'windows',
+2025-12-04T01:34:56.607Z [PLUGIN-STDOUT] [Form Builder]     platformVersion: '10.0',
+2025-12-04T01:34:56.607Z [PLUGIN-STDOUT] [Form Builder]     version: '6.0.0'
+2025-12-04T01:34:56.608Z [PLUGIN-STDOUT] [Form Builder]   },
+2025-12-04T01:34:56.609Z [PLUGIN-STDOUT] [Form Builder]   plugin: {
+2025-12-04T01:34:56.610Z [PLUGIN-STDOUT] [Form Builder]     uuid: 'plugin.com.leandro-menezes.formbuilder.sdPlugin',
+2025-12-04T01:34:56.611Z [PLUGIN-STDOUT] [Form Builder]     version: '1.0.0'
+2025-12-04T01:34:56.612Z [PLUGIN-STDOUT] [Form Builder]   },
+2025-12-04T01:34:56.612Z [PLUGIN-STDOUT] [Form Builder]   devicePixelRatio: 2,
+2025-12-04T01:34:56.613Z [PLUGIN-STDOUT] [Form Builder]   colors: {
+2025-12-04T01:34:56.614Z [PLUGIN-STDOUT] [Form Builder]     buttonPressedBackgroundColor: '#303030FF',
+2025-12-04T01:34:56.614Z [PLUGIN-STDOUT] [Form Builder]     buttonPressedBorderColor: '#646464FF',
+2025-12-04T01:34:56.615Z [PLUGIN-STDOUT] [Form Builder]     buttonPressedTextColor: '#969696FF',
+2025-12-04T01:34:56.616Z [PLUGIN-STDOUT] [Form Builder]     disabledColor: '#F7821B59',
+2025-12-04T01:34:56.616Z [PLUGIN-STDOUT] [Form Builder]     highlightColor: '#F7821BFF',
+2025-12-04T01:34:56.617Z [PLUGIN-STDOUT] [Form Builder]     mouseDownColor: '#CF6304FF'
+2025-12-04T01:34:56.618Z [PLUGIN-STDOUT] [Form Builder]   },
+2025-12-04T01:34:56.618Z [PLUGIN-STDOUT] [Form Builder]   devices: [
+2025-12-04T01:34:56.619Z [PLUGIN-STDOUT] [Form Builder]     {
+2025-12-04T01:34:56.619Z [PLUGIN-STDOUT] [Form Builder]       id: 'stream-dork-host',
+2025-12-04T01:34:56.620Z [PLUGIN-STDOUT] [Form Builder]       name: 'Stream Dork',
+2025-12-04T01:34:56.621Z [PLUGIN-STDOUT] [Form Builder]       size: [Object],
+2025-12-04T01:34:56.621Z [PLUGIN-STDOUT] [Form Builder]       type: 0
+2025-12-04T01:34:56.622Z [PLUGIN-STDOUT] [Form Builder]     }
+2025-12-04T01:34:56.623Z [PLUGIN-STDOUT] [Form Builder]   ]
+2025-12-04T01:34:56.624Z [PLUGIN-STDOUT] [Form Builder] }
+2025-12-04T01:34:56.624Z [PLUGIN-STDOUT] [Form Builder] [INFO] 🔄 Auto-connecting with parsed parameters...
+2025-12-04T01:34:56.651Z [IPC] get-config requested
+2025-12-04T01:34:56.752Z [RENDERER] SetupWindow console WARN: [useHostState] initial getHostState() [object Object] (file:///C:/Users/LeandroMenezes/AppData/Local/Programs/Stream%20Dork/resources/app.asar/dist/js/setup.js:1)
+2025-12-04T01:34:56.952Z [PLUGIN-STDOUT] [AI Chat] Command line arguments: [
+2025-12-04T01:34:56.954Z [PLUGIN-STDOUT] [AI Chat]   'C:\\Users\\LeandroMenezes\\AppData\\Roaming\\stream-dork\\plugins\\com.leandro-menezes.aichat.sdPlugin\\AIChat.exe',
+2025-12-04T01:34:56.954Z [PLUGIN-STDOUT] [AI Chat]   '-port',
+2025-12-04T01:34:56.955Z [PLUGIN-STDOUT] [AI Chat]   '50069',
+2025-12-04T01:34:56.955Z [PLUGIN-STDOUT] [AI Chat]   '-pluginUUID',
+2025-12-04T01:34:56.956Z [PLUGIN-STDOUT] [AI Chat]   'plugin.com.leandro-menezes.aichat.sdPlugin',
+2025-12-04T01:34:56.957Z [PLUGIN-STDOUT] [AI Chat]   '-registerEvent',
+2025-12-04T01:34:56.958Z [PLUGIN-STDOUT] [AI Chat]   'registerPlugin',
+2025-12-04T01:34:56.959Z [PLUGIN-STDOUT] [AI Chat]   '-info',
+2025-12-04T01:34:56.959Z [PLUGIN-STDOUT] [AI Chat]   '{"application":{"font":"Segoe UI","language":"en","platform":"windows","platformVersion":"10.0","version":"6.0.0"},"plugin":{"uuid":"plugin.com.leandro-menezes.aichat.sdPlugin","version":"1.0.0"},"devicePixelRatio":2,"colors":{"buttonPressedBackgroundColor":"#303030FF","buttonPressedBorderColor":"#646464FF","buttonPressedTextColor":"#969696FF","disabledColor":"#F7821B59","highlightColor":"#F7821BFF","mouseDownColor":"#CF6304FF"},"devices":[{"id":"stream-dork-host","name":"Stream Dork","size":{"columns":5,"rows":3},"type":0}]}'
+2025-12-04T01:34:56.960Z [PLUGIN-STDOUT] [AI Chat] ]
+2025-12-04T01:34:56.961Z [PLUGIN-STDOUT] [AI Chat] Auto-connecting with parsed parameters...
+2025-12-04T01:34:57.039Z [PLUGIN-STDOUT] [Form Builder] [INFO] 🚀 Form Builder Electron app started
+2025-12-04T01:34:57.040Z [PLUGIN-STDOUT] [Form Builder] [DEBUG] 🔧 Debug logging system initialized
+2025-12-04T01:34:57.042Z [PLUGIN-STDOUT] [Form Builder] [INFO] ⚡ Initializing Stream Deck plugin...
+2025-12-04T01:34:57.097Z [PLUGIN-STDOUT] [Form Builder] [INFO] 🔗 System tray created successfully
+2025-12-04T01:34:57.197Z [PLUGIN-STDOUT] [AI Chat] AI Chat Electron app started
+2025-12-04T01:34:57.198Z [PLUGIN-STDOUT] [AI Chat] Initializing Stream Deck plugin...
+2025-12-04T01:34:57.327Z [PLUGIN-STDOUT] [AI Chat] System tray created successfully
+2025-12-04T01:34:57.635Z [PLUGIN-STDOUT] [Form Builder] [INFO] Connecting to Stream Deck WebSocket...
+2025-12-04T01:34:57.636Z [PLUGIN-STDOUT] [Form Builder] [INFO] Port: 50069 UUID: plugin.com.leandro-menezes.formbuilder.sdPlugin Register Event: registerPlugin
+2025-12-04T01:34:57.655Z [PLUGIN-STDOUT] [Form Builder] [INFO] ✅ Connected to Stream Deck successfully!
+2025-12-04T01:34:57.656Z [PLUGIN-STDOUT] [Form Builder] [INFO] 📝 Registering plugin with Stream Deck: {
+2025-12-04T01:34:57.657Z [PLUGIN-STDOUT] [Form Builder]   "event": "registerPlugin",
+2025-12-04T01:34:57.658Z [PLUGIN-STDOUT] [Form Builder]   "uuid": "plugin.com.leandro-menezes.formbuilder.sdPlugin"
+2025-12-04T01:34:57.658Z [PLUGIN-STDOUT] [Form Builder] }
+2025-12-04T01:34:57.659Z [PLUGIN-STDOUT] [Form Builder] [INFO] ✅ Plugin registration sent successfully
+2025-12-04T01:34:57.662Z [REGISTRATION] Registration request received for plugin UUID: plugin.com.leandro-menezes.formbuilder.sdPlugin
+2025-12-04T01:34:57.663Z [REGISTRATION] Registering plugin: Form Builder (UUID: plugin.com.leandro-menezes.formbuilder.sdPlugin, Version: 1.0.0)
+2025-12-04T01:34:57.663Z [REGISTRATION] Plugin successfully registered: Form Builder (UUID: plugin.com.leandro-menezes.formbuilder.sdPlugin)
+2025-12-04T01:34:57.671Z [REGISTRATION] Registration complete for plugin: plugin.com.leandro-menezes.formbuilder.sdPlugin
+2025-12-04T01:34:57.673Z [PLUGIN-STDOUT] [Form Builder] [DEBUG] RAW MESSAGE RECEIVED: {"event":"registration","uuid":"plugin.com.leandro-menezes.formbuilder.sdPlugin"}
+2025-12-04T01:34:57.673Z [PLUGIN-STDOUT] [Form Builder] [DEBUG] PARSED MESSAGE: {
+2025-12-04T01:34:57.674Z [PLUGIN-STDOUT] [Form Builder]   "event": "registration",
+2025-12-04T01:34:57.675Z [PLUGIN-STDOUT] [Form Builder]   "uuid": "plugin.com.leandro-menezes.formbuilder.sdPlugin"
+2025-12-04T01:34:57.676Z [PLUGIN-STDOUT] [Form Builder] }
+2025-12-04T01:34:57.676Z [PLUGIN-STDOUT] [Form Builder] [INFO] Received event: registration for action: undefined context: undefined
+2025-12-04T01:34:57.677Z [PLUGIN-STDOUT] [Form Builder] [WARN] *** UNHANDLED EVENT *** registration
+2025-12-04T01:34:57.677Z [PLUGIN-STDOUT] [Form Builder] [DEBUG] RAW MESSAGE RECEIVED: {"event":"didReceiveGlobalSettings","payload":{"settings":{}}}
+2025-12-04T01:34:57.678Z [PLUGIN-STDOUT] [Form Builder] [DEBUG] PARSED MESSAGE: {
+2025-12-04T01:34:57.679Z [PLUGIN-STDOUT] [Form Builder]   "event": "didReceiveGlobalSettings",
+2025-12-04T01:34:57.679Z [PLUGIN-STDOUT] [Form Builder]   "payload": {
+2025-12-04T01:34:57.680Z [PLUGIN-STDOUT] [Form Builder]     "settings": {}
+2025-12-04T01:34:57.681Z [PLUGIN-STDOUT] [Form Builder]   }
+2025-12-04T01:34:57.681Z [PLUGIN-STDOUT] [Form Builder] }
+2025-12-04T01:34:57.682Z [PLUGIN-STDOUT] [Form Builder] [INFO] Received event: didReceiveGlobalSettings for action: undefined context: undefined
+2025-12-04T01:34:57.682Z [PLUGIN-STDOUT] [Form Builder] [WARN] *** UNHANDLED EVENT *** didReceiveGlobalSettings
+2025-12-04T01:34:57.683Z [PLUGIN-STDOUT] [Form Builder] [DEBUG] RAW MESSAGE RECEIVED: {"event":"willAppear","action":"com.leandro-menezes.formbuilder.action","context":"cd0cfeda-ae9d-483a-90ce-4e5861a86509","device":"stream-dork-host","payload":{"coordinates":{"column":1,"row":0},"settings":{"formBuilderConfig":{"title":"Create Fusion To-Do","url":"https://n8n.fusionflowsoftware.com/webhook/leandro/create-todo-ffs","method":"POST","outputType":"modal","submitButtonText":"Submit","fields":[{"description":"","label":"Customer","name":"customer","options":[{"label":"None","value":"None"},{"label":"Fusionflow","value":"7e4fb64e-4911-4e3b-a90d-2e335b12db39"},{"label":"Techmer","value":"6baa96f9-b24d-4321-a38b-6ed19ea62798"},{"label":"Timber","value":"650a8e5b-e89a-42fd-a363-5e58b8ce9a8c"}],"placeholder":"Customer","required":false,"sendAs":"body","type":"select"},{"description":"","label":"Description","name":"description","options":[],"placeholder":"","required":true,"sendAs":"body","type":"textarea"},{"description":"Type of task","label":"Type","name":"type","options":[{"label":"Development","value":"7b6ff2f0-0535-435c-a1ed-abfe89214b44"},{"label":"Follow up","value":"fa4581f4-c5e4-4595-94f7-30e4efaff01b"},{"label":"Meeting","value":"c57d5434-1eff-450f-b40f-23f518c2ea4a"},{"label":"Architecture","value":"7d4a5c15-c848-4a00-9169-62516c9022ca"},{"label":"Devops","value":"537ffa0e-4055-4eda-986a-d2f7536865be"}],"placeholder":"","required":false,"sendAs":"body","type":"select"},{"description":"Project involved","label":"Project","name":"project","options":[{"label":"Techmer IT Agent","value":"954f3833-3417-4373-9a62-7859db88eae7"},{"label":"AI-Central","value":"38361d8b-84ed-4684-a0bc-59dbab7f7b26"},{"label":"COA","value":"583fc675-b255-4c36-876c-a7654936d236"},{"label":"HR","value":"e199828e-b06a-4494-9ca4-710f8fcd1321"},{"label":"Item Nomenclature","value":"eca66ff9-6a43-4d5a-9dff-612d6b79ceb3"},{"label":"Sales Agent","value":"5d3bc8f8-0d15-4a26-90f7-2612b6896ecd"},{"label":"n8n devops control","value":"5e3187d0-5e7d-4ba4-aa14-6545e40f2214"},{"label":"Split fix","value":"b881884e-55d9-4246-aba5-309d77c58232"}],"placeholder":"","required":false,"sendAs":"body","type":"select"},{"description":"Check this field if this is no already created task in clickup\nThis will generate a template description and acceptance criteria when checked","label":"New demand","name":"new_demand","options":[],"placeholder":"","required":false,"sendAs":"body","type":"checkbox"}],"headers":[],"auth":{"clientCredentials":{"authPlacement":"header","clientId":"","clientSecret":"","scope":"","token":null,"tokenUrl":""},"oauth":{"authPlacement":"header","authorizationUrl":"","clientId":"","clientSecret":"","redirectUrl":"","saveRefreshToken":false,"scope":"","token":null,"tokenUrl":""},"type":"none"}}},"controller":"Keypad","state":0,"isInMultiAction":false}}
+2025-12-04T01:34:57.684Z [PLUGIN-STDOUT] [Form Builder] [DEBUG] PARSED MESSAGE: {
+2025-12-04T01:34:57.684Z [PLUGIN-STDOUT] [Form Builder]   "event": "willAppear",
+2025-12-04T01:34:57.685Z [PLUGIN-STDOUT] [Form Builder]   "action": "com.leandro-menezes.formbuilder.action",
+2025-12-04T01:34:57.686Z [PLUGIN-STDOUT] [Form Builder]   "context": "cd0cfeda-ae9d-483a-90ce-4e5861a86509",
+2025-12-04T01:34:57.686Z [PLUGIN-STDOUT] [Form Builder]   "device": "stream-dork-host",
+2025-12-04T01:34:57.687Z [PLUGIN-STDOUT] [Form Builder]   "payload": {
+2025-12-04T01:34:57.687Z [PLUGIN-STDOUT] [Form Builder]     "coordinates": {
+2025-12-04T01:34:57.688Z [PLUGIN-STDOUT] [Form Builder]       "column": 1,
+2025-12-04T01:34:57.689Z [PLUGIN-STDOUT] [Form Builder]       "row": 0
+2025-12-04T01:34:57.689Z [PLUGIN-STDOUT] [Form Builder]     },
+2025-12-04T01:34:57.690Z [PLUGIN-STDOUT] [Form Builder]     "settings": {
+2025-12-04T01:34:57.691Z [PLUGIN-STDOUT] [Form Builder]       "formBuilderConfig": {
+2025-12-04T01:34:57.691Z [PLUGIN-STDOUT] [Form Builder]         "title": "Create Fusion To-Do",
+2025-12-04T01:34:57.692Z [PLUGIN-STDOUT] [Form Builder]         "url": "https://n8n.fusionflowsoftware.com/webhook/leandro/create-todo-ffs",
+2025-12-04T01:34:57.693Z [PLUGIN-STDOUT] [Form Builder]         "method": "POST",
+2025-12-04T01:34:57.693Z [PLUGIN-STDOUT] [Form Builder]         "outputType": "modal",
+2025-12-04T01:34:57.694Z [PLUGIN-STDOUT] [Form Builder]         "submitButtonText": "Submit",
+2025-12-04T01:34:57.694Z [PLUGIN-STDOUT] [Form Builder]         "fields": [
+2025-12-04T01:34:57.695Z [PLUGIN-STDOUT] [Form Builder]           {
+2025-12-04T01:34:57.695Z [PLUGIN-STDOUT] [Form Builder]             "description": "",
+2025-12-04T01:34:57.696Z [PLUGIN-STDOUT] [Form Builder]             "label": "Customer",
+2025-12-04T01:34:57.697Z [PLUGIN-STDOUT] [Form Builder]             "name": "customer",
+2025-12-04T01:34:57.697Z [PLUGIN-STDOUT] [Form Builder]             "options": [
+2025-12-04T01:34:57.698Z [PLUGIN-STDOUT] [Form Builder]               {
+2025-12-04T01:34:57.698Z [PLUGIN-STDOUT] [Form Builder]                 "label": "None",
+2025-12-04T01:34:57.699Z [PLUGIN-STDOUT] [Form Builder]                 "value": "None"
+2025-12-04T01:34:57.700Z [PLUGIN-STDOUT] [Form Builder]               },
+2025-12-04T01:34:57.700Z [PLUGIN-STDOUT] [Form Builder]               {
+2025-12-04T01:34:57.701Z [PLUGIN-STDOUT] [Form Builder]                 "label": "Fusionflow",
+2025-12-04T01:34:57.701Z [PLUGIN-STDOUT] [Form Builder]                 "value": "7e4fb64e-4911-4e3b-a90d-2e335b12db39"
+2025-12-04T01:34:57.702Z [PLUGIN-STDOUT] [Form Builder]               },
+2025-12-04T01:34:57.703Z [PLUGIN-STDOUT] [Form Builder]               {
+2025-12-04T01:34:57.703Z [PLUGIN-STDOUT] [Form Builder]                 "label": "Techmer",
+2025-12-04T01:34:57.704Z [PLUGIN-STDOUT] [Form Builder]                 "value": "6baa96f9-b24d-4321-a38b-6ed19ea62798"
+2025-12-04T01:34:57.704Z [PLUGIN-STDOUT] [Form Builder]               },
+2025-12-04T01:34:57.705Z [PLUGIN-STDOUT] [Form Builder]               {
+2025-12-04T01:34:57.706Z [PLUGIN-STDOUT] [Form Builder]                 "label": "Timber",
+2025-12-04T01:34:57.707Z [PLUGIN-STDOUT] [Form Builder]                 "value": "650a8e5b-e89a-42fd-a363-5e58b8ce9a8c"
+2025-12-04T01:34:57.708Z [PLUGIN-STDOUT] [Form Builder]               }
+2025-12-04T01:34:57.708Z [PLUGIN-STDOUT] [Form Builder]             ],
+2025-12-04T01:34:57.709Z [PLUGIN-STDOUT] [Form Builder]             "placeholder": "Customer",
+2025-12-04T01:34:57.709Z [PLUGIN-STDOUT] [Form Builder]             "required": false,
+2025-12-04T01:34:57.710Z [PLUGIN-STDOUT] [Form Builder]             "sendAs": "body",
+2025-12-04T01:34:57.710Z [PLUGIN-STDOUT] [Form Builder]             "type": "select"
+2025-12-04T01:34:57.711Z [PLUGIN-STDOUT] [Form Builder]           },
+2025-12-04T01:34:57.712Z [PLUGIN-STDOUT] [Form Builder]           {
+2025-12-04T01:34:57.712Z [PLUGIN-STDOUT] [Form Builder]             "description": "",
+2025-12-04T01:34:57.713Z [PLUGIN-STDOUT] [Form Builder]             "label": "Description",
+2025-12-04T01:34:57.713Z [PLUGIN-STDOUT] [Form Builder]             "name": "description",
+2025-12-04T01:34:57.714Z [PLUGIN-STDOUT] [Form Builder]             "options": [],
+2025-12-04T01:34:57.714Z [PLUGIN-STDOUT] [Form Builder]             "placeholder": "",
+2025-12-04T01:34:57.715Z [PLUGIN-STDOUT] [Form Builder]             "required": true,
+2025-12-04T01:34:57.716Z [PLUGIN-STDOUT] [Form Builder]             "sendAs": "body",
+2025-12-04T01:34:57.716Z [PLUGIN-STDOUT] [Form Builder]             "type": "textarea"
+2025-12-04T01:34:57.717Z [PLUGIN-STDOUT] [Form Builder]           },
+2025-12-04T01:34:57.717Z [PLUGIN-STDOUT] [Form Builder]           {
+2025-12-04T01:34:57.718Z [PLUGIN-STDOUT] [Form Builder]             "description": "Type of task",
+2025-12-04T01:34:57.718Z [PLUGIN-STDOUT] [Form Builder]             "label": "Type",
+2025-12-04T01:34:57.719Z [PLUGIN-STDOUT] [Form Builder]             "name": "type",
+2025-12-04T01:34:57.720Z [PLUGIN-STDOUT] [Form Builder]             "options": [
+2025-12-04T01:34:57.720Z [PLUGIN-STDOUT] [Form Builder]               {
+2025-12-04T01:34:57.721Z [PLUGIN-STDOUT] [Form Builder]                 "label": "Development",
+2025-12-04T01:34:57.721Z [PLUGIN-STDOUT] [Form Builder]                 "value": "7b6ff2f0-0535-435c-a1ed-abfe89214b44"
+2025-12-04T01:34:57.722Z [PLUGIN-STDOUT] [Form Builder]               },
+2025-12-04T01:34:57.722Z [PLUGIN-STDOUT] [Form Builder]               {
+2025-12-04T01:34:57.723Z [PLUGIN-STDOUT] [Form Builder]                 "label": "Follow up",
+2025-12-04T01:34:57.724Z [PLUGIN-STDOUT] [Form Builder]                 "value": "fa4581f4-c5e4-4595-94f7-30e4efaff01b"
+2025-12-04T01:34:57.724Z [PLUGIN-STDOUT] [Form Builder]               },
+2025-12-04T01:34:57.725Z [PLUGIN-STDOUT] [Form Builder]               {
+2025-12-04T01:34:57.725Z [PLUGIN-STDOUT] [Form Builder]                 "label": "Meeting",
+2025-12-04T01:34:57.726Z [PLUGIN-STDOUT] [Form Builder]                 "value": "c57d5434-1eff-450f-b40f-23f518c2ea4a"
+2025-12-04T01:34:57.726Z [PLUGIN-STDOUT] [Form Builder]               },
+2025-12-04T01:34:57.727Z [PLUGIN-STDOUT] [Form Builder]               {
+2025-12-04T01:34:57.728Z [PLUGIN-STDOUT] [Form Builder]                 "label": "Architecture",
+2025-12-04T01:34:57.728Z [PLUGIN-STDOUT] [Form Builder]                 "value": "7d4a5c15-c848-4a00-9169-62516c9022ca"
+2025-12-04T01:34:57.729Z [PLUGIN-STDOUT] [Form Builder]               },
+2025-12-04T01:34:57.729Z [PLUGIN-STDOUT] [Form Builder]               {
+2025-12-04T01:34:57.730Z [PLUGIN-STDOUT] [Form Builder]                 "label": "Devops",
+2025-12-04T01:34:57.730Z [PLUGIN-STDOUT] [Form Builder]                 "value": "537ffa0e-4055-4eda-986a-d2f7536865be"
+2025-12-04T01:34:57.731Z [PLUGIN-STDOUT] [Form Builder]               }
+2025-12-04T01:34:57.731Z [PLUGIN-STDOUT] [Form Builder]             ],
+2025-12-04T01:34:57.732Z [PLUGIN-STDOUT] [Form Builder]             "placeholder": "",
+2025-12-04T01:34:57.733Z [PLUGIN-STDOUT] [Form Builder]             "required": false,
+2025-12-04T01:34:57.734Z [PLUGIN-STDOUT] [Form Builder]             "sendAs": "body",
+2025-12-04T01:34:57.734Z [PLUGIN-STDOUT] [Form Builder]             "type": "select"
+2025-12-04T01:34:57.735Z [PLUGIN-STDOUT] [Form Builder]           },
+2025-12-04T01:34:57.735Z [PLUGIN-STDOUT] [Form Builder]           {
+2025-12-04T01:34:57.736Z [PLUGIN-STDOUT] [Form Builder]             "description": "Project involved",
+2025-12-04T01:34:57.737Z [PLUGIN-STDOUT] [Form Builder]             "label": "Project",
+2025-12-04T01:34:57.738Z [PLUGIN-STDOUT] [Form Builder]             "name": "project",
+2025-12-04T01:34:57.738Z [PLUGIN-STDOUT] [Form Builder]             "options": [
+2025-12-04T01:34:57.739Z [PLUGIN-STDOUT] [Form Builder]               {
+2025-12-04T01:34:57.739Z [PLUGIN-STDOUT] [Form Builder]                 "label": "Techmer IT Agent",
+2025-12-04T01:34:57.740Z [PLUGIN-STDOUT] [Form Builder]                 "value": "954f3833-3417-4373-9a62-7859db88eae7"
+2025-12-04T01:34:57.741Z [PLUGIN-STDOUT] [Form Builder]               },
+2025-12-04T01:34:57.742Z [PLUGIN-STDOUT] [Form Builder]               {
+2025-12-04T01:34:57.742Z [PLUGIN-STDOUT] [Form Builder]                 "label": "AI-Central",
+2025-12-04T01:34:57.743Z [PLUGIN-STDOUT] [Form Builder]                 "value": "38361d8b-84ed-4684-a0bc-59dbab7f7b26"
+2025-12-04T01:34:57.743Z [PLUGIN-STDOUT] [Form Builder]               },
+2025-12-04T01:34:57.744Z [PLUGIN-STDOUT] [Form Builder]               {
+2025-12-04T01:34:57.745Z [PLUGIN-STDOUT] [Form Builder]                 "label": "COA",
+2025-12-04T01:34:57.745Z [PLUGIN-STDOUT] [Form Builder]                 "value": "583fc675-b255-4c36-876c-a7654936d236"
+2025-12-04T01:34:57.746Z [PLUGIN-STDOUT] [Form Builder]               },
+2025-12-04T01:34:57.747Z [PLUGIN-STDOUT] [Form Builder]               {
+2025-12-04T01:34:57.747Z [PLUGIN-STDOUT] [Form Builder]                 "label": "HR",
+2025-12-04T01:34:57.748Z [PLUGIN-STDOUT] [Form Builder]                 "value": "e199828e-b06a-4494-9ca4-710f8fcd1321"
+2025-12-04T01:34:57.748Z [PLUGIN-STDOUT] [Form Builder]               },
+2025-12-04T01:34:57.749Z [PLUGIN-STDOUT] [Form Builder]               {
+2025-12-04T01:34:57.750Z [PLUGIN-STDOUT] [Form Builder]                 "label": "Item Nomenclature",
+2025-12-04T01:34:57.750Z [PLUGIN-STDOUT] [Form Builder]                 "value": "eca66ff9-6a43-4d5a-9dff-612d6b79ceb3"
+2025-12-04T01:34:57.751Z [PLUGIN-STDOUT] [Form Builder]               },
+2025-12-04T01:34:57.751Z [PLUGIN-STDOUT] [Form Builder]               {
+2025-12-04T01:34:57.752Z [PLUGIN-STDOUT] [Form Builder]                 "label": "Sales Agent",
+2025-12-04T01:34:57.753Z [PLUGIN-STDOUT] [Form Builder]                 "value": "5d3bc8f8-0d15-4a26-90f7-2612b6896ecd"
+2025-12-04T01:34:57.753Z [PLUGIN-STDOUT] [Form Builder]               },
+2025-12-04T01:34:57.754Z [PLUGIN-STDOUT] [Form Builder]               {
+2025-12-04T01:34:57.755Z [PLUGIN-STDOUT] [Form Builder]                 "label": "n8n devops control",
+2025-12-04T01:34:57.755Z [PLUGIN-STDOUT] [Form Builder]                 "value": "5e3187d0-5e7d-4ba4-aa14-6545e40f2214"
+2025-12-04T01:34:57.756Z [PLUGIN-STDOUT] [Form Builder]               },
+2025-12-04T01:34:57.756Z [PLUGIN-STDOUT] [Form Builder]               {
+2025-12-04T01:34:57.757Z [PLUGIN-STDOUT] [Form Builder]                 "label": "Split fix",
+2025-12-04T01:34:57.758Z [PLUGIN-STDOUT] [Form Builder]                 "value": "b881884e-55d9-4246-aba5-309d77c58232"
+2025-12-04T01:34:57.758Z [PLUGIN-STDOUT] [Form Builder]               }
+2025-12-04T01:34:57.759Z [PLUGIN-STDOUT] [Form Builder]             ],
+2025-12-04T01:34:57.760Z [PLUGIN-STDOUT] [Form Builder]             "placeholder": "",
+2025-12-04T01:34:57.760Z [PLUGIN-STDOUT] [Form Builder]             "required": false,
+2025-12-04T01:34:57.761Z [PLUGIN-STDOUT] [Form Builder]             "sendAs": "body",
+2025-12-04T01:34:57.762Z [PLUGIN-STDOUT] [Form Builder]             "type": "select"
+2025-12-04T01:34:57.762Z [PLUGIN-STDOUT] [Form Builder]           },
+2025-12-04T01:34:57.763Z [PLUGIN-STDOUT] [Form Builder]           {
+2025-12-04T01:34:57.764Z [PLUGIN-STDOUT] [Form Builder]             "description": "Check this field if this is no already created task in clickup\nThis will generate a template description and acceptance criteria when checked",
+2025-12-04T01:34:57.764Z [PLUGIN-STDOUT] [Form Builder]             "label": "New demand",
+2025-12-04T01:34:57.765Z [PLUGIN-STDOUT] [Form Builder]             "name": "new_demand",
+2025-12-04T01:34:57.766Z [PLUGIN-STDOUT] [Form Builder]             "options": [],
+2025-12-04T01:34:57.766Z [PLUGIN-STDOUT] [Form Builder]             "placeholder": "",
+2025-12-04T01:34:57.767Z [PLUGIN-STDOUT] [Form Builder]             "required": false,
+2025-12-04T01:34:57.768Z [PLUGIN-STDOUT] [Form Builder]             "sendAs": "body",
+2025-12-04T01:34:57.768Z [PLUGIN-STDOUT] [Form Builder]             "type": "checkbox"
+2025-12-04T01:34:57.769Z [PLUGIN-STDOUT] [Form Builder]           }
+2025-12-04T01:34:57.770Z [PLUGIN-STDOUT] [Form Builder]         ],
+2025-12-04T01:34:57.770Z [PLUGIN-STDOUT] [Form Builder]         "headers": [],
+2025-12-04T01:34:57.771Z [PLUGIN-STDOUT] [Form Builder]         "auth": {
+2025-12-04T01:34:57.771Z [PLUGIN-STDOUT] [Form Builder]           "clientCredentials": {
+2025-12-04T01:34:57.772Z [PLUGIN-STDOUT] [Form Builder]             "authPlacement": "header",
+2025-12-04T01:34:57.773Z [PLUGIN-STDOUT] [Form Builder]             "clientId": "",
+2025-12-04T01:34:57.773Z [PLUGIN-STDOUT] [Form Builder]             "clientSecret": "",
+2025-12-04T01:34:57.774Z [PLUGIN-STDOUT] [Form Builder]             "scope": "",
+2025-12-04T01:34:57.775Z [PLUGIN-STDOUT] [Form Builder]             "token": null,
+2025-12-04T01:34:57.776Z [PLUGIN-STDOUT] [Form Builder]             "tokenUrl": ""
+2025-12-04T01:34:57.776Z [PLUGIN-STDOUT] [Form Builder]           },
+2025-12-04T01:34:57.777Z [PLUGIN-STDOUT] [Form Builder]           "oauth": {
+2025-12-04T01:34:57.778Z [PLUGIN-STDOUT] [Form Builder]             "authPlacement": "header",
+2025-12-04T01:34:57.778Z [PLUGIN-STDOUT] [Form Builder]             "authorizationUrl": "",
+2025-12-04T01:34:57.779Z [PLUGIN-STDOUT] [Form Builder]             "clientId": "",
+2025-12-04T01:34:57.780Z [PLUGIN-STDOUT] [Form Builder]             "clientSecret": "",
+2025-12-04T01:34:57.780Z [PLUGIN-STDOUT] [Form Builder]             "redirectUrl": "",
+2025-12-04T01:34:57.781Z [PLUGIN-STDOUT] [Form Builder]             "saveRefreshToken": false,
+2025-12-04T01:34:57.781Z [PLUGIN-STDOUT] [Form Builder]             "scope": "",
+2025-12-04T01:34:57.782Z [PLUGIN-STDOUT] [Form Builder]             "token": null,
+2025-12-04T01:34:57.783Z [PLUGIN-STDOUT] [Form Builder]             "tokenUrl": ""
+2025-12-04T01:34:57.783Z [PLUGIN-STDOUT] [Form Builder]           },
+2025-12-04T01:34:57.784Z [PLUGIN-STDOUT] [Form Builder]           "type": "none"
+2025-12-04T01:34:57.785Z [PLUGIN-STDOUT] [Form Builder]         }
+2025-12-04T01:34:57.785Z [PLUGIN-STDOUT] [Form Builder]       }
+2025-12-04T01:34:57.786Z [PLUGIN-STDOUT] [Form Builder]     },
+2025-12-04T01:34:57.787Z [PLUGIN-STDOUT] [Form Builder]     "controller": "Keypad",
+2025-12-04T01:34:57.787Z [PLUGIN-STDOUT] [Form Builder]     "state": 0,
+2025-12-04T01:34:57.788Z [PLUGIN-STDOUT] [Form Builder]     "isInMultiAction": false
+2025-12-04T01:34:57.788Z [PLUGIN-STDOUT] [Form Builder]   }
+2025-12-04T01:34:57.789Z [PLUGIN-STDOUT] [Form Builder] }
+2025-12-04T01:34:57.790Z [PLUGIN-STDOUT] [Form Builder] [INFO] Received event: willAppear for action: com.leandro-menezes.formbuilder.action context: cd0cfeda-ae9d-483a-90ce-4e5861a86509
+2025-12-04T01:34:57.790Z [PLUGIN-STDOUT] [Form Builder] [INFO] Action appeared: cd0cfeda-ae9d-483a-90ce-4e5861a86509 device: stream-dork-host with settings: {
+2025-12-04T01:34:57.791Z [PLUGIN-STDOUT] [Form Builder]   formBuilderConfig: {
+2025-12-04T01:34:57.792Z [PLUGIN-STDOUT] [Form Builder]     title: 'Create Fusion To-Do',
+2025-12-04T01:34:57.792Z [PLUGIN-STDOUT] [Form Builder]     url: 'https://n8n.fusionflowsoftware.com/webhook/leandro/create-todo-ffs',
+2025-12-04T01:34:57.793Z [PLUGIN-STDOUT] [Form Builder]     method: 'POST',
+2025-12-04T01:34:57.793Z [PLUGIN-STDOUT] [Form Builder]     outputType: 'modal',
+2025-12-04T01:34:57.794Z [PLUGIN-STDOUT] [Form Builder]     submitButtonText: 'Submit',
+2025-12-04T01:34:57.795Z [PLUGIN-STDOUT] [Form Builder]     fields: [ [Object], [Object], [Object], [Object], [Object] ],
+2025-12-04T01:34:57.795Z [PLUGIN-STDOUT] [Form Builder]     headers: [],
+2025-12-04T01:34:57.796Z [PLUGIN-STDOUT] [Form Builder]     auth: { clientCredentials: [Object], oauth: [Object], type: 'none' }
+2025-12-04T01:34:57.797Z [PLUGIN-STDOUT] [Form Builder]   }
+2025-12-04T01:34:57.797Z [PLUGIN-STDOUT] [Form Builder] }
+2025-12-04T01:34:57.798Z [PLUGIN-STDOUT] [Form Builder] [DEBUG] RAW MESSAGE RECEIVED: {"action":"com.leandro-menezes.formbuilder.action","event":"didReceiveSettings","context":"cd0cfeda-ae9d-483a-90ce-4e5861a86509","device":"stream-dork-host","payload":{"settings":{"formBuilderConfig":{"title":"Create Fusion To-Do","url":"https://n8n.fusionflowsoftware.com/webhook/leandro/create-todo-ffs","method":"POST","outputType":"modal","submitButtonText":"Submit","fields":[{"description":"","label":"Customer","name":"customer","options":[{"label":"None","value":"None"},{"label":"Fusionflow","value":"7e4fb64e-4911-4e3b-a90d-2e335b12db39"},{"label":"Techmer","value":"6baa96f9-b24d-4321-a38b-6ed19ea62798"},{"label":"Timber","value":"650a8e5b-e89a-42fd-a363-5e58b8ce9a8c"}],"placeholder":"Customer","required":false,"sendAs":"body","type":"select"},{"description":"","label":"Description","name":"description","options":[],"placeholder":"","required":true,"sendAs":"body","type":"textarea"},{"description":"Type of task","label":"Type","name":"type","options":[{"label":"Development","value":"7b6ff2f0-0535-435c-a1ed-abfe89214b44"},{"label":"Follow up","value":"fa4581f4-c5e4-4595-94f7-30e4efaff01b"},{"label":"Meeting","value":"c57d5434-1eff-450f-b40f-23f518c2ea4a"},{"label":"Architecture","value":"7d4a5c15-c848-4a00-9169-62516c9022ca"},{"label":"Devops","value":"537ffa0e-4055-4eda-986a-d2f7536865be"}],"placeholder":"","required":false,"sendAs":"body","type":"select"},{"description":"Project involved","label":"Project","name":"project","options":[{"label":"Techmer IT Agent","value":"954f3833-3417-4373-9a62-7859db88eae7"},{"label":"AI-Central","value":"38361d8b-84ed-4684-a0bc-59dbab7f7b26"},{"label":"COA","value":"583fc675-b255-4c36-876c-a7654936d236"},{"label":"HR","value":"e199828e-b06a-4494-9ca4-710f8fcd1321"},{"label":"Item Nomenclature","value":"eca66ff9-6a43-4d5a-9dff-612d6b79ceb3"},{"label":"Sales Agent","value":"5d3bc8f8-0d15-4a26-90f7-2612b6896ecd"},{"label":"n8n devops control","value":"5e3187d0-5e7d-4ba4-aa14-6545e40f2214"},{"label":"Split fix","value":"b881884e-55d9-4246-aba5-309d77c58232"}],"placeholder":"","required":false,"sendAs":"body","type":"select"},{"description":"Check this field if this is no already created task in clickup\nThis will generate a template description and acceptance criteria when checked","label":"New demand","name":"new_demand","options":[],"placeholder":"","required":false,"sendAs":"body","type":"checkbox"}],"headers":[],"auth":{"clientCredentials":{"authPlacement":"header","clientId":"","clientSecret":"","scope":"","token":null,"tokenUrl":""},"oauth":{"authPlacement":"header","authorizationUrl":"","clientId":"","clientSecret":"","redirectUrl":"","saveRefreshToken":false,"scope":"","token":null,"tokenUrl":""},"type":"none"}}},"coordinates":{"column":1,"row":0},"isInMultiAction":false}}
+2025-12-04T01:34:57.799Z [PLUGIN-STDOUT] [Form Builder] [DEBUG] PARSED MESSAGE: {
+2025-12-04T01:34:57.799Z [PLUGIN-STDOUT] [Form Builder]   "action": "com.leandro-menezes.formbuilder.action",
+2025-12-04T01:34:57.800Z [PLUGIN-STDOUT] [Form Builder]   "event": "didReceiveSettings",
+2025-12-04T01:34:57.801Z [PLUGIN-STDOUT] [Form Builder]   "context": "cd0cfeda-ae9d-483a-90ce-4e5861a86509",
+2025-12-04T01:34:57.801Z [PLUGIN-STDOUT] [Form Builder]   "device": "stream-dork-host",
+2025-12-04T01:34:57.802Z [PLUGIN-STDOUT] [Form Builder]   "payload": {
+2025-12-04T01:34:57.802Z [PLUGIN-STDOUT] [Form Builder]     "settings": {
+2025-12-04T01:34:57.803Z [PLUGIN-STDOUT] [Form Builder]       "formBuilderConfig": {
+2025-12-04T01:34:57.804Z [PLUGIN-STDOUT] [Form Builder]         "title": "Create Fusion To-Do",
+2025-12-04T01:34:57.804Z [PLUGIN-STDOUT] [Form Builder]         "url": "https://n8n.fusionflowsoftware.com/webhook/leandro/create-todo-ffs",
+2025-12-04T01:34:57.805Z [PLUGIN-STDOUT] [Form Builder]         "method": "POST",
+2025-12-04T01:34:57.806Z [PLUGIN-STDOUT] [Form Builder]         "outputType": "modal",
+2025-12-04T01:34:57.806Z [PLUGIN-STDOUT] [Form Builder]         "submitButtonText": "Submit",
+2025-12-04T01:34:57.807Z [PLUGIN-STDOUT] [Form Builder]         "fields": [
+2025-12-04T01:34:57.807Z [PLUGIN-STDOUT] [Form Builder]           {
+2025-12-04T01:34:57.808Z [PLUGIN-STDOUT] [Form Builder]             "description": "",
+2025-12-04T01:34:57.809Z [PLUGIN-STDOUT] [Form Builder]             "label": "Customer",
+2025-12-04T01:34:57.809Z [PLUGIN-STDOUT] [Form Builder]             "name": "customer",
+2025-12-04T01:34:57.810Z [PLUGIN-STDOUT] [Form Builder]             "options": [
+2025-12-04T01:34:57.811Z [PLUGIN-STDOUT] [Form Builder]               {
+2025-12-04T01:34:57.811Z [PLUGIN-STDOUT] [Form Builder]                 "label": "None",
+2025-12-04T01:34:57.812Z [PLUGIN-STDOUT] [Form Builder]                 "value": "None"
+2025-12-04T01:34:57.813Z [PLUGIN-STDOUT] [Form Builder]               },
+2025-12-04T01:34:57.813Z [PLUGIN-STDOUT] [Form Builder]               {
+2025-12-04T01:34:57.814Z [PLUGIN-STDOUT] [Form Builder]                 "label": "Fusionflow",
+2025-12-04T01:34:57.814Z [PLUGIN-STDOUT] [Form Builder]                 "value": "7e4fb64e-4911-4e3b-a90d-2e335b12db39"
+2025-12-04T01:34:57.815Z [PLUGIN-STDOUT] [Form Builder]               },
+2025-12-04T01:34:57.816Z [PLUGIN-STDOUT] [Form Builder]               {
+2025-12-04T01:34:57.816Z [PLUGIN-STDOUT] [Form Builder]                 "label": "Techmer",
+2025-12-04T01:34:57.817Z [PLUGIN-STDOUT] [Form Builder]                 "value": "6baa96f9-b24d-4321-a38b-6ed19ea62798"
+2025-12-04T01:34:57.817Z [PLUGIN-STDOUT] [Form Builder]               },
+2025-12-04T01:34:57.818Z [PLUGIN-STDOUT] [Form Builder]               {
+2025-12-04T01:34:57.819Z [PLUGIN-STDOUT] [Form Builder]                 "label": "Timber",
+2025-12-04T01:34:57.819Z [PLUGIN-STDOUT] [Form Builder]                 "value": "650a8e5b-e89a-42fd-a363-5e58b8ce9a8c"
+2025-12-04T01:34:57.820Z [PLUGIN-STDOUT] [Form Builder]               }
+2025-12-04T01:34:57.821Z [PLUGIN-STDOUT] [Form Builder]             ],
+2025-12-04T01:34:57.821Z [PLUGIN-STDOUT] [Form Builder]             "placeholder": "Customer",
+2025-12-04T01:34:57.822Z [PLUGIN-STDOUT] [Form Builder]             "required": false,
+2025-12-04T01:34:57.822Z [PLUGIN-STDOUT] [Form Builder]             "sendAs": "body",
+2025-12-04T01:34:57.823Z [PLUGIN-STDOUT] [Form Builder]             "type": "select"
+2025-12-04T01:34:57.824Z [PLUGIN-STDOUT] [Form Builder]           },
+2025-12-04T01:34:57.824Z [PLUGIN-STDOUT] [Form Builder]           {
+2025-12-04T01:34:57.825Z [PLUGIN-STDOUT] [Form Builder]             "description": "",
+2025-12-04T01:34:57.825Z [PLUGIN-STDOUT] [Form Builder]             "label": "Description",
+2025-12-04T01:34:57.826Z [PLUGIN-STDOUT] [Form Builder]             "name": "description",
+2025-12-04T01:34:57.827Z [PLUGIN-STDOUT] [Form Builder]             "options": [],
+2025-12-04T01:34:57.827Z [PLUGIN-STDOUT] [Form Builder]             "placeholder": "",
+2025-12-04T01:34:57.828Z [PLUGIN-STDOUT] [Form Builder]             "required": true,
+2025-12-04T01:34:57.829Z [PLUGIN-STDOUT] [Form Builder]             "sendAs": "body",
+2025-12-04T01:34:57.829Z [PLUGIN-STDOUT] [Form Builder]             "type": "textarea"
+2025-12-04T01:34:57.830Z [PLUGIN-STDOUT] [Form Builder]           },
+2025-12-04T01:34:57.830Z [PLUGIN-STDOUT] [Form Builder]           {
+2025-12-04T01:34:57.831Z [PLUGIN-STDOUT] [Form Builder]             "description": "Type of task",
+2025-12-04T01:34:57.832Z [PLUGIN-STDOUT] [Form Builder]             "label": "Type",
+2025-12-04T01:34:57.832Z [PLUGIN-STDOUT] [Form Builder]             "name": "type",
+2025-12-04T01:34:57.833Z [PLUGIN-STDOUT] [Form Builder]             "options": [
+2025-12-04T01:34:57.834Z [PLUGIN-STDOUT] [Form Builder]               {
+2025-12-04T01:34:57.834Z [PLUGIN-STDOUT] [Form Builder]                 "label": "Development",
+2025-12-04T01:34:57.835Z [PLUGIN-STDOUT] [Form Builder]                 "value": "7b6ff2f0-0535-435c-a1ed-abfe89214b44"
+2025-12-04T01:34:57.836Z [PLUGIN-STDOUT] [Form Builder]               },
+2025-12-04T01:34:57.836Z [PLUGIN-STDOUT] [Form Builder]               {
+2025-12-04T01:34:57.837Z [PLUGIN-STDOUT] [Form Builder]                 "label": "Follow up",
+2025-12-04T01:34:57.838Z [PLUGIN-STDOUT] [Form Builder]                 "value": "fa4581f4-c5e4-4595-94f7-30e4efaff01b"
+2025-12-04T01:34:57.838Z [PLUGIN-STDOUT] [Form Builder]               },
+2025-12-04T01:34:57.839Z [PLUGIN-STDOUT] [Form Builder]               {
+2025-12-04T01:34:57.840Z [PLUGIN-STDOUT] [Form Builder]                 "label": "Meeting",
+2025-12-04T01:34:57.840Z [PLUGIN-STDOUT] [Form Builder]                 "value": "c57d5434-1eff-450f-b40f-23f518c2ea4a"
+2025-12-04T01:34:57.841Z [PLUGIN-STDOUT] [Form Builder]               },
+2025-12-04T01:34:57.841Z [PLUGIN-STDOUT] [Form Builder]               {
+2025-12-04T01:34:57.842Z [PLUGIN-STDOUT] [Form Builder]                 "label": "Architecture",
+2025-12-04T01:34:57.842Z [PLUGIN-STDOUT] [Form Builder]                 "value": "7d4a5c15-c848-4a00-9169-62516c9022ca"
+2025-12-04T01:34:57.843Z [PLUGIN-STDOUT] [Form Builder]               },
+2025-12-04T01:34:57.844Z [PLUGIN-STDOUT] [Form Builder]               {
+2025-12-04T01:34:57.844Z [PLUGIN-STDOUT] [Form Builder]                 "label": "Devops",
+2025-12-04T01:34:57.845Z [PLUGIN-STDOUT] [Form Builder]                 "value": "537ffa0e-4055-4eda-986a-d2f7536865be"
+2025-12-04T01:34:57.846Z [PLUGIN-STDOUT] [Form Builder]               }
+2025-12-04T01:34:57.847Z [PLUGIN-STDOUT] [Form Builder]             ],
+2025-12-04T01:34:57.847Z [PLUGIN-STDOUT] [Form Builder]             "placeholder": "",
+2025-12-04T01:34:57.848Z [PLUGIN-STDOUT] [Form Builder]             "required": false,
+2025-12-04T01:34:57.849Z [PLUGIN-STDOUT] [Form Builder]             "sendAs": "body",
+2025-12-04T01:34:57.849Z [PLUGIN-STDOUT] [Form Builder]             "type": "select"
+2025-12-04T01:34:57.850Z [PLUGIN-STDOUT] [Form Builder]           },
+2025-12-04T01:34:57.851Z [PLUGIN-STDOUT] [Form Builder]           {
+2025-12-04T01:34:57.851Z [PLUGIN-STDOUT] [Form Builder]             "description": "Project involved",
+2025-12-04T01:34:57.852Z [PLUGIN-STDOUT] [Form Builder]             "label": "Project",
+2025-12-04T01:34:57.852Z [PLUGIN-STDOUT] [Form Builder]             "name": "project",
+2025-12-04T01:34:57.853Z [PLUGIN-STDOUT] [Form Builder]             "options": [
+2025-12-04T01:34:57.854Z [PLUGIN-STDOUT] [Form Builder]               {
+2025-12-04T01:34:57.854Z [PLUGIN-STDOUT] [Form Builder]                 "label": "Techmer IT Agent",
+2025-12-04T01:34:57.855Z [PLUGIN-STDOUT] [Form Builder]                 "value": "954f3833-3417-4373-9a62-7859db88eae7"
+2025-12-04T01:34:57.856Z [PLUGIN-STDOUT] [Form Builder]               },
+2025-12-04T01:34:57.856Z [PLUGIN-STDOUT] [Form Builder]               {
+2025-12-04T01:34:57.857Z [PLUGIN-STDOUT] [Form Builder]                 "label": "AI-Central",
+2025-12-04T01:34:57.858Z [PLUGIN-STDOUT] [Form Builder]                 "value": "38361d8b-84ed-4684-a0bc-59dbab7f7b26"
+2025-12-04T01:34:57.858Z [PLUGIN-STDOUT] [Form Builder]               },
+2025-12-04T01:34:57.859Z [PLUGIN-STDOUT] [Form Builder]               {
+2025-12-04T01:34:57.860Z [PLUGIN-STDOUT] [Form Builder]                 "label": "COA",
+2025-12-04T01:34:57.860Z [PLUGIN-STDOUT] [Form Builder]                 "value": "583fc675-b255-4c36-876c-a7654936d236"
+2025-12-04T01:34:57.861Z [PLUGIN-STDOUT] [Form Builder]               },
+2025-12-04T01:34:57.861Z [PLUGIN-STDOUT] [Form Builder]               {
+2025-12-04T01:34:57.862Z [PLUGIN-STDOUT] [Form Builder]                 "label": "HR",
+2025-12-04T01:34:57.863Z [PLUGIN-STDOUT] [Form Builder]                 "value": "e199828e-b06a-4494-9ca4-710f8fcd1321"
+2025-12-04T01:34:57.863Z [PLUGIN-STDOUT] [Form Builder]               },
+2025-12-04T01:34:57.864Z [PLUGIN-STDOUT] [Form Builder]               {
+2025-12-04T01:34:57.864Z [PLUGIN-STDOUT] [Form Builder]                 "label": "Item Nomenclature",
+2025-12-04T01:34:57.865Z [PLUGIN-STDOUT] [Form Builder]                 "value": "eca66ff9-6a43-4d5a-9dff-612d6b79ceb3"
+2025-12-04T01:34:57.866Z [PLUGIN-STDOUT] [Form Builder]               },
+2025-12-04T01:34:57.866Z [PLUGIN-STDOUT] [Form Builder]               {
+2025-12-04T01:34:57.867Z [PLUGIN-STDOUT] [Form Builder]                 "label": "Sales Agent",
+2025-12-04T01:34:57.867Z [PLUGIN-STDOUT] [Form Builder]                 "value": "5d3bc8f8-0d15-4a26-90f7-2612b6896ecd"
+2025-12-04T01:34:57.868Z [PLUGIN-STDOUT] [Form Builder]               },
+2025-12-04T01:34:57.869Z [PLUGIN-STDOUT] [Form Builder]               {
+2025-12-04T01:34:57.869Z [PLUGIN-STDOUT] [Form Builder]                 "label": "n8n devops control",
+2025-12-04T01:34:57.870Z [PLUGIN-STDOUT] [Form Builder]                 "value": "5e3187d0-5e7d-4ba4-aa14-6545e40f2214"
+2025-12-04T01:34:57.870Z [PLUGIN-STDOUT] [Form Builder]               },
+2025-12-04T01:34:57.871Z [PLUGIN-STDOUT] [Form Builder]               {
+2025-12-04T01:34:57.872Z [PLUGIN-STDOUT] [Form Builder]                 "label": "Split fix",
+2025-12-04T01:34:57.872Z [PLUGIN-STDOUT] [Form Builder]                 "value": "b881884e-55d9-4246-aba5-309d77c58232"
+2025-12-04T01:34:57.873Z [PLUGIN-STDOUT] [Form Builder]               }
+2025-12-04T01:34:57.873Z [PLUGIN-STDOUT] [Form Builder]             ],
+2025-12-04T01:34:57.874Z [PLUGIN-STDOUT] [Form Builder]             "placeholder": "",
+2025-12-04T01:34:57.875Z [PLUGIN-STDOUT] [Form Builder]             "required": false,
+2025-12-04T01:34:57.875Z [PLUGIN-STDOUT] [Form Builder]             "sendAs": "body",
+2025-12-04T01:34:57.876Z [PLUGIN-STDOUT] [Form Builder]             "type": "select"
+2025-12-04T01:34:57.876Z [PLUGIN-STDOUT] [Form Builder]           },
+2025-12-04T01:34:57.877Z [PLUGIN-STDOUT] [Form Builder]           {
+2025-12-04T01:34:57.878Z [PLUGIN-STDOUT] [Form Builder]             "description": "Check this field if this is no already created task in clickup\nThis will generate a template description and acceptance criteria when checked",
+2025-12-04T01:34:57.878Z [PLUGIN-STDOUT] [Form Builder]             "label": "New demand",
+2025-12-04T01:34:57.879Z [PLUGIN-STDOUT] [Form Builder]             "name": "new_demand",
+2025-12-04T01:34:57.880Z [PLUGIN-STDOUT] [Form Builder]             "options": [],
+2025-12-04T01:34:57.880Z [PLUGIN-STDOUT] [Form Builder]             "placeholder": "",
+2025-12-04T01:34:57.881Z [PLUGIN-STDOUT] [Form Builder]             "required": false,
+2025-12-04T01:34:57.882Z [PLUGIN-STDOUT] [Form Builder]             "sendAs": "body",
+2025-12-04T01:34:57.882Z [PLUGIN-STDOUT] [Form Builder]             "type": "checkbox"
+2025-12-04T01:34:57.883Z [PLUGIN-STDOUT] [Form Builder]           }
+2025-12-04T01:34:57.883Z [PLUGIN-STDOUT] [Form Builder]         ],
+2025-12-04T01:34:57.884Z [PLUGIN-STDOUT] [Form Builder]         "headers": [],
+2025-12-04T01:34:57.884Z [PLUGIN-STDOUT] [Form Builder]         "auth": {
+2025-12-04T01:34:57.885Z [PLUGIN-STDOUT] [Form Builder]           "clientCredentials": {
+2025-12-04T01:34:57.886Z [PLUGIN-STDOUT] [Form Builder]             "authPlacement": "header",
+2025-12-04T01:34:57.886Z [PLUGIN-STDOUT] [Form Builder]             "clientId": "",
+2025-12-04T01:34:57.887Z [PLUGIN-STDOUT] [Form Builder]             "clientSecret": "",
+2025-12-04T01:34:57.887Z [PLUGIN-STDOUT] [Form Builder]             "scope": "",
+2025-12-04T01:34:57.888Z [PLUGIN-STDOUT] [Form Builder]             "token": null,
+2025-12-04T01:34:57.889Z [PLUGIN-STDOUT] [Form Builder]             "tokenUrl": ""
+2025-12-04T01:34:57.889Z [PLUGIN-STDOUT] [Form Builder]           },
+2025-12-04T01:34:57.890Z [PLUGIN-STDOUT] [Form Builder]           "oauth": {
+2025-12-04T01:34:57.890Z [PLUGIN-STDOUT] [Form Builder]             "authPlacement": "header",
+2025-12-04T01:34:57.891Z [PLUGIN-STDOUT] [Form Builder]             "authorizationUrl": "",
+2025-12-04T01:34:57.892Z [PLUGIN-STDOUT] [Form Builder]             "clientId": "",
+2025-12-04T01:34:57.892Z [PLUGIN-STDOUT] [Form Builder]             "clientSecret": "",
+2025-12-04T01:34:57.893Z [PLUGIN-STDOUT] [Form Builder]             "redirectUrl": "",
+2025-12-04T01:34:57.893Z [PLUGIN-STDOUT] [Form Builder]             "saveRefreshToken": false,
+2025-12-04T01:34:57.894Z [PLUGIN-STDOUT] [Form Builder]             "scope": "",
+2025-12-04T01:34:57.894Z [PLUGIN-STDOUT] [Form Builder]             "token": null,
+2025-12-04T01:34:57.895Z [PLUGIN-STDOUT] [Form Builder]             "tokenUrl": ""
+2025-12-04T01:34:57.896Z [PLUGIN-STDOUT] [Form Builder]           },
+2025-12-04T01:34:57.897Z [PLUGIN-STDOUT] [Form Builder]           "type": "none"
+2025-12-04T01:34:57.897Z [PLUGIN-STDOUT] [Form Builder]         }
+2025-12-04T01:34:57.898Z [PLUGIN-STDOUT] [Form Builder]       }
+2025-12-04T01:34:57.898Z [PLUGIN-STDOUT] [Form Builder]     },
+2025-12-04T01:34:57.899Z [PLUGIN-STDOUT] [Form Builder]     "coordinates": {
+2025-12-04T01:34:57.899Z [PLUGIN-STDOUT] [Form Builder]       "column": 1,
+2025-12-04T01:34:57.900Z [PLUGIN-STDOUT] [Form Builder]       "row": 0
+2025-12-04T01:34:57.901Z [PLUGIN-STDOUT] [Form Builder]     },
+2025-12-04T01:34:57.901Z [PLUGIN-STDOUT] [Form Builder]     "isInMultiAction": false
+2025-12-04T01:34:57.902Z [PLUGIN-STDOUT] [Form Builder]   }
+2025-12-04T01:34:57.902Z [PLUGIN-STDOUT] [Form Builder] }
+2025-12-04T01:34:57.903Z [PLUGIN-STDOUT] [Form Builder] [INFO] Received event: didReceiveSettings for action: com.leandro-menezes.formbuilder.action context: cd0cfeda-ae9d-483a-90ce-4e5861a86509
+2025-12-04T01:34:57.905Z [PLUGIN-STDOUT] [Form Builder] [INFO] Settings updated for context: cd0cfeda-ae9d-483a-90ce-4e5861a86509 device: stream-dork-host settings: {
+2025-12-04T01:34:57.905Z [PLUGIN-STDOUT] [Form Builder]   formBuilderConfig: {
+2025-12-04T01:34:57.906Z [PLUGIN-STDOUT] [Form Builder]     title: 'Create Fusion To-Do',
+2025-12-04T01:34:57.906Z [PLUGIN-STDOUT] [Form Builder]     url: 'https://n8n.fusionflowsoftware.com/webhook/leandro/create-todo-ffs',
+2025-12-04T01:34:57.907Z [PLUGIN-STDOUT] [Form Builder]     method: 'POST',
+2025-12-04T01:34:57.908Z [PLUGIN-STDOUT] [Form Builder]     outputType: 'modal',
+2025-12-04T01:34:57.908Z [PLUGIN-STDOUT] [Form Builder]     submitButtonText: 'Submit',
+2025-12-04T01:34:57.909Z [PLUGIN-STDOUT] [Form Builder]     fields: [ [Object], [Object], [Object], [Object], [Object] ],
+2025-12-04T01:34:57.910Z [PLUGIN-STDOUT] [Form Builder]     headers: [],
+2025-12-04T01:34:57.911Z [PLUGIN-STDOUT] [Form Builder]     auth: { clientCredentials: [Object], oauth: [Object], type: 'none' }
+2025-12-04T01:34:57.911Z [PLUGIN-STDOUT] [Form Builder]   }
+2025-12-04T01:34:57.912Z [PLUGIN-STDOUT] [Form Builder] }
+2025-12-04T01:34:57.913Z [PLUGIN-STDOUT] [Form Builder] [DEBUG] RAW MESSAGE RECEIVED: {"event":"willAppear","action":"com.leandro-menezes.formbuilder.action","context":"3a807d10-80c7-4bbe-a344-8c9b3787e692","device":"stream-dork-host","payload":{"coordinates":{"column":2,"row":0},"settings":{"formBuilderConfig":{"title":"Create Fusion To-Do","url":"https://n8n.fusionflowsoftware.com/webhook/leandro/dump","method":"POST","outputType":"status","submitButtonText":"Submit","fields":[{"description":"","label":"Brain dump","name":"dump","options":[],"placeholder":"","required":false,"sendAs":"body","type":"text"}],"headers":[],"auth":{"clientCredentials":{"authPlacement":"header","clientId":"","clientSecret":"","scope":"","token":null,"tokenUrl":""},"oauth":{"authPlacement":"header","authorizationUrl":"","clientId":"","clientSecret":"","redirectUrl":"","saveRefreshToken":false,"scope":"","token":null,"tokenUrl":""},"type":"none"}}},"controller":"Keypad","state":0,"isInMultiAction":false}}
+2025-12-04T01:34:57.913Z [PLUGIN-STDOUT] [Form Builder] [DEBUG] PARSED MESSAGE: {
+2025-12-04T01:34:57.914Z [PLUGIN-STDOUT] [Form Builder]   "event": "willAppear",
+2025-12-04T01:34:57.914Z [PLUGIN-STDOUT] [Form Builder]   "action": "com.leandro-menezes.formbuilder.action",
+2025-12-04T01:34:57.915Z [PLUGIN-STDOUT] [Form Builder]   "context": "3a807d10-80c7-4bbe-a344-8c9b3787e692",
+2025-12-04T01:34:57.916Z [PLUGIN-STDOUT] [Form Builder]   "device": "stream-dork-host",
+2025-12-04T01:34:57.916Z [PLUGIN-STDOUT] [Form Builder]   "payload": {
+2025-12-04T01:34:57.917Z [PLUGIN-STDOUT] [Form Builder]     "coordinates": {
+2025-12-04T01:34:57.917Z [PLUGIN-STDOUT] [Form Builder]       "column": 2,
+2025-12-04T01:34:57.918Z [PLUGIN-STDOUT] [Form Builder]       "row": 0
+2025-12-04T01:34:57.919Z [PLUGIN-STDOUT] [Form Builder]     },
+2025-12-04T01:34:57.919Z [PLUGIN-STDOUT] [Form Builder]     "settings": {
+2025-12-04T01:34:57.920Z [PLUGIN-STDOUT] [Form Builder]       "formBuilderConfig": {
+2025-12-04T01:34:57.920Z [PLUGIN-STDOUT] [Form Builder]         "title": "Create Fusion To-Do",
+2025-12-04T01:34:57.921Z [PLUGIN-STDOUT] [Form Builder]         "url": "https://n8n.fusionflowsoftware.com/webhook/leandro/dump",
+2025-12-04T01:34:57.922Z [PLUGIN-STDOUT] [Form Builder]         "method": "POST",
+2025-12-04T01:34:57.922Z [PLUGIN-STDOUT] [Form Builder]         "outputType": "status",
+2025-12-04T01:34:57.923Z [PLUGIN-STDOUT] [Form Builder]         "submitButtonText": "Submit",
+2025-12-04T01:34:57.924Z [PLUGIN-STDOUT] [Form Builder]         "fields": [
+2025-12-04T01:34:57.924Z [PLUGIN-STDOUT] [Form Builder]           {
+2025-12-04T01:34:57.925Z [PLUGIN-STDOUT] [Form Builder]             "description": "",
+2025-12-04T01:34:57.925Z [PLUGIN-STDOUT] [Form Builder]             "label": "Brain dump",
+2025-12-04T01:34:57.926Z [PLUGIN-STDOUT] [Form Builder]             "name": "dump",
+2025-12-04T01:34:57.936Z [PLUGIN-STDOUT] [Form Builder]             "options": [],
+2025-12-04T01:34:57.937Z [PLUGIN-STDOUT] [Form Builder]             "placeholder": "",
+2025-12-04T01:34:57.938Z [PLUGIN-STDOUT] [Form Builder]             "required": false,
+2025-12-04T01:34:57.939Z [PLUGIN-STDOUT] [Form Builder]             "sendAs": "body",
+2025-12-04T01:34:57.940Z [PLUGIN-STDOUT] [Form Builder]             "type": "text"
+2025-12-04T01:34:57.941Z [PLUGIN-STDOUT] [Form Builder]           }
+2025-12-04T01:34:57.942Z [PLUGIN-STDOUT] [Form Builder]         ],
+2025-12-04T01:34:57.942Z [PLUGIN-STDOUT] [Form Builder]         "headers": [],
+2025-12-04T01:34:57.943Z [PLUGIN-STDOUT] [Form Builder]         "auth": {
+2025-12-04T01:34:57.944Z [PLUGIN-STDOUT] [Form Builder]           "clientCredentials": {
+2025-12-04T01:34:57.944Z [PLUGIN-STDOUT] [Form Builder]             "authPlacement": "header",
+2025-12-04T01:34:57.945Z [PLUGIN-STDOUT] [Form Builder]             "clientId": "",
+2025-12-04T01:34:57.946Z [PLUGIN-STDOUT] [Form Builder]             "clientSecret": "",
+2025-12-04T01:34:57.946Z [PLUGIN-STDOUT] [Form Builder]             "scope": "",
+2025-12-04T01:34:57.947Z [PLUGIN-STDOUT] [Form Builder]             "token": null,
+2025-12-04T01:34:57.947Z [PLUGIN-STDOUT] [Form Builder]             "tokenUrl": ""
+2025-12-04T01:34:57.948Z [PLUGIN-STDOUT] [Form Builder]           },
+2025-12-04T01:34:57.949Z [PLUGIN-STDOUT] [Form Builder]           "oauth": {
+2025-12-04T01:34:57.950Z [PLUGIN-STDOUT] [Form Builder]             "authPlacement": "header",
+2025-12-04T01:34:57.950Z [PLUGIN-STDOUT] [Form Builder]             "authorizationUrl": "",
+2025-12-04T01:34:57.951Z [PLUGIN-STDOUT] [Form Builder]             "clientId": "",
+2025-12-04T01:34:57.951Z [PLUGIN-STDOUT] [Form Builder]             "clientSecret": "",
+2025-12-04T01:34:57.952Z [PLUGIN-STDOUT] [Form Builder]             "redirectUrl": "",
+2025-12-04T01:34:57.953Z [PLUGIN-STDOUT] [Form Builder]             "saveRefreshToken": false,
+2025-12-04T01:34:57.953Z [PLUGIN-STDOUT] [Form Builder]             "scope": "",
+2025-12-04T01:34:57.954Z [PLUGIN-STDOUT] [Form Builder]             "token": null,
+2025-12-04T01:34:57.954Z [PLUGIN-STDOUT] [Form Builder]             "tokenUrl": ""
+2025-12-04T01:34:57.955Z [PLUGIN-STDOUT] [Form Builder]           },
+2025-12-04T01:34:57.956Z [PLUGIN-STDOUT] [Form Builder]           "type": "none"
+2025-12-04T01:34:57.956Z [PLUGIN-STDOUT] [Form Builder]         }
+2025-12-04T01:34:57.957Z [PLUGIN-STDOUT] [Form Builder]       }
+2025-12-04T01:34:57.957Z [PLUGIN-STDOUT] [Form Builder]     },
+2025-12-04T01:34:57.958Z [PLUGIN-STDOUT] [Form Builder]     "controller": "Keypad",
+2025-12-04T01:34:57.958Z [PLUGIN-STDOUT] [Form Builder]     "state": 0,
+2025-12-04T01:34:57.959Z [PLUGIN-STDOUT] [Form Builder]     "isInMultiAction": false
+2025-12-04T01:34:57.960Z [PLUGIN-STDOUT] [Form Builder]   }
+2025-12-04T01:34:57.960Z [PLUGIN-STDOUT] [Form Builder] }
+2025-12-04T01:34:57.961Z [PLUGIN-STDOUT] [Form Builder] [INFO] Received event: willAppear for action: com.leandro-menezes.formbuilder.action context: 3a807d10-80c7-4bbe-a344-8c9b3787e692
+2025-12-04T01:34:57.962Z [PLUGIN-STDOUT] [Form Builder] [INFO] Action appeared: 3a807d10-80c7-4bbe-a344-8c9b3787e692 device: stream-dork-host with settings: {
+2025-12-04T01:34:57.962Z [PLUGIN-STDOUT] [Form Builder]   formBuilderConfig: {
+2025-12-04T01:34:57.963Z [PLUGIN-STDOUT] [Form Builder]     title: 'Create Fusion To-Do',
+2025-12-04T01:34:57.964Z [PLUGIN-STDOUT] [Form Builder]     url: 'https://n8n.fusionflowsoftware.com/webhook/leandro/dump',
+2025-12-04T01:34:57.964Z [PLUGIN-STDOUT] [Form Builder]     method: 'POST',
+2025-12-04T01:34:57.965Z [PLUGIN-STDOUT] [Form Builder]     outputType: 'status',
+2025-12-04T01:34:57.965Z [PLUGIN-STDOUT] [Form Builder]     submitButtonText: 'Submit',
+2025-12-04T01:34:57.966Z [PLUGIN-STDOUT] [Form Builder]     fields: [ [Object] ],
+2025-12-04T01:34:57.966Z [PLUGIN-STDOUT] [Form Builder]     headers: [],
+2025-12-04T01:34:57.967Z [PLUGIN-STDOUT] [Form Builder]     auth: { clientCredentials: [Object], oauth: [Object], type: 'none' }
+2025-12-04T01:34:57.967Z [PLUGIN-STDOUT] [Form Builder]   }
+2025-12-04T01:34:57.968Z [PLUGIN-STDOUT] [Form Builder] }
+2025-12-04T01:34:57.969Z [PLUGIN-STDOUT] [Form Builder] [DEBUG] RAW MESSAGE RECEIVED: {"action":"com.leandro-menezes.formbuilder.action","event":"didReceiveSettings","context":"3a807d10-80c7-4bbe-a344-8c9b3787e692","device":"stream-dork-host","payload":{"settings":{"formBuilderConfig":{"title":"Create Fusion To-Do","url":"https://n8n.fusionflowsoftware.com/webhook/leandro/dump","method":"POST","outputType":"status","submitButtonText":"Submit","fields":[{"description":"","label":"Brain dump","name":"dump","options":[],"placeholder":"","required":false,"sendAs":"body","type":"text"}],"headers":[],"auth":{"clientCredentials":{"authPlacement":"header","clientId":"","clientSecret":"","scope":"","token":null,"tokenUrl":""},"oauth":{"authPlacement":"header","authorizationUrl":"","clientId":"","clientSecret":"","redirectUrl":"","saveRefreshToken":false,"scope":"","token":null,"tokenUrl":""},"type":"none"}}},"coordinates":{"column":2,"row":0},"isInMultiAction":false}}
+2025-12-04T01:34:57.969Z [PLUGIN-STDOUT] [Form Builder] [DEBUG] PARSED MESSAGE: {
+2025-12-04T01:34:57.970Z [PLUGIN-STDOUT] [Form Builder]   "action": "com.leandro-menezes.formbuilder.action",
+2025-12-04T01:34:57.970Z [PLUGIN-STDOUT] [Form Builder]   "event": "didReceiveSettings",
+2025-12-04T01:34:57.971Z [PLUGIN-STDOUT] [Form Builder]   "context": "3a807d10-80c7-4bbe-a344-8c9b3787e692",
+2025-12-04T01:34:57.972Z [PLUGIN-STDOUT] [Form Builder]   "device": "stream-dork-host",
+2025-12-04T01:34:57.972Z [PLUGIN-STDOUT] [Form Builder]   "payload": {
+2025-12-04T01:34:57.973Z [PLUGIN-STDOUT] [Form Builder]     "settings": {
+2025-12-04T01:34:57.973Z [PLUGIN-STDOUT] [Form Builder]       "formBuilderConfig": {
+2025-12-04T01:34:57.974Z [PLUGIN-STDOUT] [Form Builder]         "title": "Create Fusion To-Do",
+2025-12-04T01:34:57.975Z [PLUGIN-STDOUT] [Form Builder]         "url": "https://n8n.fusionflowsoftware.com/webhook/leandro/dump",
+2025-12-04T01:34:57.975Z [PLUGIN-STDOUT] [Form Builder]         "method": "POST",
+2025-12-04T01:34:57.976Z [PLUGIN-STDOUT] [Form Builder]         "outputType": "status",
+2025-12-04T01:34:57.976Z [PLUGIN-STDOUT] [Form Builder]         "submitButtonText": "Submit",
+2025-12-04T01:34:57.977Z [PLUGIN-STDOUT] [Form Builder]         "fields": [
+2025-12-04T01:34:57.977Z [PLUGIN-STDOUT] [Form Builder]           {
+2025-12-04T01:34:57.978Z [PLUGIN-STDOUT] [Form Builder]             "description": "",
+2025-12-04T01:34:57.978Z [PLUGIN-STDOUT] [Form Builder]             "label": "Brain dump",
+2025-12-04T01:34:57.979Z [PLUGIN-STDOUT] [Form Builder]             "name": "dump",
+2025-12-04T01:34:57.979Z [PLUGIN-STDOUT] [Form Builder]             "options": [],
+2025-12-04T01:34:57.980Z [PLUGIN-STDOUT] [Form Builder]             "placeholder": "",
+2025-12-04T01:34:57.980Z [PLUGIN-STDOUT] [Form Builder]             "required": false,
+2025-12-04T01:34:57.981Z [PLUGIN-STDOUT] [Form Builder]             "sendAs": "body",
+2025-12-04T01:34:57.982Z [PLUGIN-STDOUT] [Form Builder]             "type": "text"
+2025-12-04T01:34:57.982Z [PLUGIN-STDOUT] [Form Builder]           }
+2025-12-04T01:34:57.983Z [PLUGIN-STDOUT] [Form Builder]         ],
+2025-12-04T01:34:57.983Z [PLUGIN-STDOUT] [Form Builder]         "headers": [],
+2025-12-04T01:34:57.984Z [PLUGIN-STDOUT] [Form Builder]         "auth": {
+2025-12-04T01:34:57.985Z [PLUGIN-STDOUT] [Form Builder]           "clientCredentials": {
+2025-12-04T01:34:57.985Z [PLUGIN-STDOUT] [Form Builder]             "authPlacement": "header",
+2025-12-04T01:34:57.986Z [PLUGIN-STDOUT] [Form Builder]             "clientId": "",
+2025-12-04T01:34:57.986Z [PLUGIN-STDOUT] [Form Builder]             "clientSecret": "",
+2025-12-04T01:34:57.987Z [PLUGIN-STDOUT] [Form Builder]             "scope": "",
+2025-12-04T01:34:57.988Z [PLUGIN-STDOUT] [Form Builder]             "token": null,
+2025-12-04T01:34:57.988Z [PLUGIN-STDOUT] [Form Builder]             "tokenUrl": ""
+2025-12-04T01:34:57.989Z [PLUGIN-STDOUT] [Form Builder]           },
+2025-12-04T01:34:57.989Z [PLUGIN-STDOUT] [Form Builder]           "oauth": {
+2025-12-04T01:34:57.990Z [PLUGIN-STDOUT] [Form Builder]             "authPlacement": "header",
+2025-12-04T01:34:57.990Z [PLUGIN-STDOUT] [Form Builder]             "authorizationUrl": "",
+2025-12-04T01:34:57.991Z [PLUGIN-STDOUT] [Form Builder]             "clientId": "",
+2025-12-04T01:34:57.992Z [PLUGIN-STDOUT] [Form Builder]             "clientSecret": "",
+2025-12-04T01:34:57.992Z [PLUGIN-STDOUT] [Form Builder]             "redirectUrl": "",
+2025-12-04T01:34:57.993Z [PLUGIN-STDOUT] [Form Builder]             "saveRefreshToken": false,
+2025-12-04T01:34:57.993Z [PLUGIN-STDOUT] [Form Builder]             "scope": "",
+2025-12-04T01:34:57.994Z [PLUGIN-STDOUT] [Form Builder]             "token": null,
+2025-12-04T01:34:57.994Z [PLUGIN-STDOUT] [Form Builder]             "tokenUrl": ""
+2025-12-04T01:34:57.995Z [PLUGIN-STDOUT] [Form Builder]           },
+2025-12-04T01:34:57.995Z [PLUGIN-STDOUT] [Form Builder]           "type": "none"
+2025-12-04T01:34:57.996Z [PLUGIN-STDOUT] [Form Builder]         }
+2025-12-04T01:34:57.997Z [PLUGIN-STDOUT] [Form Builder]       }
+2025-12-04T01:34:57.997Z [PLUGIN-STDOUT] [Form Builder]     },
+2025-12-04T01:34:57.998Z [PLUGIN-STDOUT] [Form Builder]     "coordinates": {
+2025-12-04T01:34:57.998Z [PLUGIN-STDOUT] [Form Builder]       "column": 2,
+2025-12-04T01:34:57.999Z [PLUGIN-STDOUT] [Form Builder]       "row": 0
+2025-12-04T01:34:57.999Z [PLUGIN-STDOUT] [Form Builder]     },
+2025-12-04T01:34:58.000Z [PLUGIN-STDOUT] [Form Builder]     "isInMultiAction": false
+2025-12-04T01:34:58.001Z [PLUGIN-STDOUT] [Form Builder]   }
+2025-12-04T01:34:58.001Z [PLUGIN-STDOUT] [Form Builder] }
+2025-12-04T01:34:58.002Z [PLUGIN-STDOUT] [Form Builder] [INFO] Received event: didReceiveSettings for action: com.leandro-menezes.formbuilder.action context: 3a807d10-80c7-4bbe-a344-8c9b3787e692
+2025-12-04T01:34:58.003Z [PLUGIN-STDOUT] [Form Builder] [INFO] Settings updated for context: 3a807d10-80c7-4bbe-a344-8c9b3787e692 device: stream-dork-host settings: {
+2025-12-04T01:34:58.003Z [PLUGIN-STDOUT] [Form Builder]   formBuilderConfig: {
+2025-12-04T01:34:58.004Z [PLUGIN-STDOUT] [Form Builder]     title: 'Create Fusion To-Do',
+2025-12-04T01:34:58.004Z [PLUGIN-STDOUT] [Form Builder]     url: 'https://n8n.fusionflowsoftware.com/webhook/leandro/dump',
+2025-12-04T01:34:58.005Z [PLUGIN-STDOUT] [Form Builder]     method: 'POST',
+2025-12-04T01:34:58.006Z [PLUGIN-STDOUT] [Form Builder]     outputType: 'status',
+2025-12-04T01:34:58.007Z [PLUGIN-STDOUT] [Form Builder]     submitButtonText: 'Submit',
+2025-12-04T01:34:58.007Z [PLUGIN-STDOUT] [Form Builder]     fields: [ [Object] ],
+2025-12-04T01:34:58.008Z [PLUGIN-STDOUT] [Form Builder]     headers: [],
+2025-12-04T01:34:58.008Z [PLUGIN-STDOUT] [Form Builder]     auth: { clientCredentials: [Object], oauth: [Object], type: 'none' }
+2025-12-04T01:34:58.009Z [PLUGIN-STDOUT] [Form Builder]   }
+2025-12-04T01:34:58.009Z [PLUGIN-STDOUT] [Form Builder] }
+2025-12-04T01:34:58.010Z [PLUGIN-STDOUT] [Form Builder] [DEBUG] RAW MESSAGE RECEIVED: {"event":"willAppear","action":"com.leandro-menezes.formbuilder.action","context":"2b7d1880-3d10-46b5-b051-bde5a950cdb5","device":"stream-dork-host","payload":{"coordinates":{"column":3,"row":0},"settings":{"formBuilderConfig":{"title":"What are you doing?","url":"https://n8n.fusionflowsoftware.com/webhook/leandro/what-are-you-doing","method":"POST","outputType":"status","submitButtonText":"Submit","autoShowInterval":10,"autoClearOnSuccess":false,"clearOnOpen":false,"closeOnSuccess":true,"fields":[{"name":"doing","label":"What are you doing?","description":"Describe your activity","type":"textarea","required":true,"sendAs":"body","placeholder":"","options":[]}],"headers":[],"auth":{"type":"none","oauth":{"authorizationUrl":"","tokenUrl":"","clientId":"","clientSecret":"","scope":"","authPlacement":"header","redirectUrl":"","saveRefreshToken":false,"token":null},"clientCredentials":{"tokenUrl":"","clientId":"","clientSecret":"","scope":"","authPlacement":"header","token":null}}}},"controller":"Keypad","state":0,"isInMultiAction":false}}
+2025-12-04T01:34:58.010Z [PLUGIN-STDOUT] [Form Builder] [DEBUG] PARSED MESSAGE: {
+2025-12-04T01:34:58.011Z [PLUGIN-STDOUT] [Form Builder]   "event": "willAppear",
+2025-12-04T01:34:58.011Z [PLUGIN-STDOUT] [Form Builder]   "action": "com.leandro-menezes.formbuilder.action",
+2025-12-04T01:34:58.012Z [PLUGIN-STDOUT] [Form Builder]   "context": "2b7d1880-3d10-46b5-b051-bde5a950cdb5",
+2025-12-04T01:34:58.013Z [PLUGIN-STDOUT] [Form Builder]   "device": "stream-dork-host",
+2025-12-04T01:34:58.013Z [PLUGIN-STDOUT] [Form Builder]   "payload": {
+2025-12-04T01:34:58.014Z [PLUGIN-STDOUT] [Form Builder]     "coordinates": {
+2025-12-04T01:34:58.014Z [PLUGIN-STDOUT] [Form Builder]       "column": 3,
+2025-12-04T01:34:58.015Z [PLUGIN-STDOUT] [Form Builder]       "row": 0
+2025-12-04T01:34:58.016Z [PLUGIN-STDOUT] [Form Builder]     },
+2025-12-04T01:34:58.016Z [PLUGIN-STDOUT] [Form Builder]     "settings": {
+2025-12-04T01:34:58.017Z [PLUGIN-STDOUT] [Form Builder]       "formBuilderConfig": {
+2025-12-04T01:34:58.018Z [PLUGIN-STDOUT] [Form Builder]         "title": "What are you doing?",
+2025-12-04T01:34:58.018Z [PLUGIN-STDOUT] [Form Builder]         "url": "https://n8n.fusionflowsoftware.com/webhook/leandro/what-are-you-doing",
+2025-12-04T01:34:58.019Z [PLUGIN-STDOUT] [Form Builder]         "method": "POST",
+2025-12-04T01:34:58.019Z [PLUGIN-STDOUT] [Form Builder]         "outputType": "status",
+2025-12-04T01:34:58.020Z [PLUGIN-STDOUT] [Form Builder]         "submitButtonText": "Submit",
+2025-12-04T01:34:58.021Z [PLUGIN-STDOUT] [Form Builder]         "autoShowInterval": 10,
+2025-12-04T01:34:58.021Z [PLUGIN-STDOUT] [Form Builder]         "autoClearOnSuccess": false,
+2025-12-04T01:34:58.022Z [PLUGIN-STDOUT] [Form Builder]         "clearOnOpen": false,
+2025-12-04T01:34:58.023Z [PLUGIN-STDOUT] [Form Builder]         "closeOnSuccess": true,
+2025-12-04T01:34:58.023Z [PLUGIN-STDOUT] [Form Builder]         "fields": [
+2025-12-04T01:34:58.024Z [PLUGIN-STDOUT] [Form Builder]           {
+2025-12-04T01:34:58.024Z [PLUGIN-STDOUT] [Form Builder]             "name": "doing",
+2025-12-04T01:34:58.025Z [PLUGIN-STDOUT] [Form Builder]             "label": "What are you doing?",
+2025-12-04T01:34:58.025Z [PLUGIN-STDOUT] [Form Builder]             "description": "Describe your activity",
+2025-12-04T01:34:58.026Z [PLUGIN-STDOUT] [Form Builder]             "type": "textarea",
+2025-12-04T01:34:58.027Z [PLUGIN-STDOUT] [Form Builder]             "required": true,
+2025-12-04T01:34:58.027Z [PLUGIN-STDOUT] [Form Builder]             "sendAs": "body",
+2025-12-04T01:34:58.028Z [PLUGIN-STDOUT] [Form Builder]             "placeholder": "",
+2025-12-04T01:34:58.028Z [PLUGIN-STDOUT] [Form Builder]             "options": []
+2025-12-04T01:34:58.029Z [PLUGIN-STDOUT] [Form Builder]           }
+2025-12-04T01:34:58.029Z [PLUGIN-STDOUT] [Form Builder]         ],
+2025-12-04T01:34:58.030Z [PLUGIN-STDOUT] [Form Builder]         "headers": [],
+2025-12-04T01:34:58.031Z [PLUGIN-STDOUT] [Form Builder]         "auth": {
+2025-12-04T01:34:58.031Z [PLUGIN-STDOUT] [Form Builder]           "type": "none",
+2025-12-04T01:34:58.033Z [PLUGIN-STDOUT] [Form Builder]           "oauth": {
+2025-12-04T01:34:58.034Z [PLUGIN-STDOUT] [Form Builder]             "authorizationUrl": "",
+2025-12-04T01:34:58.034Z [PLUGIN-STDOUT] [Form Builder]             "tokenUrl": "",
+2025-12-04T01:34:58.035Z [PLUGIN-STDOUT] [Form Builder]             "clientId": "",
+2025-12-04T01:34:58.035Z [PLUGIN-STDOUT] [Form Builder]             "clientSecret": "",
+2025-12-04T01:34:58.036Z [PLUGIN-STDOUT] [Form Builder]             "scope": "",
+2025-12-04T01:34:58.036Z [PLUGIN-STDOUT] [Form Builder]             "authPlacement": "header",
+2025-12-04T01:34:58.037Z [PLUGIN-STDOUT] [Form Builder]             "redirectUrl": "",
+2025-12-04T01:34:58.038Z [PLUGIN-STDOUT] [Form Builder]             "saveRefreshToken": false,
+2025-12-04T01:34:58.038Z [PLUGIN-STDOUT] [Form Builder]             "token": null
+2025-12-04T01:34:58.039Z [PLUGIN-STDOUT] [Form Builder]           },
+2025-12-04T01:34:58.040Z [PLUGIN-STDOUT] [Form Builder]           "clientCredentials": {
+2025-12-04T01:34:58.040Z [PLUGIN-STDOUT] [Form Builder]             "tokenUrl": "",
+2025-12-04T01:34:58.041Z [PLUGIN-STDOUT] [Form Builder]             "clientId": "",
+2025-12-04T01:34:58.041Z [PLUGIN-STDOUT] [Form Builder]             "clientSecret": "",
+2025-12-04T01:34:58.042Z [PLUGIN-STDOUT] [Form Builder]             "scope": "",
+2025-12-04T01:34:58.043Z [PLUGIN-STDOUT] [Form Builder]             "authPlacement": "header",
+2025-12-04T01:34:58.043Z [PLUGIN-STDOUT] [Form Builder]             "token": null
+2025-12-04T01:34:58.044Z [PLUGIN-STDOUT] [Form Builder]           }
+2025-12-04T01:34:58.045Z [PLUGIN-STDOUT] [Form Builder]         }
+2025-12-04T01:34:58.045Z [PLUGIN-STDOUT] [Form Builder]       }
+2025-12-04T01:34:58.046Z [PLUGIN-STDOUT] [Form Builder]     },
+2025-12-04T01:34:58.047Z [PLUGIN-STDOUT] [Form Builder]     "controller": "Keypad",
+2025-12-04T01:34:58.047Z [PLUGIN-STDOUT] [Form Builder]     "state": 0,
+2025-12-04T01:34:58.048Z [PLUGIN-STDOUT] [Form Builder]     "isInMultiAction": false
+2025-12-04T01:34:58.049Z [PLUGIN-STDOUT] [Form Builder]   }
+2025-12-04T01:34:58.049Z [PLUGIN-STDOUT] [Form Builder] }
+2025-12-04T01:34:58.050Z [PLUGIN-STDOUT] [Form Builder] [INFO] Received event: willAppear for action: com.leandro-menezes.formbuilder.action context: 2b7d1880-3d10-46b5-b051-bde5a950cdb5
+2025-12-04T01:34:58.050Z [PLUGIN-STDOUT] [Form Builder] [INFO] Action appeared: 2b7d1880-3d10-46b5-b051-bde5a950cdb5 device: stream-dork-host with settings: {
+2025-12-04T01:34:58.051Z [PLUGIN-STDOUT] [Form Builder]   formBuilderConfig: {
+2025-12-04T01:34:58.051Z [PLUGIN-STDOUT] [Form Builder]     title: 'What are you doing?',
+2025-12-04T01:34:58.052Z [PLUGIN-STDOUT] [Form Builder]     url: 'https://n8n.fusionflowsoftware.com/webhook/leandro/what-are-you-doing',
+2025-12-04T01:34:58.052Z [PLUGIN-STDOUT] [Form Builder]     method: 'POST',
+2025-12-04T01:34:58.053Z [PLUGIN-STDOUT] [Form Builder]     outputType: 'status',
+2025-12-04T01:34:58.054Z [PLUGIN-STDOUT] [Form Builder]     submitButtonText: 'Submit',
+2025-12-04T01:34:58.055Z [PLUGIN-STDOUT] [Form Builder]     autoShowInterval: 10,
+2025-12-04T01:34:58.055Z [PLUGIN-STDOUT] [Form Builder]     autoClearOnSuccess: false,
+2025-12-04T01:34:58.056Z [PLUGIN-STDOUT] [Form Builder]     clearOnOpen: false,
+2025-12-04T01:34:58.056Z [PLUGIN-STDOUT] [Form Builder]     closeOnSuccess: true,
+2025-12-04T01:34:58.057Z [PLUGIN-STDOUT] [Form Builder]     fields: [ [Object] ],
+2025-12-04T01:34:58.058Z [PLUGIN-STDOUT] [Form Builder]     headers: [],
+2025-12-04T01:34:58.058Z [PLUGIN-STDOUT] [Form Builder]     auth: { type: 'none', oauth: [Object], clientCredentials: [Object] }
+2025-12-04T01:34:58.059Z [PLUGIN-STDOUT] [Form Builder]   }
+2025-12-04T01:34:58.059Z [PLUGIN-STDOUT] [Form Builder] }
+2025-12-04T01:34:58.060Z [PLUGIN-STDOUT] [Form Builder] [INFO] Setting up auto-show timer for context 2b7d1880-3d10-46b5-b051-bde5a950cdb5: every 10 minutes
+2025-12-04T01:34:58.061Z [PLUGIN-STDOUT] [Form Builder] [INFO] Starting activity check interval
+2025-12-04T01:34:58.061Z [PLUGIN-STDOUT] [Form Builder] [DEBUG] RAW MESSAGE RECEIVED: {"action":"com.leandro-menezes.formbuilder.action","event":"didReceiveSettings","context":"2b7d1880-3d10-46b5-b051-bde5a950cdb5","device":"stream-dork-host","payload":{"settings":{"formBuilderConfig":{"title":"What are you doing?","url":"https://n8n.fusionflowsoftware.com/webhook/leandro/what-are-you-doing","method":"POST","outputType":"status","submitButtonText":"Submit","autoShowInterval":10,"autoClearOnSuccess":false,"clearOnOpen":false,"closeOnSuccess":true,"fields":[{"name":"doing","label":"What are you doing?","description":"Describe your activity","type":"textarea","required":true,"sendAs":"body","placeholder":"","options":[]}],"headers":[],"auth":{"type":"none","oauth":{"authorizationUrl":"","tokenUrl":"","clientId":"","clientSecret":"","scope":"","authPlacement":"header","redirectUrl":"","saveRefreshToken":false,"token":null},"clientCredentials":{"tokenUrl":"","clientId":"","clientSecret":"","scope":"","authPlacement":"header","token":null}}}},"coordinates":{"column":3,"row":0},"isInMultiAction":false}}
+2025-12-04T01:34:58.062Z [PLUGIN-STDOUT] [Form Builder] [DEBUG] PARSED MESSAGE: {
+2025-12-04T01:34:58.062Z [PLUGIN-STDOUT] [Form Builder]   "action": "com.leandro-menezes.formbuilder.action",
+2025-12-04T01:34:58.063Z [PLUGIN-STDOUT] [Form Builder]   "event": "didReceiveSettings",
+2025-12-04T01:34:58.064Z [PLUGIN-STDOUT] [Form Builder]   "context": "2b7d1880-3d10-46b5-b051-bde5a950cdb5",
+2025-12-04T01:34:58.065Z [PLUGIN-STDOUT] [Form Builder]   "device": "stream-dork-host",
+2025-12-04T01:34:58.065Z [PLUGIN-STDOUT] [Form Builder]   "payload": {
+2025-12-04T01:34:58.066Z [PLUGIN-STDOUT] [Form Builder]     "settings": {
+2025-12-04T01:34:58.067Z [PLUGIN-STDOUT] [Form Builder]       "formBuilderConfig": {
+2025-12-04T01:34:58.067Z [PLUGIN-STDOUT] [Form Builder]         "title": "What are you doing?",
+2025-12-04T01:34:58.068Z [PLUGIN-STDOUT] [Form Builder]         "url": "https://n8n.fusionflowsoftware.com/webhook/leandro/what-are-you-doing",
+2025-12-04T01:34:58.068Z [PLUGIN-STDOUT] [Form Builder]         "method": "POST",
+2025-12-04T01:34:58.069Z [PLUGIN-STDOUT] [Form Builder]         "outputType": "status",
+2025-12-04T01:34:58.070Z [PLUGIN-STDOUT] [Form Builder]         "submitButtonText": "Submit",
+2025-12-04T01:34:58.070Z [PLUGIN-STDOUT] [Form Builder]         "autoShowInterval": 10,
+2025-12-04T01:34:58.071Z [PLUGIN-STDOUT] [Form Builder]         "autoClearOnSuccess": false,
+2025-12-04T01:34:58.071Z [PLUGIN-STDOUT] [Form Builder]         "clearOnOpen": false,
+2025-12-04T01:34:58.072Z [PLUGIN-STDOUT] [Form Builder]         "closeOnSuccess": true,
+2025-12-04T01:34:58.072Z [PLUGIN-STDOUT] [Form Builder]         "fields": [
+2025-12-04T01:34:58.073Z [PLUGIN-STDOUT] [Form Builder]           {
+2025-12-04T01:34:58.073Z [PLUGIN-STDOUT] [Form Builder]             "name": "doing",
+2025-12-04T01:34:58.074Z [PLUGIN-STDOUT] [Form Builder]             "label": "What are you doing?",
+2025-12-04T01:34:58.075Z [PLUGIN-STDOUT] [Form Builder]             "description": "Describe your activity",
+2025-12-04T01:34:58.075Z [PLUGIN-STDOUT] [Form Builder]             "type": "textarea",
+2025-12-04T01:34:58.076Z [PLUGIN-STDOUT] [Form Builder]             "required": true,
+2025-12-04T01:34:58.077Z [PLUGIN-STDOUT] [Form Builder]             "sendAs": "body",
+2025-12-04T01:34:58.077Z [PLUGIN-STDOUT] [Form Builder]             "placeholder": "",
+2025-12-04T01:34:58.078Z [PLUGIN-STDOUT] [Form Builder]             "options": []
+2025-12-04T01:34:58.079Z [PLUGIN-STDOUT] [Form Builder]           }
+2025-12-04T01:34:58.079Z [PLUGIN-STDOUT] [Form Builder]         ],
+2025-12-04T01:34:58.080Z [PLUGIN-STDOUT] [Form Builder]         "headers": [],
+2025-12-04T01:34:58.081Z [PLUGIN-STDOUT] [Form Builder]         "auth": {
+2025-12-04T01:34:58.081Z [PLUGIN-STDOUT] [Form Builder]           "type": "none",
+2025-12-04T01:34:58.082Z [PLUGIN-STDOUT] [Form Builder]           "oauth": {
+2025-12-04T01:34:58.082Z [PLUGIN-STDOUT] [Form Builder]             "authorizationUrl": "",
+2025-12-04T01:34:58.083Z [PLUGIN-STDOUT] [Form Builder]             "tokenUrl": "",
+2025-12-04T01:34:58.084Z [PLUGIN-STDOUT] [Form Builder]             "clientId": "",
+2025-12-04T01:34:58.084Z [PLUGIN-STDOUT] [Form Builder]             "clientSecret": "",
+2025-12-04T01:34:58.085Z [PLUGIN-STDOUT] [Form Builder]             "scope": "",
+2025-12-04T01:34:58.085Z [PLUGIN-STDOUT] [Form Builder]             "authPlacement": "header",
+2025-12-04T01:34:58.086Z [PLUGIN-STDOUT] [Form Builder]             "redirectUrl": "",
+2025-12-04T01:34:58.086Z [PLUGIN-STDOUT] [Form Builder]             "saveRefreshToken": false,
+2025-12-04T01:34:58.087Z [PLUGIN-STDOUT] [Form Builder]             "token": null
+2025-12-04T01:34:58.087Z [PLUGIN-STDOUT] [Form Builder]           },
+2025-12-04T01:34:58.088Z [PLUGIN-STDOUT] [Form Builder]           "clientCredentials": {
+2025-12-04T01:34:58.088Z [PLUGIN-STDOUT] [Form Builder]             "tokenUrl": "",
+2025-12-04T01:34:58.089Z [PLUGIN-STDOUT] [Form Builder]             "clientId": "",
+2025-12-04T01:34:58.089Z [PLUGIN-STDOUT] [Form Builder]             "clientSecret": "",
+2025-12-04T01:34:58.090Z [PLUGIN-STDOUT] [Form Builder]             "scope": "",
+2025-12-04T01:34:58.091Z [PLUGIN-STDOUT] [Form Builder]             "authPlacement": "header",
+2025-12-04T01:34:58.091Z [PLUGIN-STDOUT] [Form Builder]             "token": null
+2025-12-04T01:34:58.092Z [PLUGIN-STDOUT] [Form Builder]           }
+2025-12-04T01:34:58.092Z [PLUGIN-STDOUT] [Form Builder]         }
+2025-12-04T01:34:58.093Z [PLUGIN-STDOUT] [Form Builder]       }
+2025-12-04T01:34:58.094Z [PLUGIN-STDOUT] [Form Builder]     },
+2025-12-04T01:34:58.094Z [PLUGIN-STDOUT] [Form Builder]     "coordinates": {
+2025-12-04T01:34:58.095Z [PLUGIN-STDOUT] [Form Builder]       "column": 3,
+2025-12-04T01:34:58.095Z [PLUGIN-STDOUT] [Form Builder]       "row": 0
+2025-12-04T01:34:58.096Z [PLUGIN-STDOUT] [Form Builder]     },
+2025-12-04T01:34:58.096Z [PLUGIN-STDOUT] [Form Builder]     "isInMultiAction": false
+2025-12-04T01:34:58.097Z [PLUGIN-STDOUT] [Form Builder]   }
+2025-12-04T01:34:58.098Z [PLUGIN-STDOUT] [Form Builder] }
+2025-12-04T01:34:58.098Z [PLUGIN-STDOUT] [Form Builder] [INFO] Received event: didReceiveSettings for action: com.leandro-menezes.formbuilder.action context: 2b7d1880-3d10-46b5-b051-bde5a950cdb5
+2025-12-04T01:34:58.099Z [PLUGIN-STDOUT] [Form Builder] [INFO] Settings updated for context: 2b7d1880-3d10-46b5-b051-bde5a950cdb5 device: stream-dork-host settings: {
+2025-12-04T01:34:58.099Z [PLUGIN-STDOUT] [Form Builder]   formBuilderConfig: {
+2025-12-04T01:34:58.100Z [PLUGIN-STDOUT] [Form Builder]     title: 'What are you doing?',
+2025-12-04T01:34:58.100Z [PLUGIN-STDOUT] [Form Builder]     url: 'https://n8n.fusionflowsoftware.com/webhook/leandro/what-are-you-doing',
+2025-12-04T01:34:58.101Z [PLUGIN-STDOUT] [Form Builder]     method: 'POST',
+2025-12-04T01:34:58.102Z [PLUGIN-STDOUT] [Form Builder]     outputType: 'status',
+2025-12-04T01:34:58.102Z [PLUGIN-STDOUT] [Form Builder]     submitButtonText: 'Submit',
+2025-12-04T01:34:58.103Z [PLUGIN-STDOUT] [Form Builder]     autoShowInterval: 10,
+2025-12-04T01:34:58.103Z [PLUGIN-STDOUT] [Form Builder]     autoClearOnSuccess: false,
+2025-12-04T01:34:58.104Z [PLUGIN-STDOUT] [Form Builder]     clearOnOpen: false,
+2025-12-04T01:34:58.105Z [PLUGIN-STDOUT] [Form Builder]     closeOnSuccess: true,
+2025-12-04T01:34:58.105Z [PLUGIN-STDOUT] [Form Builder]     fields: [ [Object] ],
+2025-12-04T01:34:58.106Z [PLUGIN-STDOUT] [Form Builder]     headers: [],
+2025-12-04T01:34:58.106Z [PLUGIN-STDOUT] [Form Builder]     auth: { type: 'none', oauth: [Object], clientCredentials: [Object] }
+2025-12-04T01:34:58.107Z [PLUGIN-STDOUT] [Form Builder]   }
+2025-12-04T01:34:58.107Z [PLUGIN-STDOUT] [Form Builder] }
+2025-12-04T01:34:58.108Z [PLUGIN-STDOUT] [Form Builder] [INFO] Clearing auto-show timer for context 2b7d1880-3d10-46b5-b051-bde5a950cdb5
+2025-12-04T01:34:58.109Z [PLUGIN-STDOUT] [Form Builder] [INFO] Stopping activity check interval
+2025-12-04T01:34:58.109Z [PLUGIN-STDOUT] [Form Builder] [INFO] Setting up auto-show timer for context 2b7d1880-3d10-46b5-b051-bde5a950cdb5: every 10 minutes
+2025-12-04T01:34:58.110Z [PLUGIN-STDOUT] [Form Builder] [INFO] Starting activity check interval
+2025-12-04T01:34:58.113Z [PLUGIN-STDOUT] [AI Chat] Connecting to Stream Deck WebSocket...
+2025-12-04T01:34:58.236Z [PLUGIN-STDOUT] [Form Builder] Debug window ready to show
+2025-12-04T01:34:58.246Z [PLUGIN-STDOUT] [Form Builder] Form window ready to show
+2025-12-04T01:34:58.315Z [PLUGIN-STDOUT] [AI Chat] Connected to Stream Deck successfully!
+2025-12-04T01:34:58.317Z [REGISTRATION] Registration request received for plugin UUID: plugin.com.leandro-menezes.aichat.sdPlugin
+2025-12-04T01:34:58.318Z [REGISTRATION] Registering plugin: AI Chat (UUID: plugin.com.leandro-menezes.aichat.sdPlugin, Version: 1.0.0)
+2025-12-04T01:34:58.318Z [REGISTRATION] Plugin successfully registered: AI Chat (UUID: plugin.com.leandro-menezes.aichat.sdPlugin)
+2025-12-04T01:34:58.322Z [REGISTRATION] Registration complete for plugin: plugin.com.leandro-menezes.aichat.sdPlugin
+2025-12-04T01:34:58.323Z [PLUGIN-STDOUT] [AI Chat] Plugin registration sent successfully
+2025-12-04T01:34:58.323Z [PLUGIN-STDOUT] [AI Chat] Received event: registration for action: undefined context: undefined
+2025-12-04T01:34:58.324Z [PLUGIN-STDOUT] [AI Chat] Received event: didReceiveGlobalSettings for action: undefined context: undefined
+2025-12-04T01:34:58.325Z [PLUGIN-STDOUT] [AI Chat] Received event: willAppear for action: com.leandro-menezes.aichat.action context: e84b6dc5-ffc5-4c22-85d6-e485271b5bee
+2025-12-04T01:34:58.325Z [PLUGIN-STDOUT] [AI Chat] Action appeared: e84b6dc5-ffc5-4c22-85d6-e485271b5bee with settings: {
+2025-12-04T01:34:58.326Z [PLUGIN-STDOUT] [AI Chat]   apiUrl: 'https://n8n.fusionflowsoftware.com/webhook/leandro/master-prompt',
+2025-12-04T01:34:58.326Z [PLUGIN-STDOUT] [AI Chat]   agentSid: 'master-prompt',
+2025-12-04T01:34:58.327Z [PLUGIN-STDOUT] [AI Chat]   agentId: 'master-prompt',
+2025-12-04T01:34:58.328Z [PLUGIN-STDOUT] [AI Chat]   chatTitle: 'Master Prompt',
+2025-12-04T01:34:58.328Z [PLUGIN-STDOUT] [AI Chat]   chatFontSize: 10,
+2025-12-04T01:34:58.329Z [PLUGIN-STDOUT] [AI Chat]   primaryColor: '#7c3aed',
+2025-12-04T01:34:58.329Z [PLUGIN-STDOUT] [AI Chat]   secondaryColor: '#a78bfa',
+2025-12-04T01:34:58.330Z [PLUGIN-STDOUT] [AI Chat]   accentColor: '#8b5cf6',
+2025-12-04T01:34:58.331Z [PLUGIN-STDOUT] [AI Chat]   enablePersistence: true,
+2025-12-04T01:34:58.331Z [PLUGIN-STDOUT] [AI Chat]   showDarkModeToggle: true,
+2025-12-04T01:34:58.332Z [PLUGIN-STDOUT] [AI Chat]   showEndChatButton: true,
+2025-12-04T01:34:58.333Z [PLUGIN-STDOUT] [AI Chat]   welcomeMessage: '',
+2025-12-04T01:34:58.333Z [PLUGIN-STDOUT] [AI Chat]   fetchForWelcomeMessage: true,
+2025-12-04T01:34:58.334Z [PLUGIN-STDOUT] [AI Chat]   allowNotifications: false,
+2025-12-04T01:34:58.335Z [PLUGIN-STDOUT] [AI Chat]   fetchForNotification: false,
+2025-12-04T01:34:58.335Z [PLUGIN-STDOUT] [AI Chat]   notificationPoolingFrequency: 15,
+2025-12-04T01:34:58.336Z [PLUGIN-STDOUT] [AI Chat]   feedbackEnabled: false,
+2025-12-04T01:34:58.337Z [PLUGIN-STDOUT] [AI Chat]   thumbsUpUrl: '',
+2025-12-04T01:34:58.338Z [PLUGIN-STDOUT] [AI Chat]   thumbsDownUrl: '',
+2025-12-04T01:34:58.338Z [PLUGIN-STDOUT] [AI Chat]   footnoteEnabled: false,
+2025-12-04T01:34:58.339Z [PLUGIN-STDOUT] [AI Chat]   agentMessageFootnote: '',
+2025-12-04T01:34:58.339Z [PLUGIN-STDOUT] [AI Chat]   footnoteTitle: '',
+2025-12-04T01:34:58.340Z [PLUGIN-STDOUT] [AI Chat]   footnoteCollapsible: true,
+2025-12-04T01:34:58.341Z [PLUGIN-STDOUT] [AI Chat]   footnoteShowTiming: 'after_response',
+2025-12-04T01:34:58.341Z [PLUGIN-STDOUT] [AI Chat]   streamingType: 'http',
+2025-12-04T01:34:58.342Z [PLUGIN-STDOUT] [AI Chat]   allowFileUpload: true,
+2025-12-04T01:34:58.342Z [PLUGIN-STDOUT] [AI Chat]   allowImagePaste: true,
+2025-12-04T01:34:58.343Z [PLUGIN-STDOUT] [AI Chat]   allowedFileTypes: 'pdf,docx,jpg,jpeg,png,gif,txt,md,json',
+2025-12-04T01:34:58.344Z [PLUGIN-STDOUT] [AI Chat]   maxFileSize: 20,
+2025-12-04T01:34:58.344Z [PLUGIN-STDOUT] [AI Chat]   maxFiles: 10
+2025-12-04T01:34:58.345Z [PLUGIN-STDOUT] [AI Chat] }
+2025-12-04T01:34:58.345Z [PLUGIN-STDOUT] [AI Chat] Received event: didReceiveSettings for action: com.leandro-menezes.aichat.action context: e84b6dc5-ffc5-4c22-85d6-e485271b5bee
+2025-12-04T01:34:58.347Z [PLUGIN-STDOUT] [AI Chat] Settings updated for context: e84b6dc5-ffc5-4c22-85d6-e485271b5bee settings: {
+2025-12-04T01:34:58.347Z [PLUGIN-STDOUT] [AI Chat]   apiUrl: 'https://n8n.fusionflowsoftware.com/webhook/leandro/master-prompt',
+2025-12-04T01:34:58.348Z [PLUGIN-STDOUT] [AI Chat]   agentSid: 'master-prompt',
+2025-12-04T01:34:58.348Z [PLUGIN-STDOUT] [AI Chat]   agentId: 'master-prompt',
+2025-12-04T01:34:58.349Z [PLUGIN-STDOUT] [AI Chat]   chatTitle: 'Master Prompt',
+2025-12-04T01:34:58.350Z [PLUGIN-STDOUT] [AI Chat]   chatFontSize: 10,
+2025-12-04T01:34:58.350Z [PLUGIN-STDOUT] [AI Chat]   primaryColor: '#7c3aed',
+2025-12-04T01:34:58.351Z [PLUGIN-STDOUT] [AI Chat]   secondaryColor: '#a78bfa',
+2025-12-04T01:34:58.351Z [PLUGIN-STDOUT] [AI Chat]   accentColor: '#8b5cf6',
+2025-12-04T01:34:58.352Z [PLUGIN-STDOUT] [AI Chat]   enablePersistence: true,
+2025-12-04T01:34:58.353Z [PLUGIN-STDOUT] [AI Chat]   showDarkModeToggle: true,
+2025-12-04T01:34:58.353Z [PLUGIN-STDOUT] [AI Chat]   showEndChatButton: true,
+2025-12-04T01:34:58.354Z [PLUGIN-STDOUT] [AI Chat]   welcomeMessage: '',
+2025-12-04T01:34:58.355Z [PLUGIN-STDOUT] [AI Chat]   fetchForWelcomeMessage: true,
+2025-12-04T01:34:58.355Z [PLUGIN-STDOUT] [AI Chat]   allowNotifications: false,
+2025-12-04T01:34:58.356Z [PLUGIN-STDOUT] [AI Chat]   fetchForNotification: false,
+2025-12-04T01:34:58.357Z [PLUGIN-STDOUT] [AI Chat]   notificationPoolingFrequency: 15,
+2025-12-04T01:34:58.357Z [PLUGIN-STDOUT] [AI Chat]   feedbackEnabled: false,
+2025-12-04T01:34:58.358Z [PLUGIN-STDOUT] [AI Chat]   thumbsUpUrl: '',
+2025-12-04T01:34:58.359Z [PLUGIN-STDOUT] [AI Chat]   thumbsDownUrl: '',
+2025-12-04T01:34:58.360Z [PLUGIN-STDOUT] [AI Chat]   footnoteEnabled: false,
+2025-12-04T01:34:58.360Z [PLUGIN-STDOUT] [AI Chat]   agentMessageFootnote: '',
+2025-12-04T01:34:58.361Z [PLUGIN-STDOUT] [AI Chat]   footnoteTitle: '',
+2025-12-04T01:34:58.362Z [PLUGIN-STDOUT] [AI Chat]   footnoteCollapsible: true,
+2025-12-04T01:34:58.362Z [PLUGIN-STDOUT] [AI Chat]   footnoteShowTiming: 'after_response',
+2025-12-04T01:34:58.363Z [PLUGIN-STDOUT] [AI Chat]   streamingType: 'http',
+2025-12-04T01:34:58.364Z [PLUGIN-STDOUT] [AI Chat]   allowFileUpload: true,
+2025-12-04T01:34:58.364Z [PLUGIN-STDOUT] [AI Chat]   allowImagePaste: true,
+2025-12-04T01:34:58.365Z [PLUGIN-STDOUT] [AI Chat]   allowedFileTypes: 'pdf,docx,jpg,jpeg,png,gif,txt,md,json',
+2025-12-04T01:34:58.366Z [PLUGIN-STDOUT] [AI Chat]   maxFileSize: 20,
+2025-12-04T01:34:58.366Z [PLUGIN-STDOUT] [AI Chat]   maxFiles: 10
+2025-12-04T01:34:58.367Z [PLUGIN-STDOUT] [AI Chat] }
+2025-12-04T01:34:58.370Z [PLUGIN-STDOUT] [Form Builder] Setup window ready to show
+2025-12-04T01:34:58.430Z [REGISTRATION] Registration request received for plugin UUID: plugin.com.leandromenezes.teamsavatar.sdPlugin
+2025-12-04T01:34:58.431Z [REGISTRATION] Registering plugin: Teams Avatar (UUID: plugin.com.leandromenezes.teamsavatar.sdPlugin, Version: 1.0.0)
+2025-12-04T01:34:58.432Z [REGISTRATION] Plugin successfully registered: Teams Avatar (UUID: plugin.com.leandromenezes.teamsavatar.sdPlugin)
+2025-12-04T01:34:58.442Z [REGISTRATION] Registration complete for plugin: plugin.com.leandromenezes.teamsavatar.sdPlugin
+2025-12-04T01:34:58.443Z [PLUGINS] getGlobalSettings (plugin.com.leandromenezes.teamsavatar.sdPlugin)
+2025-12-04T01:34:58.451Z [REGISTRATION] Registration request received for plugin UUID: plugin.com.pedrofuentes.ical.sdPlugin
+2025-12-04T01:34:58.451Z [REGISTRATION] Registering plugin: iCal (UUID: plugin.com.pedrofuentes.ical.sdPlugin, Version: 1.1.0)
+2025-12-04T01:34:58.452Z [REGISTRATION] Plugin successfully registered: iCal (UUID: plugin.com.pedrofuentes.ical.sdPlugin)
+2025-12-04T01:34:58.454Z [REGISTRATION] Registration complete for plugin: plugin.com.pedrofuentes.ical.sdPlugin
+2025-12-04T01:34:58.455Z [PLUGINS] getGlobalSettings (plugin.com.pedrofuentes.ical.sdPlugin)
+2025-12-04T01:34:58.457Z [PLUGINS] setGlobalSettings (plugin.com.pedrofuentes.ical.sdPlugin)
+2025-12-04T01:34:58.468Z [WINDOW] NotificationWindow shown
+2025-12-04T01:34:58.470Z [WINDOW] NotificationWindow shown
+2025-12-04T01:34:58.479Z [WINDOW] NotificationWindow shown
+2025-12-04T01:34:58.491Z [WINDOW] NotificationWindow shown
+2025-12-04T01:34:58.493Z [WINDOW] NotificationWindow shown
+2025-12-04T01:34:58.497Z [WINDOW] NotificationWindow shown
+2025-12-04T01:34:59.015Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:34:58 PM Cached avatar for user vinicius.silva@fusionflowsoftware.com
+2025-12-04T01:34:59.017Z [PLUGIN-LOG] Cached avatar for user vinicius.silva@fusionflowsoftware.com
+2025-12-04T01:34:59.018Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:34:59 PM Cached avatar for user otavio.anaga@fusionflowsoftware.com
+2025-12-04T01:34:59.019Z [PLUGIN-LOG] Cached avatar for user otavio.anaga@fusionflowsoftware.com
+2025-12-04T01:34:59.060Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:34:59 PM Cached avatar for user carlos.eduardo@fusionflowsoftware.com
+2025-12-04T01:34:59.062Z [PLUGIN-LOG] Cached avatar for user carlos.eduardo@fusionflowsoftware.com
+2025-12-04T01:34:59.134Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:34:59 PM Cached avatar for user diego.araujo@fusionflowsoftware.com
+2025-12-04T01:34:59.135Z [PLUGIN-LOG] Cached avatar for user diego.araujo@fusionflowsoftware.com
+2025-12-04T01:34:59.303Z [WINDOW] NotificationWindow shown
+2025-12-04T01:34:59.379Z [WINDOW] NotificationWindow shown
+2025-12-04T01:34:59.419Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:34:59 PM Cached new avatar for user 19:429db516db7447e882fba4b48365f3ac@thread.v2
+2025-12-04T01:34:59.421Z [PLUGIN-LOG] Cached new avatar for user 19:429db516db7447e882fba4b48365f3ac@thread.v2
+2025-12-04T01:34:59.423Z [WINDOW] NotificationWindow shown
+2025-12-04T01:34:59.425Z [WINDOW] NotificationWindow shown
+2025-12-04T01:34:59.427Z [PLUGIN-LOG] Cached avatar for user vinicius.silva@fusionflowsoftware.com
+2025-12-04T01:34:59.427Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:34:59 PM Cached avatar for user vinicius.silva@fusionflowsoftware.com
+2025-12-04T01:34:59.447Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:34:59 PM Cached avatar for user otavio.anaga@fusionflowsoftware.com
+2025-12-04T01:34:59.448Z [PLUGIN-LOG] Cached avatar for user otavio.anaga@fusionflowsoftware.com
+2025-12-04T01:34:59.497Z [WINDOW] NotificationWindow shown
+2025-12-04T01:34:59.507Z [WINDOW] NotificationWindow shown
+2025-12-04T01:34:59.541Z [WINDOW] NotificationWindow shown
+2025-12-04T01:34:59.591Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:34:59 PM Cached avatar for user diego.araujo@fusionflowsoftware.com
+2025-12-04T01:34:59.593Z [PLUGIN-LOG] Cached avatar for user diego.araujo@fusionflowsoftware.com
+2025-12-04T01:34:59.594Z [PLUGIN-LOG] Cached avatar for user carlos.eduardo@fusionflowsoftware.com
+2025-12-04T01:34:59.595Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:34:59 PM Cached avatar for user carlos.eduardo@fusionflowsoftware.com
+2025-12-04T01:34:59.635Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:34:59 PM Using cached avatar for user 19:429db516db7447e882fba4b48365f3ac@thread.v2
+2025-12-04T01:34:59.637Z [PLUGIN-LOG] Using cached avatar for user 19:429db516db7447e882fba4b48365f3ac@thread.v2
+2025-12-04T01:34:59.639Z [WINDOW] NotificationWindow shown
+2025-12-04T01:34:59.743Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:34:59 PM Cached new avatar for user 19:meeting_ODFhZjk0MWUtOWZmOS00ZWY4LWE1NDAtMTQ4ZGFmYzk0M2U2@thread.v2
+2025-12-04T01:34:59.745Z [PLUGIN-LOG] Cached new avatar for user 19:meeting_ODFhZjk0MWUtOWZmOS00ZWY4LWE1NDAtMTQ4ZGFmYzk0M2U2@thread.v2
+2025-12-04T01:34:59.877Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:34:59 PM Cached avatar for user vinicius.silva@fusionflowsoftware.com
+2025-12-04T01:34:59.879Z [PLUGIN-LOG] Cached avatar for user vinicius.silva@fusionflowsoftware.com
+2025-12-04T01:34:59.927Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:34:59 PM Cached avatar for user otavio.anaga@fusionflowsoftware.com
+2025-12-04T01:34:59.928Z [PLUGIN-LOG] Cached avatar for user otavio.anaga@fusionflowsoftware.com
+2025-12-04T01:34:59.972Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:34:59 PM Cached avatar for user diego.araujo@fusionflowsoftware.com
+2025-12-04T01:34:59.974Z [PLUGIN-LOG] Cached avatar for user diego.araujo@fusionflowsoftware.com
+2025-12-04T01:34:59.987Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:34:59 PM Cached avatar for user carlos.eduardo@fusionflowsoftware.com
+2025-12-04T01:34:59.989Z [PLUGIN-LOG] Cached avatar for user carlos.eduardo@fusionflowsoftware.com
+2025-12-04T01:35:02.890Z [WINDOW] SetupWindow blurred
+2025-12-04T01:35:03.504Z [WINDOW] NotificationWindow shown
+2025-12-04T01:35:03.506Z [WINDOW] NotificationWindow shown
+2025-12-04T01:35:03.661Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:03 PM Cached new avatar for user 19:c871a10e-098c-4ea5-937d-bbfc8f4a7792_3a1d97f9-b56b-4295-9858-deeb3eefabed@unq.gbl.spaces
+2025-12-04T01:35:03.662Z [PLUGIN-LOG] Cached new avatar for user 19:c871a10e-098c-4ea5-937d-bbfc8f4a7792_3a1d97f9-b56b-4295-9858-deeb3eefabed@unq.gbl.spaces
+2025-12-04T01:35:04.377Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:04 PM Using cached avatar for user vinicius.silva@fusionflowsoftware.com
+2025-12-04T01:35:04.379Z [PLUGIN-LOG] Using cached avatar for user vinicius.silva@fusionflowsoftware.com
+2025-12-04T01:35:04.502Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:04 PM Using cached avatar for user carlos.eduardo@fusionflowsoftware.com
+2025-12-04T01:35:04.504Z [PLUGIN-LOG] Using cached avatar for user carlos.eduardo@fusionflowsoftware.com
+2025-12-04T01:35:04.521Z [PLUGIN-LOG] Using cached avatar for user otavio.anaga@fusionflowsoftware.com
+2025-12-04T01:35:04.522Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:04 PM Using cached avatar for user otavio.anaga@fusionflowsoftware.com
+2025-12-04T01:35:04.550Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:04 PM Using cached avatar for user diego.araujo@fusionflowsoftware.com
+2025-12-04T01:35:04.552Z [PLUGIN-LOG] Using cached avatar for user diego.araujo@fusionflowsoftware.com
+2025-12-04T01:35:04.801Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:04 PM Using cached avatar for user vinicius.silva@fusionflowsoftware.com
+2025-12-04T01:35:04.802Z [PLUGIN-LOG] Using cached avatar for user vinicius.silva@fusionflowsoftware.com
+2025-12-04T01:35:04.832Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:04 PM Using cached avatar for user otavio.anaga@fusionflowsoftware.com
+2025-12-04T01:35:04.834Z [PLUGIN-LOG] Using cached avatar for user otavio.anaga@fusionflowsoftware.com
+2025-12-04T01:35:04.942Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:04 PM Using cached avatar for user diego.araujo@fusionflowsoftware.com
+2025-12-04T01:35:04.944Z [PLUGIN-LOG] Using cached avatar for user diego.araujo@fusionflowsoftware.com
+2025-12-04T01:35:04.957Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:04 PM Using cached avatar for user carlos.eduardo@fusionflowsoftware.com
+2025-12-04T01:35:04.959Z [PLUGIN-LOG] Using cached avatar for user carlos.eduardo@fusionflowsoftware.com
+2025-12-04T01:35:05.114Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:05 PM Using cached avatar for user vinicius.silva@fusionflowsoftware.com
+2025-12-04T01:35:05.115Z [PLUGIN-LOG] Using cached avatar for user vinicius.silva@fusionflowsoftware.com
+2025-12-04T01:35:05.146Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:05 PM Using cached avatar for user otavio.anaga@fusionflowsoftware.com
+2025-12-04T01:35:05.148Z [PLUGIN-LOG] Using cached avatar for user otavio.anaga@fusionflowsoftware.com
+2025-12-04T01:35:05.178Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:05 PM Using cached avatar for user diego.araujo@fusionflowsoftware.com
+2025-12-04T01:35:05.180Z [PLUGIN-LOG] Using cached avatar for user diego.araujo@fusionflowsoftware.com
+2025-12-04T01:35:05.256Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:05 PM Using cached avatar for user carlos.eduardo@fusionflowsoftware.com
+2025-12-04T01:35:05.258Z [PLUGIN-LOG] Using cached avatar for user carlos.eduardo@fusionflowsoftware.com
+2025-12-04T01:35:08.502Z [WINDOW] NotificationWindow shown
+2025-12-04T01:35:08.504Z [WINDOW] NotificationWindow shown
+2025-12-04T01:35:08.645Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:08 PM Cached new avatar for user 19:10e8a3139d4a4e37a00738e1153ed884@thread.v2
+2025-12-04T01:35:08.647Z [PLUGIN-LOG] Cached new avatar for user 19:10e8a3139d4a4e37a00738e1153ed884@thread.v2
+2025-12-04T01:35:09.390Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:09 PM Using cached avatar for user vinicius.silva@fusionflowsoftware.com
+2025-12-04T01:35:09.392Z [PLUGIN-LOG] Using cached avatar for user vinicius.silva@fusionflowsoftware.com
+2025-12-04T01:35:09.499Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:09 PM Using cached avatar for user carlos.eduardo@fusionflowsoftware.com
+2025-12-04T01:35:09.501Z [PLUGIN-LOG] Using cached avatar for user carlos.eduardo@fusionflowsoftware.com
+2025-12-04T01:35:09.518Z [PLUGIN-LOG] Using cached avatar for user otavio.anaga@fusionflowsoftware.com
+2025-12-04T01:35:09.518Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:09 PM Using cached avatar for user otavio.anaga@fusionflowsoftware.com
+2025-12-04T01:35:09.547Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:09 PM Using cached avatar for user diego.araujo@fusionflowsoftware.com
+2025-12-04T01:35:09.548Z [PLUGIN-LOG] Using cached avatar for user diego.araujo@fusionflowsoftware.com
+2025-12-04T01:35:09.811Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:09 PM Using cached avatar for user vinicius.silva@fusionflowsoftware.com
+2025-12-04T01:35:09.813Z [PLUGIN-LOG] Using cached avatar for user vinicius.silva@fusionflowsoftware.com
+2025-12-04T01:35:09.843Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:09 PM Using cached avatar for user otavio.anaga@fusionflowsoftware.com
+2025-12-04T01:35:09.845Z [PLUGIN-LOG] Using cached avatar for user otavio.anaga@fusionflowsoftware.com
+2025-12-04T01:35:09.952Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:09 PM Using cached avatar for user diego.araujo@fusionflowsoftware.com
+2025-12-04T01:35:09.954Z [PLUGIN-LOG] Using cached avatar for user diego.araujo@fusionflowsoftware.com
+2025-12-04T01:35:09.955Z [PLUGIN-LOG] Using cached avatar for user carlos.eduardo@fusionflowsoftware.com
+2025-12-04T01:35:09.956Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:09 PM Using cached avatar for user carlos.eduardo@fusionflowsoftware.com
+2025-12-04T01:35:10.112Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:10 PM Using cached avatar for user vinicius.silva@fusionflowsoftware.com
+2025-12-04T01:35:10.114Z [PLUGIN-LOG] Using cached avatar for user vinicius.silva@fusionflowsoftware.com
+2025-12-04T01:35:10.142Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:10 PM Using cached avatar for user otavio.anaga@fusionflowsoftware.com
+2025-12-04T01:35:10.144Z [PLUGIN-LOG] Using cached avatar for user otavio.anaga@fusionflowsoftware.com
+2025-12-04T01:35:10.173Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:10 PM Using cached avatar for user diego.araujo@fusionflowsoftware.com
+2025-12-04T01:35:10.175Z [PLUGIN-LOG] Using cached avatar for user diego.araujo@fusionflowsoftware.com
+2025-12-04T01:35:10.267Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:10 PM Using cached avatar for user carlos.eduardo@fusionflowsoftware.com
+2025-12-04T01:35:10.268Z [PLUGIN-LOG] Using cached avatar for user carlos.eduardo@fusionflowsoftware.com
+2025-12-04T01:35:13.501Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:13 PM Using cached avatar for user 19:429db516db7447e882fba4b48365f3ac@thread.v2
+2025-12-04T01:35:13.503Z [PLUGIN-LOG] Using cached avatar for user 19:429db516db7447e882fba4b48365f3ac@thread.v2
+2025-12-04T01:35:13.505Z [WINDOW] NotificationWindow shown
+2025-12-04T01:35:13.506Z [WINDOW] NotificationWindow shown
+2025-12-04T01:35:14.379Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:14 PM Using cached avatar for user vinicius.silva@fusionflowsoftware.com
+2025-12-04T01:35:14.381Z [PLUGIN-LOG] Using cached avatar for user vinicius.silva@fusionflowsoftware.com
+2025-12-04T01:35:14.500Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:14 PM Using cached avatar for user carlos.eduardo@fusionflowsoftware.com
+2025-12-04T01:35:14.502Z [PLUGIN-LOG] Using cached avatar for user carlos.eduardo@fusionflowsoftware.com
+2025-12-04T01:35:14.521Z [PLUGIN-LOG] Using cached avatar for user otavio.anaga@fusionflowsoftware.com
+2025-12-04T01:35:14.522Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:14 PM Using cached avatar for user otavio.anaga@fusionflowsoftware.com
+2025-12-04T01:35:14.549Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:14 PM Using cached avatar for user diego.araujo@fusionflowsoftware.com
+2025-12-04T01:35:14.551Z [PLUGIN-LOG] Using cached avatar for user diego.araujo@fusionflowsoftware.com
+2025-12-04T01:35:14.816Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:14 PM Using cached avatar for user vinicius.silva@fusionflowsoftware.com
+2025-12-04T01:35:14.818Z [PLUGIN-LOG] Using cached avatar for user vinicius.silva@fusionflowsoftware.com
+2025-12-04T01:35:14.834Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:14 PM Using cached avatar for user otavio.anaga@fusionflowsoftware.com
+2025-12-04T01:35:14.836Z [PLUGIN-LOG] Using cached avatar for user otavio.anaga@fusionflowsoftware.com
+2025-12-04T01:35:14.959Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:14 PM Using cached avatar for user diego.araujo@fusionflowsoftware.com
+2025-12-04T01:35:14.961Z [PLUGIN-LOG] Using cached avatar for user diego.araujo@fusionflowsoftware.com
+2025-12-04T01:35:14.962Z [PLUGIN-LOG] Using cached avatar for user carlos.eduardo@fusionflowsoftware.com
+2025-12-04T01:35:14.963Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:14 PM Using cached avatar for user carlos.eduardo@fusionflowsoftware.com
+2025-12-04T01:35:15.103Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:15 PM Using cached avatar for user vinicius.silva@fusionflowsoftware.com
+2025-12-04T01:35:15.105Z [PLUGIN-LOG] Using cached avatar for user vinicius.silva@fusionflowsoftware.com
+2025-12-04T01:35:15.141Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:15 PM Using cached avatar for user otavio.anaga@fusionflowsoftware.com
+2025-12-04T01:35:15.143Z [PLUGIN-LOG] Using cached avatar for user otavio.anaga@fusionflowsoftware.com
+2025-12-04T01:35:15.173Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:15 PM Using cached avatar for user diego.araujo@fusionflowsoftware.com
+2025-12-04T01:35:15.176Z [PLUGIN-LOG] Using cached avatar for user diego.araujo@fusionflowsoftware.com
+2025-12-04T01:35:15.266Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:15 PM Using cached avatar for user carlos.eduardo@fusionflowsoftware.com
+2025-12-04T01:35:15.268Z [PLUGIN-LOG] Using cached avatar for user carlos.eduardo@fusionflowsoftware.com
+2025-12-04T01:35:18.503Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:18 PM Using cached avatar for user 19:meeting_ODFhZjk0MWUtOWZmOS00ZWY4LWE1NDAtMTQ4ZGFmYzk0M2U2@thread.v2
+2025-12-04T01:35:18.505Z [PLUGIN-LOG] Using cached avatar for user 19:meeting_ODFhZjk0MWUtOWZmOS00ZWY4LWE1NDAtMTQ4ZGFmYzk0M2U2@thread.v2
+2025-12-04T01:35:18.507Z [WINDOW] NotificationWindow shown
+2025-12-04T01:35:18.509Z [WINDOW] NotificationWindow shown
+2025-12-04T01:35:19.380Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:19 PM Using cached avatar for user vinicius.silva@fusionflowsoftware.com
+2025-12-04T01:35:19.382Z [PLUGIN-LOG] Using cached avatar for user vinicius.silva@fusionflowsoftware.com
+2025-12-04T01:35:19.507Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:19 PM Using cached avatar for user carlos.eduardo@fusionflowsoftware.com
+2025-12-04T01:35:19.512Z [PLUGIN-LOG] Using cached avatar for user carlos.eduardo@fusionflowsoftware.com
+2025-12-04T01:35:19.513Z [PLUGIN-LOG] Using cached avatar for user otavio.anaga@fusionflowsoftware.com
+2025-12-04T01:35:19.514Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:19 PM Using cached avatar for user otavio.anaga@fusionflowsoftware.com
+2025-12-04T01:35:19.553Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:19 PM Using cached avatar for user diego.araujo@fusionflowsoftware.com
+2025-12-04T01:35:19.555Z [PLUGIN-LOG] Using cached avatar for user diego.araujo@fusionflowsoftware.com
+2025-12-04T01:35:19.814Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:19 PM Using cached avatar for user vinicius.silva@fusionflowsoftware.com
+2025-12-04T01:35:19.816Z [PLUGIN-LOG] Using cached avatar for user vinicius.silva@fusionflowsoftware.com
+2025-12-04T01:35:19.832Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:19 PM Using cached avatar for user otavio.anaga@fusionflowsoftware.com
+2025-12-04T01:35:19.834Z [PLUGIN-LOG] Using cached avatar for user otavio.anaga@fusionflowsoftware.com
+2025-12-04T01:35:19.956Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:19 PM Using cached avatar for user diego.araujo@fusionflowsoftware.com
+2025-12-04T01:35:19.959Z [PLUGIN-LOG] Using cached avatar for user diego.araujo@fusionflowsoftware.com
+2025-12-04T01:35:19.964Z [PLUGIN-LOG] Using cached avatar for user carlos.eduardo@fusionflowsoftware.com
+2025-12-04T01:35:19.965Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:19 PM Using cached avatar for user carlos.eduardo@fusionflowsoftware.com
+2025-12-04T01:35:20.114Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:20 PM Using cached avatar for user vinicius.silva@fusionflowsoftware.com
+2025-12-04T01:35:20.116Z [PLUGIN-LOG] Using cached avatar for user vinicius.silva@fusionflowsoftware.com
+2025-12-04T01:35:20.130Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:20 PM Using cached avatar for user otavio.anaga@fusionflowsoftware.com
+2025-12-04T01:35:20.132Z [PLUGIN-LOG] Using cached avatar for user otavio.anaga@fusionflowsoftware.com
+2025-12-04T01:35:20.175Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:20 PM Using cached avatar for user diego.araujo@fusionflowsoftware.com
+2025-12-04T01:35:20.176Z [PLUGIN-LOG] Using cached avatar for user diego.araujo@fusionflowsoftware.com
+2025-12-04T01:35:20.265Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:20 PM Using cached avatar for user carlos.eduardo@fusionflowsoftware.com
+2025-12-04T01:35:20.270Z [PLUGIN-LOG] Using cached avatar for user carlos.eduardo@fusionflowsoftware.com
+2025-12-04T01:35:23.501Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:23 PM Using cached avatar for user 19:c871a10e-098c-4ea5-937d-bbfc8f4a7792_3a1d97f9-b56b-4295-9858-deeb3eefabed@unq.gbl.spaces
+2025-12-04T01:35:23.505Z [PLUGIN-LOG] Using cached avatar for user 19:c871a10e-098c-4ea5-937d-bbfc8f4a7792_3a1d97f9-b56b-4295-9858-deeb3eefabed@unq.gbl.spaces
+2025-12-04T01:35:23.506Z [WINDOW] NotificationWindow shown
+2025-12-04T01:35:23.508Z [WINDOW] NotificationWindow shown
+2025-12-04T01:35:24.376Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:24 PM Using cached avatar for user vinicius.silva@fusionflowsoftware.com
+2025-12-04T01:35:24.378Z [PLUGIN-LOG] Using cached avatar for user vinicius.silva@fusionflowsoftware.com
+2025-12-04T01:35:24.501Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:24 PM Using cached avatar for user carlos.eduardo@fusionflowsoftware.com
+2025-12-04T01:35:24.503Z [PLUGIN-LOG] Using cached avatar for user carlos.eduardo@fusionflowsoftware.com
+2025-12-04T01:35:24.524Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:24 PM Using cached avatar for user otavio.anaga@fusionflowsoftware.com
+2025-12-04T01:35:24.530Z [PLUGIN-LOG] Using cached avatar for user otavio.anaga@fusionflowsoftware.com
+2025-12-04T01:35:24.553Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:24 PM Using cached avatar for user diego.araujo@fusionflowsoftware.com
+2025-12-04T01:35:24.559Z [PLUGIN-LOG] Using cached avatar for user diego.araujo@fusionflowsoftware.com
+2025-12-04T01:35:24.815Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:24 PM Using cached avatar for user vinicius.silva@fusionflowsoftware.com
+2025-12-04T01:35:24.817Z [PLUGIN-LOG] Using cached avatar for user vinicius.silva@fusionflowsoftware.com
+2025-12-04T01:35:24.831Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:24 PM Using cached avatar for user otavio.anaga@fusionflowsoftware.com
+2025-12-04T01:35:24.836Z [PLUGIN-LOG] Using cached avatar for user otavio.anaga@fusionflowsoftware.com
+2025-12-04T01:35:24.959Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:24 PM Using cached avatar for user diego.araujo@fusionflowsoftware.com
+2025-12-04T01:35:24.961Z [PLUGIN-LOG] Using cached avatar for user diego.araujo@fusionflowsoftware.com
+2025-12-04T01:35:24.962Z [PLUGIN-LOG] Using cached avatar for user carlos.eduardo@fusionflowsoftware.com
+2025-12-04T01:35:24.963Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:24 PM Using cached avatar for user carlos.eduardo@fusionflowsoftware.com
+2025-12-04T01:35:25.108Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:25 PM Using cached avatar for user vinicius.silva@fusionflowsoftware.com
+2025-12-04T01:35:25.111Z [PLUGIN-LOG] Using cached avatar for user vinicius.silva@fusionflowsoftware.com
+2025-12-04T01:35:25.134Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:25 PM Using cached avatar for user otavio.anaga@fusionflowsoftware.com
+2025-12-04T01:35:25.136Z [PLUGIN-LOG] Using cached avatar for user otavio.anaga@fusionflowsoftware.com
+2025-12-04T01:35:25.177Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:25 PM Using cached avatar for user diego.araujo@fusionflowsoftware.com
+2025-12-04T01:35:25.179Z [PLUGIN-LOG] Using cached avatar for user diego.araujo@fusionflowsoftware.com
+2025-12-04T01:35:25.270Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:25 PM Using cached avatar for user carlos.eduardo@fusionflowsoftware.com
+2025-12-04T01:35:25.272Z [PLUGIN-LOG] Using cached avatar for user carlos.eduardo@fusionflowsoftware.com
+2025-12-04T01:35:28.501Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:28 PM Using cached avatar for user 19:10e8a3139d4a4e37a00738e1153ed884@thread.v2
+2025-12-04T01:35:28.503Z [PLUGIN-LOG] Using cached avatar for user 19:10e8a3139d4a4e37a00738e1153ed884@thread.v2
+2025-12-04T01:35:28.505Z [WINDOW] NotificationWindow shown
+2025-12-04T01:35:28.506Z [WINDOW] NotificationWindow shown
+2025-12-04T01:35:28.621Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:28 PM Using cached avatar for user 19:c871a10e-098c-4ea5-937d-bbfc8f4a7792_3a1d97f9-b56b-4295-9858-deeb3eefabed@unq.gbl.spaces
+2025-12-04T01:35:28.623Z [PLUGIN-LOG] Using cached avatar for user 19:c871a10e-098c-4ea5-937d-bbfc8f4a7792_3a1d97f9-b56b-4295-9858-deeb3eefabed@unq.gbl.spaces
+2025-12-04T01:35:28.624Z [PLUGIN-LOG] Using cached avatar for user 19:10e8a3139d4a4e37a00738e1153ed884@thread.v2
+2025-12-04T01:35:28.626Z [WINDOW] NotificationWindow shown
+2025-12-04T01:35:28.627Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:28 PM Using cached avatar for user 19:10e8a3139d4a4e37a00738e1153ed884@thread.v2
+2025-12-04T01:35:29.379Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:29 PM Using cached avatar for user vinicius.silva@fusionflowsoftware.com
+2025-12-04T01:35:29.381Z [PLUGIN-LOG] Using cached avatar for user vinicius.silva@fusionflowsoftware.com
+2025-12-04T01:35:29.502Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:29 PM Using cached avatar for user carlos.eduardo@fusionflowsoftware.com
+2025-12-04T01:35:29.504Z [PLUGIN-LOG] Using cached avatar for user carlos.eduardo@fusionflowsoftware.com
+2025-12-04T01:35:29.518Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:29 PM Using cached avatar for user otavio.anaga@fusionflowsoftware.com
+2025-12-04T01:35:29.520Z [PLUGIN-LOG] Using cached avatar for user otavio.anaga@fusionflowsoftware.com
+2025-12-04T01:35:29.549Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:29 PM Using cached avatar for user diego.araujo@fusionflowsoftware.com
+2025-12-04T01:35:29.551Z [PLUGIN-LOG] Using cached avatar for user diego.araujo@fusionflowsoftware.com
+2025-12-04T01:35:29.801Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:29 PM Using cached avatar for user vinicius.silva@fusionflowsoftware.com
+2025-12-04T01:35:29.803Z [PLUGIN-LOG] Using cached avatar for user vinicius.silva@fusionflowsoftware.com
+2025-12-04T01:35:29.837Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:29 PM Using cached avatar for user otavio.anaga@fusionflowsoftware.com
+2025-12-04T01:35:29.843Z [PLUGIN-LOG] Using cached avatar for user otavio.anaga@fusionflowsoftware.com
+2025-12-04T01:35:29.957Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:29 PM Using cached avatar for user diego.araujo@fusionflowsoftware.com
+2025-12-04T01:35:29.959Z [PLUGIN-LOG] Using cached avatar for user diego.araujo@fusionflowsoftware.com
+2025-12-04T01:35:29.960Z [PLUGIN-LOG] Using cached avatar for user carlos.eduardo@fusionflowsoftware.com
+2025-12-04T01:35:29.961Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:29 PM Using cached avatar for user carlos.eduardo@fusionflowsoftware.com
+2025-12-04T01:35:30.105Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:30 PM Using cached avatar for user vinicius.silva@fusionflowsoftware.com
+2025-12-04T01:35:30.107Z [PLUGIN-LOG] Using cached avatar for user vinicius.silva@fusionflowsoftware.com
+2025-12-04T01:35:30.131Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:30 PM Using cached avatar for user otavio.anaga@fusionflowsoftware.com
+2025-12-04T01:35:30.133Z [PLUGIN-LOG] Using cached avatar for user otavio.anaga@fusionflowsoftware.com
+2025-12-04T01:35:30.177Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:30 PM Using cached avatar for user diego.araujo@fusionflowsoftware.com
+2025-12-04T01:35:30.179Z [PLUGIN-LOG] Using cached avatar for user diego.araujo@fusionflowsoftware.com
+2025-12-04T01:35:30.256Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:30 PM Using cached avatar for user carlos.eduardo@fusionflowsoftware.com
+2025-12-04T01:35:30.258Z [PLUGIN-LOG] Using cached avatar for user carlos.eduardo@fusionflowsoftware.com
+2025-12-04T01:35:33.504Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:33 PM Using cached avatar for user 19:429db516db7447e882fba4b48365f3ac@thread.v2
+2025-12-04T01:35:33.505Z [PLUGIN-LOG] Using cached avatar for user 19:429db516db7447e882fba4b48365f3ac@thread.v2
+2025-12-04T01:35:33.507Z [WINDOW] NotificationWindow shown
+2025-12-04T01:35:33.509Z [WINDOW] NotificationWindow shown
+2025-12-04T01:35:34.376Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:34 PM Using cached avatar for user vinicius.silva@fusionflowsoftware.com
+2025-12-04T01:35:34.378Z [PLUGIN-LOG] Using cached avatar for user vinicius.silva@fusionflowsoftware.com
+2025-12-04T01:35:34.501Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:34 PM Using cached avatar for user carlos.eduardo@fusionflowsoftware.com
+2025-12-04T01:35:34.503Z [PLUGIN-LOG] Using cached avatar for user carlos.eduardo@fusionflowsoftware.com
+2025-12-04T01:35:34.519Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:34 PM Using cached avatar for user otavio.anaga@fusionflowsoftware.com
+2025-12-04T01:35:34.521Z [PLUGIN-LOG] Using cached avatar for user otavio.anaga@fusionflowsoftware.com
+2025-12-04T01:35:34.548Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:34 PM Using cached avatar for user diego.araujo@fusionflowsoftware.com
+2025-12-04T01:35:34.553Z [PLUGIN-LOG] Using cached avatar for user diego.araujo@fusionflowsoftware.com
+2025-12-04T01:35:34.806Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:34 PM Using cached avatar for user vinicius.silva@fusionflowsoftware.com
+2025-12-04T01:35:34.808Z [PLUGIN-LOG] Using cached avatar for user vinicius.silva@fusionflowsoftware.com
+2025-12-04T01:35:34.845Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:34 PM Using cached avatar for user otavio.anaga@fusionflowsoftware.com
+2025-12-04T01:35:34.847Z [PLUGIN-LOG] Using cached avatar for user otavio.anaga@fusionflowsoftware.com
+2025-12-04T01:35:34.944Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:34 PM Using cached avatar for user diego.araujo@fusionflowsoftware.com
+2025-12-04T01:35:34.946Z [PLUGIN-LOG] Using cached avatar for user diego.araujo@fusionflowsoftware.com
+2025-12-04T01:35:34.953Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:34 PM Using cached avatar for user carlos.eduardo@fusionflowsoftware.com
+2025-12-04T01:35:34.954Z [PLUGIN-LOG] Using cached avatar for user carlos.eduardo@fusionflowsoftware.com
+2025-12-04T01:35:35.110Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:35 PM Using cached avatar for user vinicius.silva@fusionflowsoftware.com
+2025-12-04T01:35:35.111Z [PLUGIN-LOG] Using cached avatar for user vinicius.silva@fusionflowsoftware.com
+2025-12-04T01:35:35.141Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:35 PM Using cached avatar for user otavio.anaga@fusionflowsoftware.com
+2025-12-04T01:35:35.143Z [PLUGIN-LOG] Using cached avatar for user otavio.anaga@fusionflowsoftware.com
+2025-12-04T01:35:35.172Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:35 PM Using cached avatar for user diego.araujo@fusionflowsoftware.com
+2025-12-04T01:35:35.174Z [PLUGIN-LOG] Using cached avatar for user diego.araujo@fusionflowsoftware.com
+2025-12-04T01:35:35.264Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:35 PM Using cached avatar for user carlos.eduardo@fusionflowsoftware.com
+2025-12-04T01:35:35.267Z [PLUGIN-LOG] Using cached avatar for user carlos.eduardo@fusionflowsoftware.com
+2025-12-04T01:35:38.508Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:38 PM Using cached avatar for user 19:meeting_ODFhZjk0MWUtOWZmOS00ZWY4LWE1NDAtMTQ4ZGFmYzk0M2U2@thread.v2
+2025-12-04T01:35:38.509Z [PLUGIN-LOG] Using cached avatar for user 19:meeting_ODFhZjk0MWUtOWZmOS00ZWY4LWE1NDAtMTQ4ZGFmYzk0M2U2@thread.v2
+2025-12-04T01:35:38.511Z [WINDOW] NotificationWindow shown
+2025-12-04T01:35:38.513Z [WINDOW] NotificationWindow shown
+2025-12-04T01:35:39.388Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:39 PM Using cached avatar for user vinicius.silva@fusionflowsoftware.com
+2025-12-04T01:35:39.391Z [PLUGIN-LOG] Using cached avatar for user vinicius.silva@fusionflowsoftware.com
+2025-12-04T01:35:39.504Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:39 PM Using cached avatar for user carlos.eduardo@fusionflowsoftware.com
+2025-12-04T01:35:39.507Z [PLUGIN-LOG] Using cached avatar for user carlos.eduardo@fusionflowsoftware.com
+2025-12-04T01:35:39.508Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:39 PM Using cached avatar for user otavio.anaga@fusionflowsoftware.com
+2025-12-04T01:35:39.510Z [PLUGIN-LOG] Using cached avatar for user otavio.anaga@fusionflowsoftware.com
+2025-12-04T01:35:39.553Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:39 PM Using cached avatar for user diego.araujo@fusionflowsoftware.com
+2025-12-04T01:35:39.557Z [PLUGIN-LOG] Using cached avatar for user diego.araujo@fusionflowsoftware.com
+2025-12-04T01:35:39.813Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:39 PM Using cached avatar for user vinicius.silva@fusionflowsoftware.com
+2025-12-04T01:35:39.815Z [PLUGIN-LOG] Using cached avatar for user vinicius.silva@fusionflowsoftware.com
+2025-12-04T01:35:39.844Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:39 PM Using cached avatar for user otavio.anaga@fusionflowsoftware.com
+2025-12-04T01:35:39.846Z [PLUGIN-LOG] Using cached avatar for user otavio.anaga@fusionflowsoftware.com
+2025-12-04T01:35:39.954Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:39 PM Using cached avatar for user diego.araujo@fusionflowsoftware.com
+2025-12-04T01:35:39.956Z [PLUGIN-LOG] Using cached avatar for user diego.araujo@fusionflowsoftware.com
+2025-12-04T01:35:39.957Z [PLUGIN-LOG] Using cached avatar for user carlos.eduardo@fusionflowsoftware.com
+2025-12-04T01:35:39.958Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:39 PM Using cached avatar for user carlos.eduardo@fusionflowsoftware.com
+2025-12-04T01:35:40.102Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:40 PM Using cached avatar for user vinicius.silva@fusionflowsoftware.com
+2025-12-04T01:35:40.103Z [PLUGIN-LOG] Using cached avatar for user vinicius.silva@fusionflowsoftware.com
+2025-12-04T01:35:40.141Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:40 PM Using cached avatar for user otavio.anaga@fusionflowsoftware.com
+2025-12-04T01:35:40.143Z [PLUGIN-LOG] Using cached avatar for user otavio.anaga@fusionflowsoftware.com
+2025-12-04T01:35:40.172Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:40 PM Using cached avatar for user diego.araujo@fusionflowsoftware.com
+2025-12-04T01:35:40.174Z [PLUGIN-LOG] Using cached avatar for user diego.araujo@fusionflowsoftware.com
+2025-12-04T01:35:40.259Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:40 PM Using cached avatar for user carlos.eduardo@fusionflowsoftware.com
+2025-12-04T01:35:40.261Z [PLUGIN-LOG] Using cached avatar for user carlos.eduardo@fusionflowsoftware.com
+2025-12-04T01:35:43.501Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:43 PM Using cached avatar for user 19:c871a10e-098c-4ea5-937d-bbfc8f4a7792_3a1d97f9-b56b-4295-9858-deeb3eefabed@unq.gbl.spaces
+2025-12-04T01:35:43.503Z [PLUGIN-LOG] Using cached avatar for user 19:c871a10e-098c-4ea5-937d-bbfc8f4a7792_3a1d97f9-b56b-4295-9858-deeb3eefabed@unq.gbl.spaces
+2025-12-04T01:35:43.505Z [WINDOW] NotificationWindow shown
+2025-12-04T01:35:43.506Z [WINDOW] NotificationWindow shown
+2025-12-04T01:35:44.377Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:44 PM Using cached avatar for user vinicius.silva@fusionflowsoftware.com
+2025-12-04T01:35:44.379Z [PLUGIN-LOG] Using cached avatar for user vinicius.silva@fusionflowsoftware.com
+2025-12-04T01:35:44.502Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:44 PM Using cached avatar for user carlos.eduardo@fusionflowsoftware.com
+2025-12-04T01:35:44.504Z [PLUGIN-LOG] Using cached avatar for user carlos.eduardo@fusionflowsoftware.com
+2025-12-04T01:35:44.521Z [PLUGIN-LOG] Using cached avatar for user otavio.anaga@fusionflowsoftware.com
+2025-12-04T01:35:44.522Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:44 PM Using cached avatar for user otavio.anaga@fusionflowsoftware.com
+2025-12-04T01:35:44.549Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:44 PM Using cached avatar for user diego.araujo@fusionflowsoftware.com
+2025-12-04T01:35:44.550Z [PLUGIN-LOG] Using cached avatar for user diego.araujo@fusionflowsoftware.com
+2025-12-04T01:35:44.813Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:44 PM Using cached avatar for user vinicius.silva@fusionflowsoftware.com
+2025-12-04T01:35:44.815Z [PLUGIN-LOG] Using cached avatar for user vinicius.silva@fusionflowsoftware.com
+2025-12-04T01:35:44.845Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:44 PM Using cached avatar for user otavio.anaga@fusionflowsoftware.com
+2025-12-04T01:35:44.847Z [PLUGIN-LOG] Using cached avatar for user otavio.anaga@fusionflowsoftware.com
+2025-12-04T01:35:44.947Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:44 PM Using cached avatar for user diego.araujo@fusionflowsoftware.com
+2025-12-04T01:35:44.949Z [PLUGIN-LOG] Using cached avatar for user diego.araujo@fusionflowsoftware.com
+2025-12-04T01:35:44.950Z [PLUGIN-LOG] Using cached avatar for user carlos.eduardo@fusionflowsoftware.com
+2025-12-04T01:35:44.951Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:44 PM Using cached avatar for user carlos.eduardo@fusionflowsoftware.com
+2025-12-04T01:35:45.106Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:45 PM Using cached avatar for user vinicius.silva@fusionflowsoftware.com
+2025-12-04T01:35:45.108Z [PLUGIN-LOG] Using cached avatar for user vinicius.silva@fusionflowsoftware.com
+2025-12-04T01:35:45.139Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:45 PM Using cached avatar for user otavio.anaga@fusionflowsoftware.com
+2025-12-04T01:35:45.141Z [PLUGIN-LOG] Using cached avatar for user otavio.anaga@fusionflowsoftware.com
+2025-12-04T01:35:45.171Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:45 PM Using cached avatar for user diego.araujo@fusionflowsoftware.com
+2025-12-04T01:35:45.173Z [PLUGIN-LOG] Using cached avatar for user diego.araujo@fusionflowsoftware.com
+2025-12-04T01:35:45.265Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:45 PM Using cached avatar for user carlos.eduardo@fusionflowsoftware.com
+2025-12-04T01:35:45.267Z [PLUGIN-LOG] Using cached avatar for user carlos.eduardo@fusionflowsoftware.com
+2025-12-04T01:35:48.499Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:48 PM Using cached avatar for user 19:10e8a3139d4a4e37a00738e1153ed884@thread.v2
+2025-12-04T01:35:48.501Z [PLUGIN-LOG] Using cached avatar for user 19:10e8a3139d4a4e37a00738e1153ed884@thread.v2
+2025-12-04T01:35:48.502Z [WINDOW] NotificationWindow shown
+2025-12-04T01:35:48.504Z [WINDOW] NotificationWindow shown
+2025-12-04T01:35:49.378Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:49 PM Using cached avatar for user vinicius.silva@fusionflowsoftware.com
+2025-12-04T01:35:49.380Z [PLUGIN-LOG] Using cached avatar for user vinicius.silva@fusionflowsoftware.com
+2025-12-04T01:35:49.506Z [PLUGIN-LOG] Using cached avatar for user carlos.eduardo@fusionflowsoftware.com
+2025-12-04T01:35:49.507Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:49 PM Using cached avatar for user carlos.eduardo@fusionflowsoftware.com
+2025-12-04T01:35:49.523Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:49 PM Using cached avatar for user otavio.anaga@fusionflowsoftware.com
+2025-12-04T01:35:49.533Z [PLUGIN-LOG] Using cached avatar for user otavio.anaga@fusionflowsoftware.com
+2025-12-04T01:35:49.550Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:49 PM Using cached avatar for user diego.araujo@fusionflowsoftware.com
+2025-12-04T01:35:49.552Z [PLUGIN-LOG] Using cached avatar for user diego.araujo@fusionflowsoftware.com
+2025-12-04T01:35:49.801Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:49 PM Using cached avatar for user vinicius.silva@fusionflowsoftware.com
+2025-12-04T01:35:49.803Z [PLUGIN-LOG] Using cached avatar for user vinicius.silva@fusionflowsoftware.com
+2025-12-04T01:35:49.831Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:49 PM Using cached avatar for user otavio.anaga@fusionflowsoftware.com
+2025-12-04T01:35:49.833Z [PLUGIN-LOG] Using cached avatar for user otavio.anaga@fusionflowsoftware.com
+2025-12-04T01:35:49.956Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:49 PM Using cached avatar for user diego.araujo@fusionflowsoftware.com
+2025-12-04T01:35:49.958Z [PLUGIN-LOG] Using cached avatar for user diego.araujo@fusionflowsoftware.com
+2025-12-04T01:35:49.959Z [PLUGIN-LOG] Using cached avatar for user carlos.eduardo@fusionflowsoftware.com
+2025-12-04T01:35:49.960Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:49 PM Using cached avatar for user carlos.eduardo@fusionflowsoftware.com
+2025-12-04T01:35:50.115Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:50 PM Using cached avatar for user vinicius.silva@fusionflowsoftware.com
+2025-12-04T01:35:50.118Z [PLUGIN-LOG] Using cached avatar for user vinicius.silva@fusionflowsoftware.com
+2025-12-04T01:35:50.131Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:50 PM Using cached avatar for user otavio.anaga@fusionflowsoftware.com
+2025-12-04T01:35:50.133Z [PLUGIN-LOG] Using cached avatar for user otavio.anaga@fusionflowsoftware.com
+2025-12-04T01:35:50.179Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:50 PM Using cached avatar for user diego.araujo@fusionflowsoftware.com
+2025-12-04T01:35:50.182Z [PLUGIN-LOG] Using cached avatar for user diego.araujo@fusionflowsoftware.com
+2025-12-04T01:35:50.260Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:50 PM Using cached avatar for user carlos.eduardo@fusionflowsoftware.com
+2025-12-04T01:35:50.262Z [PLUGIN-LOG] Using cached avatar for user carlos.eduardo@fusionflowsoftware.com
+2025-12-04T01:35:53.501Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:53 PM Using cached avatar for user 19:429db516db7447e882fba4b48365f3ac@thread.v2
+2025-12-04T01:35:53.503Z [PLUGIN-LOG] Using cached avatar for user 19:429db516db7447e882fba4b48365f3ac@thread.v2
+2025-12-04T01:35:53.504Z [WINDOW] NotificationWindow shown
+2025-12-04T01:35:53.506Z [WINDOW] NotificationWindow shown
+2025-12-04T01:35:54.443Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:54 PM Using cached avatar for user vinicius.silva@fusionflowsoftware.com
+2025-12-04T01:35:54.445Z [PLUGIN-LOG] Using cached avatar for user vinicius.silva@fusionflowsoftware.com
+2025-12-04T01:35:54.507Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:54 PM Using cached avatar for user carlos.eduardo@fusionflowsoftware.com
+2025-12-04T01:35:54.509Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:54 PM Using cached avatar for user otavio.anaga@fusionflowsoftware.com
+2025-12-04T01:35:54.517Z [PLUGIN-LOG] Using cached avatar for user carlos.eduardo@fusionflowsoftware.com
+2025-12-04T01:35:54.519Z [PLUGIN-LOG] Using cached avatar for user otavio.anaga@fusionflowsoftware.com
+2025-12-04T01:35:54.540Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:54 PM Using cached avatar for user diego.araujo@fusionflowsoftware.com
+2025-12-04T01:35:54.548Z [PLUGIN-LOG] Using cached avatar for user diego.araujo@fusionflowsoftware.com
+2025-12-04T01:35:54.807Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:54 PM Using cached avatar for user vinicius.silva@fusionflowsoftware.com
+2025-12-04T01:35:54.809Z [PLUGIN-LOG] Using cached avatar for user vinicius.silva@fusionflowsoftware.com
+2025-12-04T01:35:54.857Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:54 PM Using cached avatar for user otavio.anaga@fusionflowsoftware.com
+2025-12-04T01:35:54.859Z [PLUGIN-LOG] Using cached avatar for user otavio.anaga@fusionflowsoftware.com
+2025-12-04T01:35:54.949Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:54 PM Using cached avatar for user diego.araujo@fusionflowsoftware.com
+2025-12-04T01:35:54.952Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:54 PM Using cached avatar for user carlos.eduardo@fusionflowsoftware.com
+2025-12-04T01:35:54.967Z [PLUGIN-LOG] Using cached avatar for user diego.araujo@fusionflowsoftware.com
+2025-12-04T01:35:54.968Z [PLUGIN-LOG] Using cached avatar for user carlos.eduardo@fusionflowsoftware.com
+2025-12-04T01:35:55.115Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:55 PM Using cached avatar for user vinicius.silva@fusionflowsoftware.com
+2025-12-04T01:35:55.117Z [PLUGIN-LOG] Using cached avatar for user vinicius.silva@fusionflowsoftware.com
+2025-12-04T01:35:55.168Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:55 PM Using cached avatar for user otavio.anaga@fusionflowsoftware.com
+2025-12-04T01:35:55.170Z [PLUGIN-LOG] Using cached avatar for user otavio.anaga@fusionflowsoftware.com
+2025-12-04T01:35:55.171Z [PLUGIN-LOG] Using cached avatar for user diego.araujo@fusionflowsoftware.com
+2025-12-04T01:35:55.172Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:55 PM Using cached avatar for user diego.araujo@fusionflowsoftware.com
+2025-12-04T01:35:55.270Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:55 PM Using cached avatar for user carlos.eduardo@fusionflowsoftware.com
+2025-12-04T01:35:55.272Z [PLUGIN-LOG] Using cached avatar for user carlos.eduardo@fusionflowsoftware.com
+2025-12-04T01:35:58.505Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:58 PM Using cached avatar for user 19:meeting_ODFhZjk0MWUtOWZmOS00ZWY4LWE1NDAtMTQ4ZGFmYzk0M2U2@thread.v2
+2025-12-04T01:35:58.507Z [PLUGIN-LOG] Using cached avatar for user 19:meeting_ODFhZjk0MWUtOWZmOS00ZWY4LWE1NDAtMTQ4ZGFmYzk0M2U2@thread.v2
+2025-12-04T01:35:58.511Z [WINDOW] NotificationWindow shown
+2025-12-04T01:35:58.513Z [WINDOW] NotificationWindow shown
+2025-12-04T01:35:58.782Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:58 PM Using cached avatar for user 19:429db516db7447e882fba4b48365f3ac@thread.v2
+2025-12-04T01:35:58.783Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:58 PM Using cached avatar for user 19:meeting_ODFhZjk0MWUtOWZmOS00ZWY4LWE1NDAtMTQ4ZGFmYzk0M2U2@thread.v2
+2025-12-04T01:35:58.786Z [PLUGIN-LOG] Using cached avatar for user 19:429db516db7447e882fba4b48365f3ac@thread.v2
+2025-12-04T01:35:58.787Z [PLUGIN-LOG] Using cached avatar for user 19:meeting_ODFhZjk0MWUtOWZmOS00ZWY4LWE1NDAtMTQ4ZGFmYzk0M2U2@thread.v2
+2025-12-04T01:35:58.789Z [WINDOW] NotificationWindow shown
+2025-12-04T01:35:59.386Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:59 PM Using cached avatar for user vinicius.silva@fusionflowsoftware.com
+2025-12-04T01:35:59.393Z [PLUGIN-LOG] Using cached avatar for user vinicius.silva@fusionflowsoftware.com
+2025-12-04T01:35:59.521Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:59 PM Using cached avatar for user carlos.eduardo@fusionflowsoftware.com
+2025-12-04T01:35:59.523Z [PLUGIN-LOG] Using cached avatar for user carlos.eduardo@fusionflowsoftware.com
+2025-12-04T01:35:59.524Z [PLUGIN-LOG] Using cached avatar for user otavio.anaga@fusionflowsoftware.com
+2025-12-04T01:35:59.527Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:59 PM Using cached avatar for user otavio.anaga@fusionflowsoftware.com
+2025-12-04T01:35:59.544Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:59 PM Using cached avatar for user diego.araujo@fusionflowsoftware.com
+2025-12-04T01:35:59.551Z [PLUGIN-LOG] Using cached avatar for user diego.araujo@fusionflowsoftware.com
+2025-12-04T01:35:59.808Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:59 PM Using cached avatar for user vinicius.silva@fusionflowsoftware.com
+2025-12-04T01:35:59.810Z [PLUGIN-LOG] Using cached avatar for user vinicius.silva@fusionflowsoftware.com
+2025-12-04T01:35:59.840Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:59 PM Using cached avatar for user otavio.anaga@fusionflowsoftware.com
+2025-12-04T01:35:59.842Z [PLUGIN-LOG] Using cached avatar for user otavio.anaga@fusionflowsoftware.com
+2025-12-04T01:35:59.950Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:59 PM Using cached avatar for user diego.araujo@fusionflowsoftware.com
+2025-12-04T01:35:59.952Z [PLUGIN-LOG] Using cached avatar for user diego.araujo@fusionflowsoftware.com
+2025-12-04T01:35:59.953Z [PLUGIN-LOG] Using cached avatar for user carlos.eduardo@fusionflowsoftware.com
+2025-12-04T01:35:59.954Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:35:59 PM Using cached avatar for user carlos.eduardo@fusionflowsoftware.com
+2025-12-04T01:36:00.129Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:36:00 PM Using cached avatar for user vinicius.silva@fusionflowsoftware.com
+2025-12-04T01:36:00.133Z [PLUGIN-LOG] Using cached avatar for user vinicius.silva@fusionflowsoftware.com
+2025-12-04T01:36:00.137Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:36:00 PM Using cached avatar for user otavio.anaga@fusionflowsoftware.com
+2025-12-04T01:36:00.138Z [PLUGIN-LOG] Using cached avatar for user otavio.anaga@fusionflowsoftware.com
+2025-12-04T01:36:00.168Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:36:00 PM Using cached avatar for user diego.araujo@fusionflowsoftware.com
+2025-12-04T01:36:00.170Z [PLUGIN-LOG] Using cached avatar for user diego.araujo@fusionflowsoftware.com
+2025-12-04T01:36:00.258Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:36:00 PM Using cached avatar for user carlos.eduardo@fusionflowsoftware.com
+2025-12-04T01:36:00.264Z [PLUGIN-LOG] Using cached avatar for user carlos.eduardo@fusionflowsoftware.com
+2025-12-04T01:36:03.512Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:36:03 PM Using cached avatar for user 19:c871a10e-098c-4ea5-937d-bbfc8f4a7792_3a1d97f9-b56b-4295-9858-deeb3eefabed@unq.gbl.spaces
+2025-12-04T01:36:03.515Z [PLUGIN-LOG] Using cached avatar for user 19:c871a10e-098c-4ea5-937d-bbfc8f4a7792_3a1d97f9-b56b-4295-9858-deeb3eefabed@unq.gbl.spaces
+2025-12-04T01:36:03.517Z [WINDOW] NotificationWindow shown
+2025-12-04T01:36:03.518Z [WINDOW] NotificationWindow shown
+2025-12-04T01:36:04.382Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:36:04 PM Using cached avatar for user vinicius.silva@fusionflowsoftware.com
+2025-12-04T01:36:04.384Z [PLUGIN-LOG] Using cached avatar for user vinicius.silva@fusionflowsoftware.com
+2025-12-04T01:36:04.508Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:36:04 PM Using cached avatar for user carlos.eduardo@fusionflowsoftware.com
+2025-12-04T01:36:04.510Z [PLUGIN-LOG] Using cached avatar for user carlos.eduardo@fusionflowsoftware.com
+2025-12-04T01:36:04.511Z [PLUGIN-LOG] Using cached avatar for user otavio.anaga@fusionflowsoftware.com
+2025-12-04T01:36:04.512Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:36:04 PM Using cached avatar for user otavio.anaga@fusionflowsoftware.com
+2025-12-04T01:36:04.541Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:36:04 PM Using cached avatar for user diego.araujo@fusionflowsoftware.com
+2025-12-04T01:36:04.542Z [PLUGIN-LOG] Using cached avatar for user diego.araujo@fusionflowsoftware.com
+2025-12-04T01:36:04.808Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:36:04 PM Using cached avatar for user vinicius.silva@fusionflowsoftware.com
+2025-12-04T01:36:04.810Z [PLUGIN-LOG] Using cached avatar for user vinicius.silva@fusionflowsoftware.com
+2025-12-04T01:36:04.839Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:36:04 PM Using cached avatar for user otavio.anaga@fusionflowsoftware.com
+2025-12-04T01:36:04.841Z [PLUGIN-LOG] Using cached avatar for user otavio.anaga@fusionflowsoftware.com
+2025-12-04T01:36:04.944Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:36:04 PM Using cached avatar for user diego.araujo@fusionflowsoftware.com
+2025-12-04T01:36:04.946Z [PLUGIN-LOG] Using cached avatar for user diego.araujo@fusionflowsoftware.com
+2025-12-04T01:36:04.952Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:36:04 PM Using cached avatar for user carlos.eduardo@fusionflowsoftware.com
+2025-12-04T01:36:04.953Z [PLUGIN-LOG] Using cached avatar for user carlos.eduardo@fusionflowsoftware.com
+2025-12-04T01:36:05.106Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:36:05 PM Using cached avatar for user vinicius.silva@fusionflowsoftware.com
+2025-12-04T01:36:05.109Z [PLUGIN-LOG] Using cached avatar for user vinicius.silva@fusionflowsoftware.com
+2025-12-04T01:36:05.138Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:36:05 PM Using cached avatar for user otavio.anaga@fusionflowsoftware.com
+2025-12-04T01:36:05.139Z [PLUGIN-LOG] Using cached avatar for user otavio.anaga@fusionflowsoftware.com
+2025-12-04T01:36:05.171Z [PLUGIN-LOG] Using cached avatar for user diego.araujo@fusionflowsoftware.com
+2025-12-04T01:36:05.173Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:36:05 PM Using cached avatar for user diego.araujo@fusionflowsoftware.com
+2025-12-04T01:36:05.264Z [PLUGIN-WARN] [Teams Avatar] 12/3/2025 10:36:05 PM Using cached avatar for user carlos.eduardo@fusionflowsoftware.com
+2025-12-04T01:36:05.267Z [PLUGIN-LOG] Using cached avatar for user carlos.eduardo@fusionflowsoftware.com

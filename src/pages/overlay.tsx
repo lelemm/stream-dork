@@ -4,16 +4,25 @@ import React from "react"
 import { createRoot } from "react-dom/client"
 import { OverlayButtonGrid } from "@/components/overlay-button-grid"
 import { useDeckStore } from "@/lib/deck-store"
-import { useEffect, useMemo, useRef } from "react"
+import { useEffect, useMemo, useRef, useCallback } from "react"
 
 function OverlayPage() {
   const {
     config,
     setConfigFromMain,
-    updateButtonByContext,
+    updateButtonVisualByContext,
     setButtonStatusByContext,
   } = useDeckStore()
   const statusTimers = useRef(new Map<string, ReturnType<typeof setTimeout>>())
+  
+  // Click-through handlers for transparent overlay
+  const enableClickThrough = useCallback(() => {
+    window.electron?.setIgnoreMouseEvents(true, true)
+  }, [])
+  
+  const disableClickThrough = useCallback(() => {
+    window.electron?.setIgnoreMouseEvents(false)
+  }, [])
 
   useEffect(() => {
     let unsubscribe: (() => void) | undefined
@@ -29,23 +38,18 @@ function OverlayPage() {
             const visualState = await window.electron?.getHostVisualState()
             if (visualState) {
               Object.entries(visualState).forEach(([context, visual]) => {
+                const updates: { icon?: string; label?: string; state?: number } = {}
                 if (visual.image) {
-                  updateButtonByContext(context, (button) => ({
-                    ...button,
-                    icon: visual.image,
-                  }))
+                  updates.icon = visual.image
                 }
                 if (typeof visual.title === "string") {
-                  updateButtonByContext(context, (button) => ({
-                    ...button,
-                    label: visual.title,
-                  }))
+                  updates.label = visual.title
                 }
                 if (typeof visual.state === "number") {
-                  updateButtonByContext(context, (button) => ({
-                    ...button,
-                    action: button.action ? { ...button.action, state: visual.state } : button.action,
-                  }))
+                  updates.state = visual.state
+                }
+                if (Object.keys(updates).length > 0) {
+                  updateButtonVisualByContext(context, updates)
                 }
               })
             }
@@ -63,7 +67,7 @@ function OverlayPage() {
     return () => {
       unsubscribe?.()
     }
-  }, [setConfigFromMain, updateButtonByContext])
+  }, [setConfigFromMain, updateButtonVisualByContext])
 
   useEffect(() => {
     const handleHostEvent = (message: { event: string; context: string; payload?: Record<string, unknown> }) => {
@@ -72,30 +76,19 @@ function OverlayPage() {
       switch (event) {
         case "setTitle":
           if (typeof payload?.title === "string") {
-            const title = payload.title as string
-            updateButtonByContext(context, (button) => ({
-              ...button,
-              label: title,
-            }))
+            updateButtonVisualByContext(context, { label: payload.title as string })
           }
           break
         case "setImage":
           if (typeof payload?.image === "string") {
-            const image = payload.image as string
-            updateButtonByContext(context, (button) => ({
-              ...button,
-              icon: image,
-            }))
+            updateButtonVisualByContext(context, { icon: payload.image as string })
           }
           break
         case "setState":
-          updateButtonByContext(context, (button) => ({
-            ...button,
-            action: button.action ? { ...button.action, state: payload?.state ?? 0 } : button.action,
-          }))
+          updateButtonVisualByContext(context, { state: (payload?.state as number) ?? 0 })
           break
         case "showAlert":
-          updateButtonByContext(context, (button) => ({ ...button, status: "alert" }))
+          updateButtonVisualByContext(context, { status: "alert" })
           clearTimeout(statusTimers.current.get(context))
           statusTimers.current.set(
             context,
@@ -106,7 +99,7 @@ function OverlayPage() {
           )
           break
         case "showOk":
-          updateButtonByContext(context, (button) => ({ ...button, status: "ok" }))
+          updateButtonVisualByContext(context, { status: "ok" })
           clearTimeout(statusTimers.current.get(context))
           statusTimers.current.set(
             context,
@@ -127,7 +120,7 @@ function OverlayPage() {
       statusTimers.current.forEach((timer) => clearTimeout(timer))
       statusTimers.current.clear()
     }
-  }, [updateButtonByContext, setButtonStatusByContext])
+  }, [updateButtonVisualByContext, setButtonStatusByContext])
 
   // Note: Keyboard handling is now done by OverlayButtonGrid component
 
@@ -172,10 +165,32 @@ function OverlayPage() {
     }
   }, [config.overlayPosition, config.overlayMargin, config.overlayCustomX, config.overlayCustomY])
 
+  // Enable click-through by default when overlay becomes visible
+  useEffect(() => {
+    const unsubscribe = window.electron?.onOverlayVisibility(({ visible }: { visible: boolean }) => {
+      if (visible) {
+        // Start with click-through enabled so transparent areas don't block
+        enableClickThrough()
+      }
+    })
+    return () => unsubscribe?.()
+  }, [enableClickThrough])
+
   return (
     <div className="h-screen w-screen relative bg-transparent">
-      <div className="absolute" style={positionStyles}>
-        <OverlayButtonGrid />
+      <div 
+        className="absolute" 
+        style={positionStyles}
+      >
+        {/* Extra wrapper with padding to include floating UI elements (scene picker, search indicator) 
+            that are positioned with negative top values outside the grid bounds */}
+        <div
+          className="pt-24 -mt-24"
+          onMouseEnter={disableClickThrough}
+          onMouseLeave={enableClickThrough}
+        >
+          <OverlayButtonGrid />
+        </div>
       </div>
     </div>
   )

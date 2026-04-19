@@ -1,9 +1,9 @@
 import { useDeckStore } from "@/lib/deck-store"
 import { useMemo, useState, useEffect, useCallback, useRef } from "react"
-import type { GridButton as GridButtonType, AnimationDirection, AnimationStartCorner } from "@/lib/types"
-import { Search } from "lucide-react"
+import type { GridButton as GridButtonType, AnimationDirection, AnimationStartCorner, Scene } from "@/lib/types"
+import { Search, Layers } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { motion, useSpring, useTransform } from "motion/react"
+import { motion, useSpring, useTransform, AnimatePresence } from "motion/react"
 import { interpolate } from "flubber"
 
 interface ButtonWithHint extends GridButtonType {
@@ -11,8 +11,57 @@ interface ButtonWithHint extends GridButtonType {
   linearIndex: number
 }
 
+interface SceneWithHint extends Scene {
+  filterHint: string
+}
+
 interface OverlayButtonGridProps {
   onButtonActivated?: () => void
+}
+
+// Generate filter hints for scenes (same algorithm as button hints)
+function generateSceneHints(scenes: Scene[]): SceneWithHint[] {
+  const letterGroups = new Map<string, Scene[]>()
+
+  scenes.forEach((scene) => {
+    const label = scene.name || ""
+    const firstLetter = label.charAt(0).toUpperCase() || "?"
+    if (!letterGroups.has(firstLetter)) {
+      letterGroups.set(firstLetter, [])
+    }
+    letterGroups.get(firstLetter)!.push(scene)
+  })
+
+  const result: SceneWithHint[] = []
+
+  letterGroups.forEach((scenesInGroup, letter) => {
+    scenesInGroup.forEach((scene, index) => {
+      let hint: string
+
+      if (scenesInGroup.length === 1) {
+        hint = letter
+      } else if (scenesInGroup.length <= 10) {
+        const num = index < 9 ? (index + 1).toString() : "0"
+        hint = `${letter}${num}`
+      } else {
+        if (index < 10) {
+          const num = index < 9 ? (index + 1).toString() : "0"
+          hint = `${letter}${num}`
+        } else {
+          const extIndex = index - 10
+          const num = extIndex < 9 ? (extIndex + 1).toString() : "0"
+          hint = `${letter}O${num}`
+        }
+      }
+
+      result.push({
+        ...scene,
+        filterHint: hint,
+      })
+    })
+  })
+
+  return result
 }
 
 // Direction the button animates FROM (where it "comes from" in the spiral)
@@ -206,10 +255,34 @@ function calculateCenterOutwardSpiral(
 type AnimationPhase = "idle" | "showing" | "visible" | "hiding" | "hidden"
 
 export function OverlayButtonGrid({ onButtonActivated }: OverlayButtonGridProps) {
-  const { config, executeAction } = useDeckStore()
+  const { config, executeAction, setActiveScene } = useDeckStore()
   const [typedCombo, setTypedCombo] = useState("")
   const [focusedButton, setFocusedButton] = useState<ButtonWithHint | null>(null)
   const gridRef = useRef<HTMLDivElement>(null)
+  
+  // Scene switching state
+  const [isAltHeld, setIsAltHeld] = useState(false)
+  const [sceneCombo, setSceneCombo] = useState("")
+
+  // Filter buttons for current scene (same logic as button-grid.tsx)
+  const activeSceneId = config.activeSceneId || "default"
+  const sceneButtons = useMemo(() => {
+    return config.buttons.filter((btn) => (btn.sceneId || "default") === activeSceneId)
+  }, [config.buttons, activeSceneId])
+  
+  // Generate scene hints for scene switching
+  const scenes = config.scenes || []
+  const scenesWithHints = useMemo(() => {
+    return scenes.length > 0 ? generateSceneHints(scenes) : []
+  }, [scenes])
+  
+  // Find matching scenes based on typed scene combo
+  const matchingScenes = useMemo(() => {
+    if (!sceneCombo) return scenesWithHints
+    return scenesWithHints.filter((scene) =>
+      scene.filterHint.toUpperCase().startsWith(sceneCombo.toUpperCase())
+    )
+  }, [scenesWithHints, sceneCombo])
   
   // Animation state
   const [animationPhase, setAnimationPhase] = useState<AnimationPhase>("hidden")
@@ -238,19 +311,9 @@ export function OverlayButtonGrid({ onButtonActivated }: OverlayButtonGridProps)
   const animationDuration = config.animationDuration || 250
   const staggerDelay = Math.max(10, animationDuration / 10)
 
-  // Calculate spiral order for animation based on config
-  const spiralOrder = useMemo(() => {
-    return calculateSpiralOrder(
-      config.rows, 
-      config.cols,
-      config.animationStartCorner || 'bottom-right',
-      config.animationDirection || 'clockwise'
-    )
-  }, [config.rows, config.cols, config.animationStartCorner, config.animationDirection])
-
   // Get all buttons with their positions sorted left-to-right, top-to-bottom
   const sortedButtons = useMemo(() => {
-    return [...config.buttons]
+    return [...sceneButtons]
       .filter((btn) => btn.action) // Only buttons with actions
       .sort((a, b) => {
         if (a.position.row !== b.position.row) {
@@ -258,7 +321,7 @@ export function OverlayButtonGrid({ onButtonActivated }: OverlayButtonGridProps)
         }
         return a.position.col - b.position.col
       })
-  }, [config.buttons])
+  }, [sceneButtons])
 
   // Generate filter hints for each button
   const buttonsWithHints = useMemo((): ButtonWithHint[] => {
@@ -312,6 +375,60 @@ export function OverlayButtonGrid({ onButtonActivated }: OverlayButtonGridProps)
     return result
   }, [sortedButtons])
 
+  // Compute the effective grid bounds based on actual buttons so we ignore
+  // completely empty trailing rows/cols and center the used area.
+  const { effectiveRows, effectiveCols, rowOffset, colOffset } = useMemo(() => {
+    // No buttons for this scene - fall back to configured grid
+    if (buttonsWithHints.length === 0) {
+      return {
+        effectiveRows: config.rows,
+        effectiveCols: config.cols,
+        rowOffset: 0,
+        colOffset: 0,
+      }
+    }
+
+    let minRow = Number.POSITIVE_INFINITY
+    let maxRow = 0
+    let minCol = Number.POSITIVE_INFINITY
+    let maxCol = 0
+
+    for (const btn of buttonsWithHints) {
+      const r = btn.position.row
+      const c = btn.position.col
+      if (r < minRow) minRow = r
+      if (r > maxRow) maxRow = r
+      if (c < minCol) minCol = c
+      if (c > maxCol) maxCol = c
+    }
+
+    // Clamp to configured grid just in case
+    minRow = Math.max(0, Math.min(minRow, config.rows - 1))
+    maxRow = Math.max(0, Math.min(maxRow, config.rows - 1))
+    minCol = Math.max(0, Math.min(minCol, config.cols - 1))
+    maxCol = Math.max(0, Math.min(maxCol, config.cols - 1))
+
+    const rows = Math.max(1, maxRow - minRow + 1)
+    const cols = Math.max(1, maxCol - minCol + 1)
+
+    return {
+      effectiveRows: rows,
+      effectiveCols: cols,
+      rowOffset: minRow,
+      colOffset: minCol,
+    }
+  }, [buttonsWithHints, config.rows, config.cols])
+
+  // Calculate spiral order for animation based on the effective grid size
+  const spiralOrder = useMemo(() => {
+    return calculateSpiralOrder(
+      effectiveRows, 
+      effectiveCols,
+      config.animationStartCorner || 'bottom-right',
+      config.animationDirection || 'clockwise'
+    )
+  }, [effectiveRows, effectiveCols, config.animationStartCorner, config.animationDirection])
+
   // Find matching buttons based on typed combo
   const matchingButtons = useMemo(() => {
     if (!typedCombo) return buttonsWithHints
@@ -329,6 +446,49 @@ export function OverlayButtonGrid({ onButtonActivated }: OverlayButtonGridProps)
     (event: KeyboardEvent) => {
       // Reset auto-dismiss timer on any key press
       resetAutoDismissTimer()
+
+      // Track ALT key for scene switching mode
+      if (event.key === "Alt") {
+        setIsAltHeld(true)
+        setSceneCombo("")
+        event.preventDefault()
+        return
+      }
+
+      // When ALT is held, handle scene switching input
+      if (isAltHeld) {
+        // Escape cancels scene mode
+        if (event.key === "Escape") {
+          setIsAltHeld(false)
+          setSceneCombo("")
+          return
+        }
+        
+        // Backspace removes last character from scene combo
+        if (event.key === "Backspace") {
+          setSceneCombo((prev) => prev.slice(0, -1))
+          return
+        }
+        
+        // Accept alphanumeric characters for scene selection
+        if (/^[a-zA-Z0-9]$/.test(event.key)) {
+          const newCombo = sceneCombo + event.key.toUpperCase()
+          setSceneCombo(newCombo)
+          
+          // Check for unique scene match
+          const matchedScenes = scenesWithHints.filter((scene) =>
+            scene.filterHint.toUpperCase().startsWith(newCombo)
+          )
+          
+          // If exactly one scene matches and the combo is complete, switch to it
+          if (matchedScenes.length === 1 && matchedScenes[0].filterHint.toUpperCase() === newCombo) {
+            setActiveScene(matchedScenes[0].id)
+            setIsAltHeld(false)
+            setSceneCombo("")
+          }
+        }
+        return
+      }
 
       // Escape closes overlay
       if (event.key === "Escape") {
@@ -372,13 +532,33 @@ export function OverlayButtonGrid({ onButtonActivated }: OverlayButtonGridProps)
         setTypedCombo((prev) => prev + event.key.toUpperCase())
       }
     },
-    [focusedButton, singleMatch, executeAction, onButtonActivated, resetAutoDismissTimer]
+    [focusedButton, singleMatch, executeAction, onButtonActivated, resetAutoDismissTimer, isAltHeld, sceneCombo, scenesWithHints, setActiveScene]
+  )
+  
+  // Handle ALT key release
+  const handleKeyUp = useCallback(
+    (event: KeyboardEvent) => {
+      if (event.key === "Alt") {
+        // If ALT is released with no scene combo, just exit scene mode
+        // If there was a partial combo, check if there's a unique match
+        if (sceneCombo && matchingScenes.length === 1) {
+          setActiveScene(matchingScenes[0].id)
+        }
+        setIsAltHeld(false)
+        setSceneCombo("")
+      }
+    },
+    [sceneCombo, matchingScenes, setActiveScene]
   )
 
   useEffect(() => {
     window.addEventListener("keydown", handleKeyDown)
-    return () => window.removeEventListener("keydown", handleKeyDown)
-  }, [handleKeyDown])
+    window.addEventListener("keyup", handleKeyUp)
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown)
+      window.removeEventListener("keyup", handleKeyUp)
+    }
+  }, [handleKeyDown, handleKeyUp])
 
   // Listen for overlay visibility changes from main process
   useEffect(() => {
@@ -390,9 +570,11 @@ export function OverlayButtonGrid({ onButtonActivated }: OverlayButtonGridProps)
       }
 
       if (visible) {
-        // Reset focus mode when showing
+        // Reset focus mode and scene mode when showing
         setFocusedButton(null)
         setTypedCombo("")
+        setIsAltHeld(false)
+        setSceneCombo("")
         
         if (animationEnabled) {
           // Start show animation
@@ -401,7 +583,7 @@ export function OverlayButtonGrid({ onButtonActivated }: OverlayButtonGridProps)
         } else {
           // Skip animation - show all immediately
           setAnimationPhase("visible")
-          setVisibleButtonCount(config.rows * config.cols)
+          setVisibleButtonCount(effectiveRows * effectiveCols)
         }
         
         // Set up auto-dismiss if enabled
@@ -429,12 +611,12 @@ export function OverlayButtonGrid({ onButtonActivated }: OverlayButtonGridProps)
         clearTimeout(autoDismissRef.current)
       }
     }
-  }, [animationEnabled, config.rows, config.cols, config.autoDismissEnabled, config.autoDismissDelaySeconds])
+  }, [animationEnabled, effectiveRows, effectiveCols, config.autoDismissEnabled, config.autoDismissDelaySeconds])
 
   // Animation loop for showing buttons
   useEffect(() => {
     if (animationPhase === "showing") {
-      const totalPositions = config.rows * config.cols
+      const totalPositions = effectiveRows * effectiveCols
       
       if (visibleButtonCount < totalPositions) {
         animationRef.current = setTimeout(() => {
@@ -450,12 +632,12 @@ export function OverlayButtonGrid({ onButtonActivated }: OverlayButtonGridProps)
         clearTimeout(animationRef.current)
       }
     }
-  }, [animationPhase, visibleButtonCount, config.rows, config.cols])
+  }, [animationPhase, visibleButtonCount, effectiveRows, effectiveCols])
 
   // Animation loop for hiding buttons
   useEffect(() => {
     if (animationPhase === "hiding") {
-      const totalPositions = config.rows * config.cols
+      const totalPositions = effectiveRows * effectiveCols
       
       // If starting from 0 (edge case), initialize to full
       if (visibleButtonCount === 0) {
@@ -483,7 +665,7 @@ export function OverlayButtonGrid({ onButtonActivated }: OverlayButtonGridProps)
         clearTimeout(animationRef.current)
       }
     }
-  }, [animationPhase, visibleButtonCount, config.rows, config.cols])
+  }, [animationPhase, visibleButtonCount, effectiveRows, effectiveCols])
 
   // Calculate which positions are currently visible based on animation
   const visiblePositions = useMemo(() => {
@@ -524,8 +706,10 @@ export function OverlayButtonGrid({ onButtonActivated }: OverlayButtonGridProps)
   }, [singleMatch, focusedButton, typedCombo])
 
   const getButtonAtPosition = (row: number, col: number) => {
+    const targetRow = row + rowOffset
+    const targetCol = col + colOffset
     return buttonsWithHints.find(
-      (btn) => btn.position.row === row && btn.position.col === col
+      (btn) => btn.position.row === targetRow && btn.position.col === targetCol
     )
   }
 
@@ -539,9 +723,11 @@ export function OverlayButtonGrid({ onButtonActivated }: OverlayButtonGridProps)
   const bgColor = config.backgroundColor || "#0a0a0a"
   const bgOpacity = (config.backgroundOpacity ?? 100) / 100
   const gridSize = config.gridSizePixels || 400
-  const buttonSize = Math.floor(gridSize / Math.max(config.rows, config.cols))
-  const gridWidth = buttonSize * config.cols
-  const gridHeight = buttonSize * config.rows
+  // Cap button size at 128px max (same as setup grid) to prevent huge buttons with few items
+  const maxButtonSize = 128
+  const buttonSize = Math.min(Math.floor(gridSize / Math.max(effectiveRows, effectiveCols)), maxButtonSize)
+  const gridWidth = buttonSize * effectiveCols
+  const gridHeight = buttonSize * effectiveRows
 
   return (
     <div 
@@ -549,8 +735,76 @@ export function OverlayButtonGrid({ onButtonActivated }: OverlayButtonGridProps)
       onMouseMove={resetAutoDismissTimer}
       onMouseEnter={resetAutoDismissTimer}
     >
+      {/* Scene picker - shown when ALT is held */}
+      <AnimatePresence>
+        {isAltHeld && scenesWithHints.length > 1 && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 10 }}
+            transition={{ duration: 0.15 }}
+            className="absolute -top-20 left-1/2 -translate-x-1/2 z-50"
+          >
+            <div
+              className="flex flex-col items-center gap-2 px-4 py-3 rounded-xl"
+              style={{
+                backgroundColor: "rgba(0, 0, 0, 0.85)",
+                backdropFilter: "blur(12px)",
+                border: "1px solid rgba(255, 255, 255, 0.1)",
+              }}
+            >
+              <div className="flex items-center gap-2 text-white/60 text-xs">
+                <Layers className="size-3" />
+                <span>Switch Scene</span>
+                {sceneCombo && (
+                  <span className="font-mono bg-white/10 px-2 py-0.5 rounded text-white">
+                    {sceneCombo}
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-2 flex-wrap justify-center max-w-[400px]">
+                {scenesWithHints.map((scene) => {
+                  const isActive = scene.id === activeSceneId
+                  const isMatching = !sceneCombo || scene.filterHint.toUpperCase().startsWith(sceneCombo.toUpperCase())
+                  
+                  return (
+                    <div
+                      key={scene.id}
+                      className={cn(
+                        "flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all",
+                        isActive && "bg-white/20 ring-1 ring-white/30",
+                        !isActive && isMatching && "bg-white/10 hover:bg-white/15",
+                        !isMatching && "opacity-30"
+                      )}
+                    >
+                      <span
+                        className={cn(
+                          "font-mono text-[10px] px-1.5 py-0.5 rounded font-bold",
+                          isMatching ? "bg-amber-500/80 text-black" : "bg-white/20 text-white/50"
+                        )}
+                      >
+                        {scene.filterHint}
+                      </span>
+                      <span className={cn(
+                        "text-sm whitespace-nowrap",
+                        isMatching ? "text-white" : "text-white/40"
+                      )}>
+                        {scene.name}
+                      </span>
+                    </div>
+                  )
+                })}
+              </div>
+              <div className="text-[10px] text-white/40">
+                Release ALT to confirm • ESC to cancel
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Search indicator */}
-      {typedCombo && !focusedButton && (
+      {typedCombo && !focusedButton && !isAltHeld && (
         <div
           className="absolute -top-12 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 px-4 py-2 rounded-full"
           style={{
@@ -571,19 +825,26 @@ export function OverlayButtonGrid({ onButtonActivated }: OverlayButtonGridProps)
           className="fixed inset-0 z-40 flex items-center justify-center pointer-events-none"
           onMouseMove={resetAutoDismissTimer}
         >
-          <div className="animate-focus-pulse pointer-events-auto">
-            <OverlayButton
-              button={focusedButton}
-              buttonSize={buttonSize * 2}
-              radius={radius * 1.5}
-              isDimmed={false}
-              showHint={false}
-              isFocused={true}
-            />
-          </div>
-          <div className="absolute bottom-8 text-white/60 text-sm bg-black/50 px-4 py-2 rounded-lg pointer-events-auto">
-            Press <kbd className="px-2 py-1 bg-white/10 rounded mx-1">Enter</kbd> to activate or{" "}
-            <kbd className="px-2 py-1 bg-white/10 rounded mx-1">Backspace</kbd> to go back
+          <div className="flex flex-col items-center gap-4">
+            <div className="animate-focus-pulse pointer-events-auto">
+              <OverlayButton
+                button={focusedButton}
+                buttonSize={buttonSize * 2}
+                radius={radius * 1.5}
+                isDimmed={false}
+                showHint={false}
+                isFocused={true}
+                onClick={() => {
+                  executeAction(focusedButton.id)
+                  onButtonActivated?.()
+                  window.electron?.forceHideOverlay()
+                }}
+              />
+            </div>
+            <div className="text-white/60 text-sm bg-black/50 px-4 py-2 rounded-lg pointer-events-auto">
+              Press <kbd className="px-2 py-1 bg-white/10 rounded mx-1">Enter</kbd> to activate or{" "}
+              <kbd className="px-2 py-1 bg-white/10 rounded mx-1">Backspace</kbd> to go back
+            </div>
           </div>
         </div>
       )}
@@ -605,8 +866,8 @@ export function OverlayButtonGrid({ onButtonActivated }: OverlayButtonGridProps)
       >
         {/* Background layer - uses configured background color with opacity */}
         <MergedBackground
-          rows={config.rows}
-          cols={config.cols}
+          rows={effectiveRows}
+          cols={effectiveCols}
           buttonsWithHints={buttonsWithHints}
           padding={padding}
           radius={radius}
@@ -615,19 +876,21 @@ export function OverlayButtonGrid({ onButtonActivated }: OverlayButtonGridProps)
           bgOpacity={bgOpacity}
           visiblePositions={visiblePositions}
           animationPhase={animationPhase}
+          rowOffset={rowOffset}
+          colOffset={colOffset}
         />
 
         {/* Buttons layer */}
         <div
           className="relative grid"
           style={{
-            gridTemplateColumns: `repeat(${config.cols}, ${buttonSize}px)`,
-            gridTemplateRows: `repeat(${config.rows}, ${buttonSize}px)`,
+            gridTemplateColumns: `repeat(${effectiveCols}, ${buttonSize}px)`,
+            gridTemplateRows: `repeat(${effectiveRows}, ${buttonSize}px)`,
           }}
         >
-          {Array.from({ length: config.rows * config.cols }).map((_, index) => {
-            const row = Math.floor(index / config.cols)
-            const col = index % config.cols
+          {Array.from({ length: effectiveRows * effectiveCols }).map((_, index) => {
+            const row = Math.floor(index / effectiveCols)
+            const col = index % effectiveCols
             const button = getButtonAtPosition(row, col)
             const isVisible = isPositionVisible(row, col)
             const { index: animIndex, direction: stretchDirection } = getPositionAnimationInfo(row, col)
@@ -654,6 +917,7 @@ export function OverlayButtonGrid({ onButtonActivated }: OverlayButtonGridProps)
                     stretchDirection={stretchDirection}
                     animationDurationMs={animationDuration}
                     staggerDelayMs={staggerDelay}
+                    maxIconSize={40}
                     onClick={() => {
                       executeAction(button.id)
                       onButtonActivated?.()
@@ -683,6 +947,7 @@ interface OverlayButtonProps {
   stretchDirection?: StretchDirection
   animationDurationMs?: number
   staggerDelayMs?: number
+  maxIconSize?: number
   onClick?: () => void
 }
 
@@ -725,6 +990,7 @@ function OverlayButton({
   stretchDirection = 'from-bottom',
   animationDurationMs = 250,
   staggerDelayMs = 25,
+  maxIconSize = 40,
   onClick,
 }: OverlayButtonProps) {
   const innerPadding = 4
@@ -733,6 +999,17 @@ function OverlayButton({
   // Use per-button duration if set, otherwise use the passed default
   const duration = (button.animationDuration ?? animationDurationMs) / 1000
   const stretchAnim = getStretchAnimation(stretchDirection, isVisible)
+  
+  // Calculate icon size as 50% of button size, capped at maxIconSize
+  // This ensures icons scale proportionally with button size
+  const iconSize = Math.min(Math.floor(buttonSize * 0.5), maxIconSize)
+  const focusedIconSize = Math.min(Math.floor(buttonSize * 0.8), maxIconSize * 1.6)
+  
+  // Calculate font sizes proportionally
+  const emojiSize = Math.max(Math.floor(buttonSize * 0.35), 16) // Min 16px
+  const focusedEmojiSize = Math.max(Math.floor(buttonSize * 0.55), 24)
+  const labelSize = Math.max(Math.floor(buttonSize * 0.08), 8) // Min 8px
+  const focusedLabelSize = Math.max(Math.floor(buttonSize * 0.12), 10)
 
   return (
     <motion.div
@@ -793,12 +1070,18 @@ function OverlayButton({
             <img
               src={button.icon}
               alt={button.label || "Button icon"}
-              className={cn("size-10 object-contain", isFocused && "size-16")}
+              className="object-contain"
+              style={{ 
+                width: isFocused ? focusedIconSize : iconSize, 
+                height: isFocused ? focusedIconSize : iconSize 
+              }}
             />
           ) : (
             <div
-              className={cn("text-2xl", isFocused && "text-4xl")}
-              style={{ color: button?.textColor || "#ffffff" }}
+              style={{ 
+                color: button?.textColor || "#ffffff",
+                fontSize: isFocused ? focusedEmojiSize : emojiSize,
+              }}
             >
               {button?.icon || "🎮"}
             </div>
@@ -815,11 +1098,11 @@ function OverlayButton({
               delay: isVisible ? animationIndex * (staggerDelayMs / 1000) : 0,
               ease: [0.34, 1.56, 0.64, 1]
             }}
-            className={cn(
-              "text-[10px] font-medium text-center line-clamp-2 px-1",
-              isFocused && "text-sm"
-            )}
-            style={{ color: button?.textColor || "#ffffff" }}
+            className="font-medium text-center line-clamp-2 px-1"
+            style={{ 
+              color: button?.textColor || "#ffffff",
+              fontSize: isFocused ? focusedLabelSize : labelSize,
+            }}
           >
             {button.label}
           </motion.p>
@@ -853,6 +1136,8 @@ interface MergedBackgroundProps {
   bgOpacity: number
   visiblePositions: Set<string>
   animationPhase: AnimationPhase
+   rowOffset: number
+   colOffset: number
 }
 
 // Animated path component that morphs between paths using Flubber
@@ -935,6 +1220,8 @@ function MergedBackground({
   bgOpacity,
   visiblePositions,
   animationPhase,
+  rowOffset,
+  colOffset,
 }: MergedBackgroundProps) {
   // Create icon map based on visible positions during animation
   const iconMap = useMemo(() => {
@@ -942,8 +1229,10 @@ function MergedBackground({
     for (let r = 0; r < rows; r++) {
       map[r] = []
       for (let c = 0; c < cols; c++) {
+        const buttonRow = r + rowOffset
+        const buttonCol = c + colOffset
         const button = buttonsWithHints.find(
-          (btn) => btn.position.row === r && btn.position.col === c
+          (btn) => btn.position.row === buttonRow && btn.position.col === buttonCol
         )
         // During animation, only include visible positions
         const isAnimating = animationPhase === "showing" || animationPhase === "hiding"
@@ -952,7 +1241,7 @@ function MergedBackground({
       }
     }
     return map
-  }, [buttonsWithHints, rows, cols, visiblePositions, animationPhase])
+  }, [buttonsWithHints, rows, cols, visiblePositions, animationPhase, rowOffset, colOffset])
 
   const generatePath = useCallback(() => {
     const cellSize = buttonSize

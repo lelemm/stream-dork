@@ -1,6 +1,6 @@
 {
   "name": "stream-dork",
-  "version": "0.2.0",
+  "version": "0.2.3",
   "description": "Electron overlay for virtual stream deck controls",
   "author": "Leandro Menezes",
   "private": true,
@@ -17,6 +17,7 @@
     "lint": "eslint ."
   },
   "dependencies": {
+    "koffi": "^2.9.0",
     "@hookform/resolvers": "^3.10.0",
     "@radix-ui/react-accordion": "1.2.2",
     "@radix-ui/react-alert-dialog": "1.1.4",

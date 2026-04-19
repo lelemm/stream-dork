@@ -24,6 +24,7 @@ const defaultConfig: DeckConfig = {
   animationDirection: "clockwise",
   animationStartCorner: "bottom-right",
   // Shortcut defaults
+  overlayShortcut: "Control+Alt+Space",
   shortcutDebounceMs: 300,
   // Auto-dismiss defaults
   autoDismissEnabled: false,
@@ -107,6 +108,7 @@ interface DeckStore {
   setAnimationDirection: (direction: AnimationDirection) => void
   setAnimationStartCorner: (corner: AnimationStartCorner) => void
   // Shortcut settings
+  setOverlayShortcut: (shortcut: string) => void
   setShortcutDebounceMs: (ms: number) => void
   // Auto-dismiss settings
   setAutoDismissEnabled: (enabled: boolean) => void
@@ -128,6 +130,8 @@ interface DeckStore {
   exportConfig: () => string
   importConfig: (json: string) => boolean
   updateButtonByContext: (context: string, updater: (button: GridButton) => GridButton | null) => void
+  // Update button visuals (icon, label, state) without persisting to main - for runtime plugin updates
+  updateButtonVisualByContext: (context: string, updates: { icon?: string; label?: string; state?: number; status?: "alert" | "ok" }) => void
   setButtonStatusByContext: (context: string, status?: "alert" | "ok") => void
 }
 
@@ -148,13 +152,22 @@ export const useDeckStore = create<DeckStore>((set, get) => ({
   setConfigFromMain: (newConfig) => {
     // Mark that we've received config from main, so future updates can be pushed
     configLoadedFromMain = true
-    // Ensure scenes exist with migration
-    const migrated = { ...defaultConfig, ...newConfig }
-    if (!migrated.scenes || migrated.scenes.length === 0) {
-      migrated.scenes = [{ id: DEFAULT_SCENE_ID, name: "Scene 1", rows: migrated.rows, cols: migrated.cols }]
-      migrated.activeSceneId = DEFAULT_SCENE_ID
+    
+    // Merge with defaults
+    const merged = { ...defaultConfig, ...newConfig }
+    
+    // Ensure scenes exist (metadata only, no buttons in scenes)
+    if (!merged.scenes || merged.scenes.length === 0) {
+      merged.scenes = [{ id: DEFAULT_SCENE_ID, name: "Scene 1", rows: merged.rows, cols: merged.cols }]
+      merged.activeSceneId = DEFAULT_SCENE_ID
     }
-    set({ config: migrated })
+    
+    // Ensure buttons array exists
+    if (!Array.isArray(merged.buttons)) {
+      merged.buttons = []
+    }
+    
+    set({ config: merged })
   },
 
   setGridDimensions: (rows, cols) => {
@@ -348,6 +361,14 @@ export const useDeckStore = create<DeckStore>((set, get) => ({
     })
   },
 
+  setOverlayShortcut: (shortcut) => {
+    set((state) => {
+      const updatedConfig = { ...state.config, overlayShortcut: shortcut }
+      pushUpdateToMain(updatedConfig)
+      return { config: updatedConfig }
+    })
+  },
+
   setShortcutDebounceMs: (ms) => {
     set((state) => {
       const updatedConfig = { ...state.config, shortcutDebounceMs: ms }
@@ -450,20 +471,33 @@ export const useDeckStore = create<DeckStore>((set, get) => ({
 
   moveButton: (id, newRow, newCol) => {
     set((state) => {
-      // Check if target position is occupied
-      const existingButton = state.config.buttons.find(
-        (btn) => btn.position.row === newRow && btn.position.col === newCol
-      )
+      const activeSceneId = state.config.activeSceneId || DEFAULT_SCENE_ID
+
+      // Check if target position is occupied **within the same scene only**
+      const existingButton = state.config.buttons.find((btn) => {
+        const sceneId = btn.sceneId || DEFAULT_SCENE_ID
+        return (
+          sceneId === activeSceneId &&
+          btn.position.row === newRow &&
+          btn.position.col === newCol
+        )
+      })
       
       const buttons = state.config.buttons.map((btn) => {
         if (btn.id === id) {
           return { ...btn, position: { row: newRow, col: newCol } }
         }
-        // If there's a button at the target, swap positions
+        // If there's a button at the target (same scene), swap positions
         if (existingButton && btn.id === existingButton.id) {
           const sourceButton = state.config.buttons.find((b) => b.id === id)
           if (sourceButton) {
-            return { ...btn, position: { row: sourceButton.position.row, col: sourceButton.position.col } }
+            return {
+              ...btn,
+              position: {
+                row: sourceButton.position.row,
+                col: sourceButton.position.col,
+              },
+            }
           }
         }
         return btn
@@ -560,6 +594,43 @@ export const useDeckStore = create<DeckStore>((set, get) => ({
       const updatedConfig = { ...state.config, buttons }
       pushUpdateToMain(updatedConfig)
       return { config: updatedConfig }
+    })
+  },
+
+  // Update button visuals without persisting to main process
+  // This is used for runtime plugin updates (setImage, setTitle, etc.)
+  // to avoid circular updates and unnecessary re-renders
+  updateButtonVisualByContext: (context, updates) => {
+    set((state) => {
+      let updated = false
+      const buttons = state.config.buttons.map((button) => {
+        if (button.action?.context === context) {
+          const newButton = { ...button }
+          if (updates.icon !== undefined) {
+            newButton.icon = updates.icon
+            updated = true
+          }
+          if (updates.label !== undefined) {
+            newButton.label = updates.label
+            updated = true
+          }
+          if (updates.state !== undefined && newButton.action) {
+            newButton.action = { ...newButton.action, state: updates.state }
+            updated = true
+          }
+          if (updates.status !== undefined) {
+            newButton.status = updates.status
+            updated = true
+          }
+          return newButton
+        }
+        return button
+      })
+      if (!updated) {
+        return { config: state.config }
+      }
+      // Don't push to main - visual updates are runtime state only
+      return { config: { ...state.config, buttons } }
     })
   },
 

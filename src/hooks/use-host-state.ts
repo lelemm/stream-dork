@@ -6,7 +6,7 @@ import type { HostState } from "@/types/electron"
  * Hook for managing host state and events in the setup page
  */
 export function useHostState() {
-  const { selectedButton, updateButtonByContext, setButtonStatusByContext } = useDeckStore()
+  const { selectedButton, updateButtonVisualByContext, setButtonStatusByContext } = useDeckStore()
   const [hostState, setHostState] = useState<HostState | null>(null)
   const statusTimers = useRef(new Map<string, ReturnType<typeof setTimeout>>())
 
@@ -65,28 +65,22 @@ export function useHostState() {
           break
         case "setTitle":
           if (typeof payload?.title === "string") {
-            updateButtonByContext(context, (button) => ({
-              ...button,
-              label: payload.title!,
-            }))
+            // Use visual update to avoid persisting to main and causing circular updates
+            updateButtonVisualByContext(context, { label: payload.title })
           }
           break
         case "setImage":
           if (typeof payload?.image === "string") {
-            updateButtonByContext(context, (button) => ({
-              ...button,
-              icon: payload.image!,
-            }))
+            // Use visual update to avoid persisting to main and causing circular updates
+            updateButtonVisualByContext(context, { icon: payload.image })
           }
           break
         case "setState":
-          updateButtonByContext(context, (button) => ({
-            ...button,
-            action: button.action ? { ...button.action, state: payload?.state ?? 0 } : button.action,
-          }))
+          // Use visual update to avoid persisting to main and causing circular updates
+          updateButtonVisualByContext(context, { state: payload?.state ?? 0 })
           break
         case "showAlert":
-          updateButtonByContext(context, (button) => ({ ...button, status: "alert" }))
+          updateButtonVisualByContext(context, { status: "alert" })
           clearTimeout(statusTimers.current.get(context))
           statusTimers.current.set(
             context,
@@ -97,7 +91,7 @@ export function useHostState() {
           )
           break
         case "showOk":
-          updateButtonByContext(context, (button) => ({ ...button, status: "ok" }))
+          updateButtonVisualByContext(context, { status: "ok" })
           clearTimeout(statusTimers.current.get(context))
           statusTimers.current.set(
             context,
@@ -118,7 +112,7 @@ export function useHostState() {
       statusTimers.current.forEach((timer) => clearTimeout(timer))
       statusTimers.current.clear()
     }
-  }, [updateButtonByContext, setButtonStatusByContext, refreshHostState])
+  }, [updateButtonVisualByContext, setButtonStatusByContext, refreshHostState])
 
   return {
     hostState,

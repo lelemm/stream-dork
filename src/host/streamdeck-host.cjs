@@ -14,6 +14,16 @@ function safeUUID() {
   return `${Date.now()}-${Math.floor(Math.random() * 1_000_000)}`
 }
 
+/**
+ * Strip ANSI escape codes from a string (color codes, cursor movements, etc.)
+ * @param {string} str - The string to strip
+ * @returns {string} The string without ANSI codes
+ */
+function stripAnsi(str) {
+  // eslint-disable-next-line no-control-regex
+  return str.replace(/\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])/g, "")
+}
+
 class StreamDeckHost {
   constructor({ plugins = [], iconLibraries = [], logger = () => {}, notifyRenderer = () => {}, stateFile, language = "en", enableFileLogging = false }) {
     this.plugins = plugins
@@ -57,6 +67,17 @@ class StreamDeckHost {
     // Key: context, Value: JSON string of last sent settings
     this.lastSentSettingsToPlugin = new Map()
     this.lastSentSettingsToInspector = new Map()
+    // Debounce timer for saving visual state (can update frequently)
+    this.saveStateDebounceTimer = null
+    this.debouncedSaveState = () => {
+      if (this.saveStateDebounceTimer) {
+        clearTimeout(this.saveStateDebounceTimer)
+      }
+      this.saveStateDebounceTimer = setTimeout(() => {
+        this.saveState()
+        this.saveStateDebounceTimer = null
+      }, 1000) // Save after 1 second of no changes
+    }
   }
 
   getCommLogPath() {
@@ -115,6 +136,11 @@ class StreamDeckHost {
 
   stop() {
     if (!this.server) return
+    // Flush any pending state save
+    if (this.saveStateDebounceTimer) {
+      clearTimeout(this.saveStateDebounceTimer)
+      this.saveState()
+    }
     this.terminatePlugins()
     this.server.close()
     this.server = null
@@ -171,6 +197,95 @@ class StreamDeckHost {
       ]
     }
 
+    const ext = path.extname(plugin.codePath).toLowerCase()
+    this.log("HOST", `Launching plugin: ${plugin.name} (${plugin.codePath}) [type: ${ext}]`)
+
+    // Handle different plugin types
+    if (ext === ".html" || ext === ".htm") {
+      // HTML-based plugins run in a hidden BrowserWindow
+      this.launchHtmlPlugin(plugin, info)
+    } else if (ext === ".js") {
+      // JavaScript plugins run with Node.js
+      this.launchNodePlugin(plugin, info)
+    } else {
+      // Native executables (.exe, etc.) spawn directly
+      this.launchNativePlugin(plugin, info)
+    }
+  }
+
+  launchHtmlPlugin(plugin, info) {
+    // HTML plugins need to be launched in Electron's main process
+    // We'll use a callback to notify the main process to create a hidden BrowserWindow
+    if (this.onLaunchHtmlPlugin) {
+      this.onLaunchHtmlPlugin(plugin, this.port, info)
+      this.log("HOST", `Requested HTML plugin launch: ${plugin.name}`)
+    } else {
+      this.log("HOST", `Cannot launch HTML plugin ${plugin.name}: no HTML plugin launcher registered`)
+    }
+  }
+
+  launchNodePlugin(plugin, info) {
+    // For JS plugins, we can use Electron's BrowserWindow with nodeIntegration
+    // This allows running JS plugins without requiring Node.js to be installed separately
+    // The plugin will run in a hidden renderer process with Node.js APIs available
+    if (this.onLaunchJsPlugin) {
+      this.onLaunchJsPlugin(plugin, this.port, info)
+      this.log("HOST", `Requested JS plugin launch via Electron: ${plugin.name}`)
+      return
+    }
+    
+    // Fallback: try to spawn with Node.js from PATH (if available)
+    const args = [
+      plugin.codePath,
+      "-port", String(this.port),
+      "-pluginUUID", plugin.uuid,
+      "-registerEvent", "registerPlugin",
+      "-info", JSON.stringify(info)
+    ]
+
+    this.log("HOST", `Plugin args: node ${args.join(" ")}`)
+
+    try {
+      const pluginDir = path.dirname(plugin.codePath)
+      const nodeCmd = process.platform === "win32" ? "node.exe" : "node"
+      const proc = spawn(nodeCmd, args, {
+        cwd: pluginDir,
+        stdio: ["ignore", "pipe", "pipe"],
+        detached: false,
+        windowsHide: true,
+        shell: true // Use shell to find node in PATH
+      })
+
+      this.pluginProcesses.set(plugin.uuid, proc)
+
+      proc.stdout.on("data", (data) => {
+        const lines = data.toString().split("\n").filter(Boolean)
+        lines.forEach((line) => this.log("PLUGIN-STDOUT", `[${plugin.name}] ${stripAnsi(line)}`))
+      })
+
+      proc.stderr.on("data", (data) => {
+        const lines = data.toString().split("\n").filter(Boolean)
+        lines.forEach((line) => this.log("PLUGIN-STDERR", `[${plugin.name}] ${stripAnsi(line)}`))
+      })
+
+      proc.on("error", (error) => {
+        this.log("HOST", `Plugin ${plugin.name} (Node) failed to start: ${error.message}`)
+        this.pluginProcesses.delete(plugin.uuid)
+      })
+
+      proc.on("exit", (code, signal) => {
+        this.log("HOST", `Plugin ${plugin.name} exited (code=${code}, signal=${signal})`)
+        this.pluginProcesses.delete(plugin.uuid)
+        this.pluginSockets.delete(plugin.uuid)
+      })
+
+      this.log("HOST", `Plugin ${plugin.name} launched with Node.js, PID ${proc.pid}`)
+    } catch (error) {
+      this.log("HOST", `Failed to spawn Node plugin ${plugin.name}: ${error.message}`)
+    }
+  }
+
+  launchNativePlugin(plugin, info) {
     const args = [
       "-port", String(this.port),
       "-pluginUUID", plugin.uuid,
@@ -178,7 +293,6 @@ class StreamDeckHost {
       "-info", JSON.stringify(info)
     ]
 
-    this.log("HOST", `Launching plugin: ${plugin.name} (${plugin.codePath})`)
     this.log("HOST", `Plugin args: ${args.join(" ")}`)
 
     try {
@@ -194,12 +308,12 @@ class StreamDeckHost {
 
       proc.stdout.on("data", (data) => {
         const lines = data.toString().split("\n").filter(Boolean)
-        lines.forEach((line) => this.log("PLUGIN-STDOUT", `[${plugin.name}] ${line}`))
+        lines.forEach((line) => this.log("PLUGIN-STDOUT", `[${plugin.name}] ${stripAnsi(line)}`))
       })
 
       proc.stderr.on("data", (data) => {
         const lines = data.toString().split("\n").filter(Boolean)
-        lines.forEach((line) => this.log("PLUGIN-STDERR", `[${plugin.name}] ${line}`))
+        lines.forEach((line) => this.log("PLUGIN-STDERR", `[${plugin.name}] ${stripAnsi(line)}`))
       })
 
       proc.on("error", (error) => {
@@ -631,15 +745,24 @@ class StreamDeckHost {
     
     // Store visual state for later retrieval (when overlay opens)
     const currentVisual = this.visualState.get(context) || {}
+    let visualStateChanged = false
     if (eventName === "setImage" && payload?.image) {
       currentVisual.image = payload.image
+      visualStateChanged = true
     } else if (eventName === "setTitle" && typeof payload?.title === "string") {
       currentVisual.title = payload.title
+      visualStateChanged = true
     } else if (eventName === "setState" && typeof payload?.state === "number") {
       currentVisual.state = payload.state
+      visualStateChanged = true
     }
     if (Object.keys(currentVisual).length > 0) {
       this.visualState.set(context, currentVisual)
+    }
+    
+    // Debounced save to avoid excessive disk writes (visual updates can be frequent)
+    if (visualStateChanged) {
+      this.debouncedSaveState()
     }
     
     // Notify renderer if available
@@ -785,6 +908,92 @@ class StreamDeckHost {
     return context
   }
 
+  /**
+   * Destroy a context and clean up all associated data.
+   * Sends willDisappear to the plugin and removes from all maps.
+   * @param {string} context - The context to destroy
+   */
+  destroyContext(context) {
+    const entry = this.contextRegistry.get(context)
+    if (entry) {
+      // Send willDisappear to the plugin
+      this.send(entry.pluginUuid, {
+        event: "willDisappear",
+        action: entry.action,
+        context,
+        device: entry.device,
+        payload: {
+          coordinates: entry.coordinates,
+          settings: this.contextSettings.get(context) || {},
+          controller: entry.controller,
+          state: entry.state,
+          isInMultiAction: false,
+        },
+      })
+      this.log("HOST", `Destroying context ${context} for action ${entry.action}`)
+    }
+
+    // Clean up all maps that reference this context
+    this.contextRegistry.delete(context)
+    this.contextSettings.delete(context)
+    this.visualState.delete(context)
+    this.lastSentSettingsToPlugin.delete(context)
+    this.lastSentSettingsToInspector.delete(context)
+    
+    // Also clean up -pi suffixed keys (legacy)
+    this.contextSettings.delete(`${context}-pi`)
+    
+    // Remove inspector association if any
+    this.inspectorByContext.delete(context)
+
+    this.saveState()
+  }
+
+  /**
+   * Clean up orphaned contexts that no longer have corresponding buttons in the config.
+   * @param {string[]} activeContexts - Array of context IDs that are still in use
+   */
+  cleanupOrphanedContexts(activeContexts) {
+    const activeSet = new Set(activeContexts)
+    let cleanedCount = 0
+    
+    // Find and remove orphaned contexts from contextRegistry
+    const orphanedContexts = []
+    for (const [context] of this.contextRegistry) {
+      if (!activeSet.has(context)) {
+        orphanedContexts.push(context)
+      }
+    }
+    
+    for (const context of orphanedContexts) {
+      this.destroyContext(context)
+      cleanedCount++
+    }
+    
+    // Also clean up orphaned contextSettings (entries not in registry but persisted)
+    const orphanedSettings = []
+    for (const [key] of this.contextSettings) {
+      // Skip -pi suffixed keys as they're handled by destroyContext
+      if (key.endsWith("-pi")) continue
+      if (!activeSet.has(key) && !this.contextRegistry.has(key)) {
+        orphanedSettings.push(key)
+      }
+    }
+    
+    for (const key of orphanedSettings) {
+      this.contextSettings.delete(key)
+      this.contextSettings.delete(`${key}-pi`)
+      cleanedCount++
+    }
+    
+    if (cleanedCount > 0) {
+      this.log("HOST", `Cleaned up ${cleanedCount} orphaned context(s)`)
+      this.saveState()
+    }
+    
+    return cleanedCount
+  }
+
   sendToContext(context, eventName, payload = {}) {
     const entry = this.contextRegistry.get(context)
     if (!entry) return
@@ -916,6 +1125,11 @@ class StreamDeckHost {
           this.contextSettings.set(key, value)
         })
         
+        // Load visual state (persisted image/title/state per context)
+        Object.entries(parsed.visualState || {}).forEach(([key, value]) => {
+          this.visualState.set(key, value)
+        })
+        
         // Save the migrated state if needed
         if (needsSave) {
           // Defer save to avoid issues during initialization
@@ -933,8 +1147,9 @@ class StreamDeckHost {
       const payload = {
         globalSettings: Object.fromEntries(this.globalSettings),
         contextSettings: Object.fromEntries(this.contextSettings),
+        visualState: Object.fromEntries(this.visualState),
       }
-      fs.writeFileSync(this.stateFile, JSON.stringify(payload), "utf-8")
+      fs.writeFileSync(this.stateFile, JSON.stringify(payload, null, 2), "utf-8")
     } catch (error) {
       this.log("HOST", `saveState failed: ${error.message}`)
     }

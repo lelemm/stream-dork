@@ -106,6 +106,17 @@ export interface AppFlags {
   fileLogging: boolean
 }
 
+export interface ShortcutTestResult {
+  valid: boolean
+  error?: string
+}
+
+export interface ShortcutRegisterResult {
+  success: boolean
+  shortcut: string
+  error?: string
+}
+
 export interface ElectronAPI {
   getConfig: () => Promise<DeckConfig>
   getAppFlags: () => Promise<AppFlags>
@@ -114,6 +125,7 @@ export interface ElectronAPI {
   showSetup: () => void
   closeOverlay: () => void
   forceHideOverlay: () => void
+  setIgnoreMouseEvents: (ignore: boolean, forward?: boolean) => void
   toggleSetup: () => void
   getHostState: () => Promise<HostState>
   getHostVisualState: () => Promise<HostVisualState>
@@ -126,11 +138,18 @@ export interface ElectronAPI {
   // Notification window methods
   onNotification?: (callback: (data: NotificationData) => void) => () => void
   onNotificationConfig?: (callback: (config: NotificationSettings) => void) => () => void
-  onDismissNotification?: (callback: (data: { id: string }) => void) => () => void
+  onDismissNotification?: (callback: (data: { context: string }) => void) => () => void
   getNotificationConfig?: () => Promise<NotificationSettings>
   hideNotification?: () => void
-  dismissNotification?: (id: string) => void
+  setNotificationIgnoreMouseEvents?: (ignore: boolean, forward?: boolean) => void
+  dismissNotification?: (context: string) => void
   openPluginFolder?: () => void
+  testShortcut?: (shortcut: string) => Promise<ShortcutTestResult>
+  registerOverlayShortcut?: () => Promise<ShortcutRegisterResult>
+  // Snooze notification methods
+  snoozeNotification?: (context: string, minutes: number) => Promise<{ success: boolean; expiryTime: number }>
+  wakeNotification?: (context: string) => Promise<{ success: boolean; wasSnozed: boolean }>
+  getSnoozedContexts?: () => Promise<Record<string, number>>
 }
 
 declare global {

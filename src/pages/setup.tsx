@@ -3,6 +3,7 @@ import "@/styles/global.css"
 import { createRoot } from "react-dom/client"
 import { useEffect, useState, useCallback } from "react"
 import { useDeckStore } from "@/lib/deck-store"
+import { useHostState } from "@/hooks/use-host-state"
 import { ButtonGrid } from "@/components/button-grid"
 import { ButtonConfigPanel } from "@/components/button-config-panel"
 import { GridSettings } from "@/components/grid-settings"
@@ -20,12 +21,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
 import { Settings, Search, Puzzle, Sliders, FolderOpen } from "lucide-react"
 import { Input } from "@/components/ui/input"
-import type { HostState } from "@/types/electron"
+import { Toaster } from "@/components/ui/sonner"
 
 function SetupPage() {
   const [draggedAction, setDraggedAction] = useState<any>(null)
   const { config, addButton, setConfigFromMain, selectedButton, setPanelSizes } = useDeckStore()
-  const [hostState, setHostState] = useState<HostState | null>(null)
+  const { hostState, refreshHostState } = useHostState()
   const [showControlPanel, setShowControlPanel] = useState(false)
   const [actionFilter, setActionFilter] = useState("")
   const [rightPanelTab, setRightPanelTab] = useState<string>("actions")
@@ -101,24 +102,12 @@ function SetupPage() {
       unsubscribe = window.electron?.onConfigUpdated((cfg) => {
         setConfigFromMain(cfg)
       })
-      window.electron?.getHostState().then((state) => setHostState(state))
     }
 
     return () => {
       unsubscribe?.()
     }
   }, [setConfigFromMain])
-
-  const refreshHostState = async () => {
-    try {
-      const state = await window.electron?.getHostState()
-      if (state) {
-        setHostState(state)
-      }
-    } catch (error) {
-      console.error("Unable to refresh host state", error)
-    }
-  }
 
   const handleHorizontalLayoutChange = useCallback((sizes: number[]) => {
     if (sizes.length === 2) {
@@ -142,6 +131,7 @@ function SetupPage() {
 
   return (
     <div className="h-screen flex flex-col bg-background">
+      <Toaster position="bottom-right" />
       {/* Header */}
       <header className="border-b border-border bg-card flex-shrink-0">
         <div className="flex items-center justify-between px-6 py-4">

@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
 import { Grid3x3, Maximize2, Palette, Move, Download, Upload, Sparkles, Keyboard, Timer } from "lucide-react"
+import { toast } from "sonner"
 import type { OverlayPosition, AnimationDirection, AnimationStartCorner } from "@/lib/types"
 
 export function GridSettings() {
@@ -26,6 +27,7 @@ export function GridSettings() {
     setAnimationDuration,
     setAnimationDirection,
     setAnimationStartCorner,
+    setOverlayShortcut,
     setShortcutDebounceMs,
     setAutoDismissEnabled,
     setAutoDismissDelaySeconds,
@@ -50,7 +52,10 @@ export function GridSettings() {
   const [animDirection, setAnimDirection] = useState<AnimationDirection>(config.animationDirection || "clockwise")
   const [animStartCorner, setAnimStartCorner] = useState<AnimationStartCorner>(config.animationStartCorner || "bottom-right")
   // Shortcut settings
+  const [overlayShortcutValue, setOverlayShortcutValue] = useState(config.overlayShortcut || "Control+Alt+Space")
+  const [isRecordingShortcut, setIsRecordingShortcut] = useState(false)
   const [debounceMs, setDebounceMs] = useState(config.shortcutDebounceMs || 300)
+  const shortcutInputRef = useRef<HTMLInputElement>(null)
   // Auto-dismiss settings
   const [autoDismiss, setAutoDismiss] = useState(config.autoDismissEnabled ?? false)
   const [dismissDelay, setDismissDelay] = useState(config.autoDismissDelaySeconds || 5)
@@ -73,12 +78,13 @@ export function GridSettings() {
     setAnimDuration(config.animationDuration || 250)
     setAnimDirection(config.animationDirection || "clockwise")
     setAnimStartCorner(config.animationStartCorner || "bottom-right")
+    setOverlayShortcutValue(config.overlayShortcut || "Control+Alt+Space")
     setDebounceMs(config.shortcutDebounceMs || 300)
     setAutoDismiss(config.autoDismissEnabled ?? false)
     setDismissDelay(config.autoDismissDelaySeconds || 5)
   }, [config])
 
-  const handleApply = () => {
+  const handleApply = async () => {
     const newRows = Math.max(1, Math.min(8, rows))
     const newCols = Math.max(1, Math.min(10, cols))
     setGridDimensions(newRows, newCols)
@@ -96,10 +102,23 @@ export function GridSettings() {
     setAnimationDirection(animDirection)
     setAnimationStartCorner(animStartCorner)
     // Shortcut settings
+    setOverlayShortcut(overlayShortcutValue)
     setShortcutDebounceMs(Math.max(50, Math.min(1000, debounceMs)))
     // Auto-dismiss settings
     setAutoDismissEnabled(autoDismiss)
     setAutoDismissDelaySeconds(Math.max(1, Math.min(60, dismissDelay)))
+    
+    // Register the new shortcut and check if it succeeded
+    const result = await window.electron?.registerOverlayShortcut?.()
+    if (result?.success) {
+      toast.success("Settings saved", {
+        description: `Configuration applied. Shortcut: ${result.shortcut}`,
+      })
+    } else {
+      toast.error("Settings saved with warning", {
+        description: result?.error || "Could not register the shortcut. It may be in use by another application.",
+      })
+    }
   }
 
   const handleExport = () => {
@@ -415,6 +434,117 @@ export function GridSettings() {
           <h3 className="font-semibold text-sm">Shortcut & Behavior</h3>
         </div>
         <div className="space-y-3">
+          <div>
+            <Label htmlFor="overlayShortcut" className="text-xs">
+              Toggle Overlay Shortcut
+            </Label>
+            <div className="flex gap-2 mt-1.5">
+              <Input
+                ref={shortcutInputRef}
+                id="overlayShortcut"
+                type="text"
+                value={isRecordingShortcut ? "Press keys..." : overlayShortcutValue}
+                readOnly
+                className={`flex-1 cursor-pointer ${isRecordingShortcut ? "ring-2 ring-primary animate-pulse" : ""}`}
+                onKeyDown={async (e) => {
+                  if (!isRecordingShortcut) return
+                  e.preventDefault()
+                  e.stopPropagation()
+                  
+                  const parts: string[] = []
+                  if (e.ctrlKey) parts.push("Control")
+                  if (e.altKey) parts.push("Alt")
+                  if (e.shiftKey) parts.push("Shift")
+                  if (e.metaKey) parts.push("Meta")
+                  
+                  // Only accept if a modifier is pressed with a key
+                  const key = e.key
+                  const code = e.code // Use code for more reliable key detection
+                  
+                  if (!["Control", "Alt", "Shift", "Meta"].includes(key)) {
+                    // Convert key to proper Electron accelerator format
+                    let finalKey = key
+                    
+                    // Handle dead keys and special characters using e.code
+                    if (key === "Dead" || key === "Unidentified") {
+                      // Map common dead key codes to their characters
+                      if (code === "Backquote") finalKey = "`"
+                      else if (code === "Quote") finalKey = "'"
+                      else {
+                        toast.error("Unsupported key", {
+                          description: "This key combination is not supported.",
+                        })
+                        return
+                      }
+                    } else if (key === " ") finalKey = "Space"
+                    else if (key === "Escape") finalKey = "Escape"
+                    else if (key === "Tab") finalKey = "Tab"
+                    else if (key === "Backspace") finalKey = "Backspace"
+                    else if (key === "Delete") finalKey = "Delete"
+                    else if (key === "Enter") finalKey = "Enter"
+                    else if (key === "ArrowUp") finalKey = "Up"
+                    else if (key === "ArrowDown") finalKey = "Down"
+                    else if (key === "ArrowLeft") finalKey = "Left"
+                    else if (key === "ArrowRight") finalKey = "Right"
+                    else if (key.startsWith("F") && key.length <= 3) finalKey = key // F1-F12
+                    else if (key.length === 1) finalKey = key.toUpperCase()
+                    // Keep special characters as-is (like `, ~, etc.)
+                    
+                    parts.push(finalKey)
+                    
+                    if (parts.length >= 2) {
+                      const shortcutString = parts.join("+")
+                      
+                      // Test if the shortcut is valid
+                      const testResult = await window.electron?.testShortcut?.(shortcutString)
+                      if (testResult?.valid) {
+                        setOverlayShortcutValue(shortcutString)
+                        setIsRecordingShortcut(false)
+                        toast.success("Shortcut recorded", {
+                          description: `New shortcut: ${shortcutString}`,
+                        })
+                      } else {
+                        toast.error("Invalid shortcut", {
+                          description: testResult?.error || "This shortcut cannot be used. It may be reserved by the system or another application.",
+                        })
+                        setIsRecordingShortcut(false)
+                      }
+                    }
+                  }
+                }}
+                onBlur={() => {
+                  // Small delay to allow button click to register first
+                  setTimeout(() => setIsRecordingShortcut(false), 150)
+                }}
+                onClick={() => {
+                  if (!isRecordingShortcut) {
+                    setIsRecordingShortcut(true)
+                    shortcutInputRef.current?.focus()
+                  }
+                }}
+              />
+              <Button
+                type="button"
+                variant={isRecordingShortcut ? "destructive" : "outline"}
+                size="sm"
+                onClick={() => {
+                  if (isRecordingShortcut) {
+                    setIsRecordingShortcut(false)
+                  } else {
+                    setIsRecordingShortcut(true)
+                    // Focus the input after a small delay to ensure state is updated
+                    setTimeout(() => shortcutInputRef.current?.focus(), 10)
+                  }
+                }}
+                className="whitespace-nowrap"
+              >
+                {isRecordingShortcut ? "Cancel" : "Record"}
+              </Button>
+            </div>
+            <p className="text-[10px] text-muted-foreground mt-1">
+              Click Record and press your desired key combination
+            </p>
+          </div>
           <div>
             <Label htmlFor="debounceMs" className="text-xs">
               Shortcut Debounce (ms)

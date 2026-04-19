@@ -1,11 +1,43 @@
 import "@/styles/global.css"
 
-import { useState, useEffect, useCallback, useRef } from "react"
+import { useEffect, useCallback, useRef, useMemo, useState } from "react"
 import { createRoot } from "react-dom/client"
+import { create } from "zustand"
+import { shallow } from "zustand/shallow"
 import type { NotificationSettings } from "@/lib/types"
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuTrigger,
+  ContextMenuSub,
+  ContextMenuSubContent,
+  ContextMenuSubTrigger,
+} from "@/components/ui/context-menu"
 
-interface NotificationData {
-  id: string
+// Generate initials from a title string (up to 2-3 characters)
+function getInitials(title: string | undefined, maxChars: number = 2): string {
+  if (!title) return "?"
+  
+  // Split by common separators and get first letter of each word
+  const words = title.split(/[\s\-_/\\|]+/).filter(w => w.length > 0)
+  
+  if (words.length === 0) return "?"
+  
+  if (words.length === 1) {
+    // Single word: take first 2-3 characters
+    return words[0].substring(0, maxChars).toUpperCase()
+  }
+  
+  // Multiple words: take first letter of first N words
+  return words
+    .slice(0, maxChars)
+    .map(w => w[0])
+    .join("")
+    .toUpperCase()
+}
+
+interface NotificationContent {
   context: string
   event: "setTitle" | "setImage" | "showOk" | "showAlert"
   icon?: string
@@ -13,7 +45,12 @@ interface NotificationData {
   backgroundColor?: string
   textColor?: string
   status?: "ok" | "alert"
+}
+
+interface NotificationMeta {
+  context: string
   createdAt: number
+  opacity: number
 }
 
 const defaultSettings: NotificationSettings = {
@@ -24,57 +61,306 @@ const defaultSettings: NotificationSettings = {
   alwaysFanOut: false,
   clickThrough: false,
   hoverOpacity: 100,
+  iconSize: 72,
 }
 
+const MAX_NOTIFICATIONS = 5
+const FADE_DURATION = 300
+
+// Timer refs stored outside React to avoid re-renders
+const dismissTimers = new Map<string, ReturnType<typeof setTimeout>>()
+const fadeTimers = new Map<string, ReturnType<typeof setTimeout>>()
+
+interface NotificationStore {
+  // Content indexed by context - using plain object for reliable updates
+  contentByContext: Record<string, NotificationContent>
+  // Ordered list of active notification contexts with metadata
+  notificationOrder: NotificationMeta[]
+  // Settings
+  settings: NotificationSettings
+  isHovered: boolean
+  
+  // Actions
+  setSettings: (settings: NotificationSettings) => void
+  setHovered: (hovered: boolean) => void
+  addOrUpdateNotification: (data: NotificationContent) => { isNew: boolean; context: string }
+  updateOpacity: (context: string, opacity: number) => void
+  removeNotification: (context: string) => void
+}
+
+const useNotificationStore = create<NotificationStore>((set, get) => ({
+  contentByContext: {},
+  notificationOrder: [],
+  settings: defaultSettings,
+  isHovered: false,
+
+  setSettings: (settings) => set({ settings }),
+  
+  setHovered: (hovered) => set({ isHovered: hovered }),
+  
+  addOrUpdateNotification: (data) => {
+    const state = get()
+    const existingIndex = state.notificationOrder.findIndex(n => n.context === data.context)
+    
+    // Update content
+    const newContent = { ...state.contentByContext, [data.context]: data }
+    
+    if (existingIndex >= 0) {
+      // Update existing - keep position, just update createdAt for timer reset
+      const newOrder = [...state.notificationOrder]
+      newOrder[existingIndex] = {
+        ...newOrder[existingIndex],
+        createdAt: Date.now(),
+        opacity: 1, // Ensure visible (in case was fading)
+      }
+      set({ contentByContext: newContent, notificationOrder: newOrder })
+      return { isNew: false, context: data.context }
+    } else {
+      // New notification
+      let newOrder = [...state.notificationOrder, {
+        context: data.context,
+        createdAt: Date.now(),
+        opacity: 0, // Start at 0 for fade-in
+      }]
+      
+      // Limit to max
+      while (newOrder.length > MAX_NOTIFICATIONS) {
+        const removed = newOrder.shift()
+        if (removed) {
+          delete newContent[removed.context]
+          clearTimersForContext(removed.context)
+        }
+      }
+      
+      set({ contentByContext: newContent, notificationOrder: newOrder })
+      return { isNew: true, context: data.context }
+    }
+  },
+  
+  updateOpacity: (context, opacity) => {
+    set((state) => {
+      const index = state.notificationOrder.findIndex(n => n.context === context)
+      if (index < 0) return state
+      
+      const newOrder = [...state.notificationOrder]
+      newOrder[index] = { ...newOrder[index], opacity }
+      return { notificationOrder: newOrder }
+    })
+  },
+  
+  removeNotification: (context) => {
+    set((state) => {
+      const { [context]: _, ...newContent } = state.contentByContext
+      const newOrder = state.notificationOrder.filter(n => n.context !== context)
+      
+      if (newOrder.length === 0) {
+        window.electron?.hideNotification?.()
+      }
+      
+      return { contentByContext: newContent, notificationOrder: newOrder }
+    })
+  },
+}))
+
+function clearTimersForContext(context: string) {
+  const timer = dismissTimers.get(context)
+  if (timer) {
+    clearTimeout(timer)
+    dismissTimers.delete(context)
+  }
+  const fadeTimer = fadeTimers.get(context)
+  if (fadeTimer) {
+    clearTimeout(fadeTimer)
+    fadeTimers.delete(context)
+  }
+}
+
+// Inner content component - reads directly from store, only re-renders when its own content changes
+function NotificationIconContent({ 
+  context,
+  buttonSize,
+  isExpanded,
+  total,
+}: { 
+  context: string
+  buttonSize: number
+  isExpanded: boolean
+  total: number
+}) {
+  // Subscribe only to this specific context's content
+  const content = useNotificationStore(
+    useCallback((state) => state.contentByContext[context], [context])
+  )
+  
+  if (!content) return null
+  
+  const innerPadding = Math.max(Math.floor(buttonSize * 0.04), 2)
+  const innerRadius = Math.max(Math.max(Math.floor(buttonSize * 0.19), 8) - 3, 4)
+  
+  // Check if we have a real image icon
+  const hasImageIcon = content.icon && (content.icon.startsWith("data:") || content.icon.startsWith("http"))
+  
+  // Calculate whether we should show title
+  const shouldShowTitle = content.title && (isExpanded || total === 1)
+  
+  // Calculate icon size - smaller when we need to show a title
+  const baseIconSize = Math.floor(buttonSize * 0.44)
+  const smallIconSize = Math.floor(buttonSize * 0.32)
+  const iconSize = shouldShowTitle ? smallIconSize : baseIconSize
+  
+  // Calculate font sizes proportionally
+  const labelSize = Math.max(Math.floor(buttonSize * 0.10), 8)
+  const initialsSize = Math.floor(iconSize * 0.55)
+  
+  const initials = useMemo(() => getInitials(content.title, 2), [content.title])
+
+  return (
+    <>
+      <div
+        className="relative flex items-center justify-center w-full h-full"
+        style={{
+          borderRadius: `${Math.max(Math.floor(buttonSize * 0.19), 8)}px`,
+          backgroundColor: content.backgroundColor || "rgba(26, 26, 26, 0.98)",
+          boxShadow: "0 4px 20px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.1)",
+        }}
+      >
+        {/* Inner button with bevel effect */}
+        <div
+          className="absolute flex items-center justify-center flex-col overflow-hidden"
+          style={{
+            inset: `${innerPadding}px`,
+            borderRadius: `${innerRadius}px`,
+            background: "linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 50%, rgba(0,0,0,0.1) 100%)",
+            border: "1px solid rgba(255,255,255,0.1)",
+            boxShadow: "inset 0 1px 0 rgba(255,255,255,0.1), inset 0 -1px 0 rgba(0,0,0,0.2)",
+            padding: `${Math.floor(buttonSize * 0.04)}px`,
+            gap: `${Math.floor(buttonSize * 0.02)}px`,
+          }}
+        >
+          {/* Icon */}
+          <div 
+            className="flex items-center justify-center flex-shrink-0"
+            style={{ 
+              width: iconSize, 
+              height: iconSize,
+              minHeight: iconSize,
+            }}
+          >
+            {hasImageIcon ? (
+              <img
+                src={content.icon}
+                alt={content.title || "Button icon"}
+                className="object-contain w-full h-full"
+              />
+            ) : (
+              <div
+                className="flex items-center justify-center w-full h-full rounded-md"
+                style={{ 
+                  backgroundColor: content.backgroundColor ? "rgba(255,255,255,0.1)" : "rgba(99, 102, 241, 0.3)",
+                  color: content.textColor || "#ffffff",
+                  fontSize: initialsSize,
+                  fontWeight: 700,
+                  letterSpacing: "-0.02em",
+                }}
+              >
+                {initials}
+              </div>
+            )}
+          </div>
+
+          {/* Title - show when expanded or single item */}
+          {shouldShowTitle && (
+            <p
+              className="font-medium text-center leading-tight w-full"
+              style={{ 
+                color: content.textColor || "#ffffff",
+                fontSize: labelSize,
+                display: "-webkit-box",
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: "vertical",
+                overflow: "hidden",
+                wordBreak: "break-word",
+              }}
+            >
+              {content.title}
+            </p>
+          )}
+
+          {/* Status indicator */}
+          {content.status && (
+            <span
+              className="absolute top-0.5 right-0.5 rounded-full px-1.5 py-0.5 text-[8px] font-bold uppercase animate-pulse"
+              style={{
+                backgroundColor: content.status === "alert" ? "#f97316" : "#22c55e",
+                color: "#000",
+              }}
+            >
+              {content.status === "alert" ? "!" : "✓"}
+            </span>
+          )}
+        </div>
+      </div>
+    </>
+  )
+}
+
+// Outer wrapper - handles positioning and opacity, minimal re-renders
 function NotificationIcon({ 
-  data, 
+  meta,
   index, 
   total, 
   isExpanded,
   isHovered,
-  opacity,
   fanDirection,
   hoverOpacity,
+  buttonSize,
   onClick,
+  onSnooze,
+  onMenuOpenChange,
 }: { 
-  data: NotificationData
+  meta: NotificationMeta
   index: number
   total: number
   isExpanded: boolean
   isHovered: boolean
-  opacity: number
   fanDirection: "vertical" | "horizontal"
   hoverOpacity: number
+  buttonSize: number
   onClick?: () => void
+  onSnooze?: (context: string, minutes: number) => void
+  onMenuOpenChange?: (open: boolean) => void
 }) {
-  const buttonSize = 72
-  const radius = 14
-  const innerPadding = 3
-  const innerRadius = Math.max(radius - 3, 4)
-
   // Calculate position based on whether expanded or stacked
   const reverseIndex = total - 1 - index // 0 = newest (on top)
   
-  // Stack offset calculations
-  const stackOffsetX = reverseIndex * 8 // Horizontal offset when stacked
-  const stackOffsetY = reverseIndex * 4 // Slight vertical offset when stacked
+  // Stack offset calculations (proportional to button size)
+  const stackOffsetX = reverseIndex * Math.floor(buttonSize * 0.11)
+  const stackOffsetY = reverseIndex * Math.floor(buttonSize * 0.055)
+  const gap = Math.floor(buttonSize * 0.11)
   
   // Expanded offset based on fan direction
-  const expandedOffsetX = fanDirection === "horizontal" ? reverseIndex * (buttonSize + 8) : 0
-  const expandedOffsetY = fanDirection === "vertical" ? reverseIndex * (buttonSize + 8) : 0
+  const expandedOffsetX = fanDirection === "horizontal" ? reverseIndex * (buttonSize + gap) : 0
+  const expandedOffsetY = fanDirection === "vertical" ? reverseIndex * (buttonSize + gap) : 0
   
   const translateX = isExpanded ? -expandedOffsetX : -stackOffsetX
   const translateY = isExpanded ? -expandedOffsetY : -stackOffsetY
-  const rotate = isExpanded ? 0 : reverseIndex * 3 // Slight rotation when stacked
+  const rotate = isExpanded ? 0 : reverseIndex * 3
   const scale = isExpanded ? 1 : Math.max(0.95 - reverseIndex * 0.03, 0.85)
   
   // Cards further back are slightly dimmer when stacked
   const stackOpacity = isExpanded ? 1 : Math.max(1 - reverseIndex * 0.15, 0.5)
   
-  // Apply hover opacity (make semi-transparent when hovering)
-  const finalOpacity = isHovered ? (opacity * stackOpacity * hoverOpacity / 100) : (opacity * stackOpacity)
+  // Apply hover opacity
+  const finalOpacity = isHovered ? (meta.opacity * stackOpacity * hoverOpacity / 100) : (meta.opacity * stackOpacity)
 
-  return (
+  const snoozeOptions = [
+    { label: "5 minutes", minutes: 5 },
+    { label: "10 minutes", minutes: 10 },
+    { label: "30 minutes", minutes: 30 },
+    { label: "60 minutes", minutes: 60 },
+  ]
+
+  const buttonWrapper = (
     <div
       className="absolute bottom-0 right-0 transition-all duration-300 ease-out cursor-pointer"
       style={{
@@ -87,220 +373,100 @@ function NotificationIcon({
       }}
       onClick={onClick}
     >
-      <div
-        className="relative flex items-center justify-center w-full h-full"
-        style={{
-          borderRadius: `${radius}px`,
-          backgroundColor: data.backgroundColor || "rgba(26, 26, 26, 0.98)",
-          boxShadow: "0 4px 20px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.1)",
-        }}
-      >
-        {/* Inner button with bevel effect */}
-        <div
-          className="absolute flex items-center justify-center flex-col gap-0.5"
-          style={{
-            inset: `${innerPadding}px`,
-            borderRadius: `${innerRadius}px`,
-            background: "linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 50%, rgba(0,0,0,0.1) 100%)",
-            border: "1px solid rgba(255,255,255,0.1)",
-            boxShadow: "inset 0 1px 0 rgba(255,255,255,0.1), inset 0 -1px 0 rgba(0,0,0,0.2)",
-          }}
-        >
-          {/* Icon */}
-          {data.icon && (data.icon.startsWith("data:") || data.icon.startsWith("http")) ? (
-            <img
-              src={data.icon}
-              alt={data.title || "Button icon"}
-              className="size-8 object-contain"
-            />
-          ) : (
-            <div
-              className="text-xl"
-              style={{ color: data.textColor || "#ffffff" }}
-            >
-              {data.icon || "🎮"}
-            </div>
-          )}
-
-          {/* Title - only show when expanded or single item */}
-          {data.title && (isExpanded || total === 1) && (
-            <p
-              className="text-[8px] font-medium text-center line-clamp-1 px-1"
-              style={{ color: data.textColor || "#ffffff" }}
-            >
-              {data.title}
-            </p>
-          )}
-
-          {/* Status indicator */}
-          {data.status && (
-            <span
-              className="absolute top-0.5 right-0.5 rounded-full px-1.5 py-0.5 text-[8px] font-bold uppercase animate-pulse"
-              style={{
-                backgroundColor: data.status === "alert" ? "#f97316" : "#22c55e",
-                color: "#000",
-              }}
-            >
-              {data.status === "alert" ? "!" : "✓"}
-            </span>
-          )}
-        </div>
-      </div>
+      <NotificationIconContent 
+        context={meta.context}
+        buttonSize={buttonSize}
+        isExpanded={isExpanded}
+        total={total}
+      />
     </div>
+  )
+
+  return (
+    <ContextMenu onOpenChange={onMenuOpenChange}>
+      <ContextMenuTrigger asChild>
+        {buttonWrapper}
+      </ContextMenuTrigger>
+      <ContextMenuContent className="w-48">
+        <ContextMenuSub>
+          <ContextMenuSubTrigger>
+            <span className="mr-2 inline-flex h-4 w-4 items-center justify-center rounded-full border border-current text-[10px] leading-none">
+              !
+            </span>
+            Snooze for...
+          </ContextMenuSubTrigger>
+          <ContextMenuSubContent className="w-40">
+            {snoozeOptions.map((option) => (
+              <ContextMenuItem
+                key={option.minutes}
+                onClick={() => onSnooze?.(meta.context, option.minutes)}
+              >
+                <span className="mr-2 inline-block text-xs">⏱</span>
+                {option.label}
+              </ContextMenuItem>
+            ))}
+          </ContextMenuSubContent>
+        </ContextMenuSub>
+      </ContextMenuContent>
+    </ContextMenu>
   )
 }
 
 function NotificationPage() {
-  const [notifications, setNotifications] = useState<NotificationData[]>([])
-  const [opacities, setOpacities] = useState<Map<string, number>>(new Map())
-  const [isHovered, setIsHovered] = useState(false)
-  const [settings, setSettings] = useState<NotificationSettings>(defaultSettings)
-  const timersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map())
-  const fadeTimersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map())
-
-  const FADE_DURATION = 300 // 300ms fade
-  const MAX_NOTIFICATIONS = 5 // Maximum notifications to show
+  const notificationOrder = useNotificationStore((state) => state.notificationOrder)
+  const settings = useNotificationStore((state) => state.settings)
+  const isHovered = useNotificationStore((state) => state.isHovered)
+  const setSettings = useNotificationStore((state) => state.setSettings)
+  const setHovered = useNotificationStore((state) => state.setHovered)
+  const addOrUpdateNotification = useNotificationStore((state) => state.addOrUpdateNotification)
+  const updateOpacity = useNotificationStore((state) => state.updateOpacity)
+  const removeNotification = useNotificationStore((state) => state.removeNotification)
+  
+  const pausedTimersRef = useRef<Map<string, number>>(new Map()) // context -> remaining time
+  const [isMenuOpen, setIsMenuOpen] = useState(false)
 
   // Computed values
   const displayDuration = (settings.autoDismissSeconds ?? 5) * 1000
   const isExpanded = settings.alwaysFanOut || isHovered
   const fanDirection = settings.fanDirection ?? "vertical"
   const hoverOpacity = settings.hoverOpacity ?? 100
+  const buttonSize = settings.iconSize ?? 72
+  const clickThrough = settings.clickThrough ?? false
 
-  const removeNotification = useCallback((id: string) => {
-    // Clear any existing timers for this notification
-    const timer = timersRef.current.get(id)
-    if (timer) {
-      clearTimeout(timer)
-      timersRef.current.delete(id)
-    }
-    const fadeTimer = fadeTimersRef.current.get(id)
-    if (fadeTimer) {
-      clearTimeout(fadeTimer)
-      fadeTimersRef.current.delete(id)
-    }
-
-    setNotifications((prev) => {
-      const next = prev.filter((n) => n.id !== id)
-      if (next.length === 0) {
-        window.electron?.hideNotification?.()
-      }
-      return next
-    })
-    setOpacities((prev) => {
-      const next = new Map(prev)
-      next.delete(id)
-      return next
-    })
-  }, [])
-
-  const startFadeOut = useCallback((id: string) => {
-    // Start fade out
-    setOpacities((prev) => {
-      const next = new Map(prev)
-      next.set(id, 0)
-      return next
-    })
-
-    // Remove after fade completes
+  const startFadeOut = useCallback((context: string) => {
+    updateOpacity(context, 0)
+    
     const fadeTimer = setTimeout(() => {
-      removeNotification(id)
+      removeNotification(context)
+      fadeTimers.delete(context)
     }, FADE_DURATION)
-    fadeTimersRef.current.set(id, fadeTimer)
-  }, [removeNotification])
+    fadeTimers.set(context, fadeTimer)
+  }, [updateOpacity, removeNotification])
 
-  const startTimer = useCallback((id: string, duration?: number) => {
-    // Clear existing timer if any
-    const existingTimer = timersRef.current.get(id)
-    if (existingTimer) {
-      clearTimeout(existingTimer)
-    }
-
-    // Start new timer
+  const startTimer = useCallback((context: string, duration?: number) => {
+    clearTimersForContext(context)
+    
+    const effectiveDuration = duration ?? displayDuration
+    if (effectiveDuration <= 0) return
+    
     const timer = setTimeout(() => {
-      startFadeOut(id)
-    }, duration ?? displayDuration)
-    timersRef.current.set(id, timer)
+      startFadeOut(context)
+      dismissTimers.delete(context)
+    }, effectiveDuration)
+    dismissTimers.set(context, timer)
   }, [startFadeOut, displayDuration])
 
-  const handleDismiss = useCallback((id: string) => {
+  const handleDismiss = useCallback((context: string) => {
     if (settings.dismissOnClick) {
-      startFadeOut(id)
+      startFadeOut(context)
     }
   }, [settings.dismissOnClick, startFadeOut])
 
-  const addNotification = useCallback((data: Omit<NotificationData, "id" | "createdAt">) => {
-    const id = `${data.context}-${Date.now()}`
-    const newNotification: NotificationData = {
-      ...data,
-      id,
-      createdAt: Date.now(),
-    }
-
-    setNotifications((prev) => {
-      // Check if we already have a notification for this context
-      const existingIndex = prev.findIndex((n) => n.context === data.context)
-      
-      let next: NotificationData[]
-      if (existingIndex >= 0) {
-        // Update existing notification for this context
-        const oldId = prev[existingIndex].id
-        
-        // Clear old timers
-        const oldTimer = timersRef.current.get(oldId)
-        if (oldTimer) {
-          clearTimeout(oldTimer)
-          timersRef.current.delete(oldId)
-        }
-        const oldFadeTimer = fadeTimersRef.current.get(oldId)
-        if (oldFadeTimer) {
-          clearTimeout(oldFadeTimer)
-          fadeTimersRef.current.delete(oldId)
-        }
-        
-        // Remove old opacity
-        setOpacities((prev) => {
-          const next = new Map(prev)
-          next.delete(oldId)
-          return next
-        })
-        
-        // Remove old and add new at the end (newest)
-        next = [...prev.filter((n) => n.context !== data.context), newNotification]
-      } else {
-        // Add new notification
-        next = [...prev, newNotification]
-      }
-      
-      // Limit to max notifications
-      if (next.length > MAX_NOTIFICATIONS) {
-        const removed = next.shift()
-        if (removed) {
-          const timer = timersRef.current.get(removed.id)
-          if (timer) {
-            clearTimeout(timer)
-            timersRef.current.delete(removed.id)
-          }
-        }
-      }
-      
-      return next
-    })
-
-    // Set opacity to 1 with a slight delay for animation
-    requestAnimationFrame(() => {
-      setOpacities((prev) => {
-        const next = new Map(prev)
-        next.set(id, 1)
-        return next
-      })
-    })
-
-    // Start the hide timer
-    startTimer(id)
-
-    return id
-  }, [startTimer])
+  const handleSnooze = useCallback((context: string, minutes: number) => {
+    window.electron?.snoozeNotification?.(context, minutes)
+    clearTimersForContext(context)
+    removeNotification(context)
+  }, [removeNotification])
 
   // Load initial config
   useEffect(() => {
@@ -309,7 +475,7 @@ function NotificationPage() {
         setSettings(config)
       }
     })
-  }, [])
+  }, [setSettings])
 
   // Listen for config updates
   useEffect(() => {
@@ -319,25 +485,37 @@ function NotificationPage() {
       }
     })
     return () => unsubscribe?.()
-  }, [])
+  }, [setSettings])
 
   // Listen for notifications
   useEffect(() => {
-    const handleNotification = (data: Omit<NotificationData, "id" | "createdAt">) => {
-      addNotification(data)
+    const handleNotification = (data: NotificationContent) => {
+      const { isNew, context } = addOrUpdateNotification(data)
+      
+      // Clear any existing timers
+      clearTimersForContext(context)
+      
+      if (isNew) {
+        // Fade in new notifications
+        requestAnimationFrame(() => {
+          updateOpacity(context, 1)
+        })
+      }
+      
+      // Start/restart dismiss timer
+      startTimer(context)
     }
 
     const unsubscribe = window.electron?.onNotification?.(handleNotification)
-
-    return () => {
-      unsubscribe?.()
-    }
-  }, [addNotification])
+    return () => unsubscribe?.()
+  }, [addOrUpdateNotification, updateOpacity, startTimer])
 
   // Listen for dismiss requests
   useEffect(() => {
-    const handleDismissRequest = ({ id }: { id: string }) => {
-      startFadeOut(id)
+    const handleDismissRequest = ({ context }: { context?: string; id?: string }) => {
+      if (context) {
+        startFadeOut(context)
+      }
     }
 
     const unsubscribe = window.electron?.onDismissNotification?.(handleDismissRequest)
@@ -347,55 +525,101 @@ function NotificationPage() {
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      timersRef.current.forEach((timer) => clearTimeout(timer))
-      timersRef.current.clear()
-      fadeTimersRef.current.forEach((timer) => clearTimeout(timer))
-      fadeTimersRef.current.clear()
+      dismissTimers.forEach((timer) => clearTimeout(timer))
+      dismissTimers.clear()
+      fadeTimers.forEach((timer) => clearTimeout(timer))
+      fadeTimers.clear()
     }
   }, [])
 
-  // Pause timers when hovered (unless alwaysFanOut is true, then timers keep running)
+  // Control OS-level click-through behavior:
+  // - Outside the notification stack area, the window should ALWAYS be click-through
+  // - When "Click Through" setting is enabled, even the notifications themselves are click-through
+  // - When it is disabled, notifications are clickable but the rest of the window still passes events through
   useEffect(() => {
+    const api = window.electron
+    if (!api?.setNotificationIgnoreMouseEvents) {
+      return
+    }
+
+    // While any context menu (including submenus like "Snooze for") is open,
+    // temporarily disable click-through so clicks outside the menu can close it.
+    if (isMenuOpen) {
+      api.setNotificationIgnoreMouseEvents(false, true)
+      return
+    }
+
+    // If click-through is enabled globally, always pass events through
+    if (clickThrough) {
+      api.setNotificationIgnoreMouseEvents(true, true)
+      return
+    }
+
+    // Otherwise, only capture mouse events while hovering over the notification stack
+    if (isHovered && notificationOrder.length > 0) {
+      api.setNotificationIgnoreMouseEvents(false, true)
+    } else {
+      api.setNotificationIgnoreMouseEvents(true, true)
+    }
+  }, [clickThrough, isHovered, isMenuOpen, notificationOrder.length])
+
+  // Pause/resume timers when hovered
+  useEffect(() => {
+    if (displayDuration <= 0) {
+      // Auto-dismiss disabled
+      dismissTimers.forEach((timer) => clearTimeout(timer))
+      dismissTimers.clear()
+      return
+    }
+
     if (isHovered && !settings.alwaysFanOut) {
-      // Pause all timers
-      timersRef.current.forEach((timer) => clearTimeout(timer))
-      timersRef.current.clear()
-    } else if (!isHovered && !settings.alwaysFanOut) {
-      // Restart timers for all notifications
-      notifications.forEach((n) => {
+      // Pause all timers - store remaining time
+      notificationOrder.forEach((n: NotificationMeta) => {
         const elapsed = Date.now() - n.createdAt
         const remaining = Math.max(displayDuration - elapsed, 500)
+        pausedTimersRef.current.set(n.context, remaining)
+      })
+      dismissTimers.forEach((timer) => clearTimeout(timer))
+      dismissTimers.clear()
+    } else if (!isHovered && !settings.alwaysFanOut) {
+      // Resume timers with remaining time
+      notificationOrder.forEach((n: NotificationMeta) => {
+        const remaining = pausedTimersRef.current.get(n.context) ?? displayDuration
         
         const timer = setTimeout(() => {
-          startFadeOut(n.id)
+          startFadeOut(n.context)
+          dismissTimers.delete(n.context)
         }, remaining)
-        timersRef.current.set(n.id, timer)
+        dismissTimers.set(n.context, timer)
       })
+      pausedTimersRef.current.clear()
     }
-  }, [isHovered, notifications, startFadeOut, displayDuration, settings.alwaysFanOut])
+  }, [isHovered, notificationOrder, startFadeOut, displayDuration, settings.alwaysFanOut])
 
-  if (notifications.length === 0) {
+  if (notificationOrder.length === 0) {
     return null
   }
 
-  // Calculate container size based on whether expanded and fan direction
-  const buttonSize = 72
+  // Calculate container size
   const margin = 16
+  const gap = Math.floor(buttonSize * 0.11)
+  const stackOffsetX = Math.floor(buttonSize * 0.11)
+  const stackOffsetY = Math.floor(buttonSize * 0.055)
   
   let containerWidth: number
   let containerHeight: number
   
   if (isExpanded) {
     if (fanDirection === "horizontal") {
-      containerWidth = buttonSize + (notifications.length - 1) * (buttonSize + 8)
+      containerWidth = buttonSize + (notificationOrder.length - 1) * (buttonSize + gap)
       containerHeight = buttonSize
     } else {
       containerWidth = buttonSize
-      containerHeight = buttonSize + (notifications.length - 1) * (buttonSize + 8)
+      containerHeight = buttonSize + (notificationOrder.length - 1) * (buttonSize + gap)
     }
   } else {
-    containerWidth = buttonSize + (notifications.length - 1) * 8
-    containerHeight = buttonSize + (notifications.length - 1) * 4
+    containerWidth = buttonSize + (notificationOrder.length - 1) * stackOffsetX
+    containerHeight = buttonSize + (notificationOrder.length - 1) * stackOffsetY
   }
 
   return (
@@ -413,21 +637,23 @@ function NotificationPage() {
           height: containerHeight,
           transition: "width 300ms ease-out, height 300ms ease-out",
         }}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
       >
-        {notifications.map((notification, index) => (
+        {notificationOrder.map((meta: NotificationMeta, index: number) => (
           <NotificationIcon
-            key={notification.id}
-            data={notification}
+            key={meta.context}
+            meta={meta}
             index={index}
-            total={notifications.length}
+            total={notificationOrder.length}
             isExpanded={isExpanded}
             isHovered={isHovered}
-            opacity={opacities.get(notification.id) ?? 0}
             fanDirection={fanDirection}
             hoverOpacity={hoverOpacity}
-            onClick={() => handleDismiss(notification.id)}
+            buttonSize={buttonSize}
+            onClick={() => handleDismiss(meta.context)}
+            onSnooze={handleSnooze}
+            onMenuOpenChange={setIsMenuOpen}
           />
         ))}
       </div>

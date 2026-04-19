@@ -12,6 +12,7 @@ contextBridge.exposeInMainWorld("electron", {
   showSetup: () => ipcRenderer.send("show-setup"),
   closeOverlay: () => ipcRenderer.send("close-overlay"),
   forceHideOverlay: () => ipcRenderer.send("force-hide-overlay"),
+  setIgnoreMouseEvents: (ignore, forward = true) => ipcRenderer.send("set-ignore-mouse-events", { ignore, forward }),
   toggleSetup: () => ipcRenderer.send("toggle-setup"),
   getHostState: async () => ipcRenderer.invoke("host:get-state"),
   getHostVisualState: async () => ipcRenderer.invoke("host:get-visual-state"),
@@ -48,7 +49,14 @@ contextBridge.exposeInMainWorld("electron", {
   },
   getNotificationConfig: async () => ipcRenderer.invoke("get-notification-config"),
   hideNotification: () => ipcRenderer.send("hide-notification"),
-  dismissNotification: (id) => ipcRenderer.send("dismiss-notification", { id }),
+  setNotificationIgnoreMouseEvents: (ignore, forward = true) => ipcRenderer.send("set-notification-ignore-mouse-events", { ignore, forward }),
+  dismissNotification: (context) => ipcRenderer.send("dismiss-notification", { context }),
   openPluginFolder: () => ipcRenderer.send("open-plugin-folder"),
+  testShortcut: async (shortcut) => ipcRenderer.invoke("test-shortcut", shortcut),
+  registerOverlayShortcut: async () => ipcRenderer.invoke("register-overlay-shortcut"),
+  // Snooze notification methods
+  snoozeNotification: async (context, minutes) => ipcRenderer.invoke("snooze-notification", { context, minutes }),
+  wakeNotification: async (context) => ipcRenderer.invoke("wake-notification", { context }),
+  getSnoozedContexts: async () => ipcRenderer.invoke("get-snoozed-contexts"),
 })
 
